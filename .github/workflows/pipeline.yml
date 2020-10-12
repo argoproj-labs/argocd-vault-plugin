@@ -1,0 +1,16 @@
+name: Basic pipeline
+on: [push, pull_request]
+
+jobs:
+  CI:
+    name: CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Quality checks
+        run: make quality
+
+      - name: Build and test plugin
+        run: make e2e
