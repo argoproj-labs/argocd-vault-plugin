@@ -9,5 +9,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Show code
-        run: ls -R $GITHUB_WORKSPACE/
+      - name: Format code
+        run: make format
+
+      - name: Build and test plugin
+        run: make e2e
