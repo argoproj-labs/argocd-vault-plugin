@@ -7,6 +7,9 @@ default: build
 format: 
 	go fmt github.com/IBM/argocd-vault-plugin/...
 
+quality:
+	go vet
+
 build:
 	go build -o ${BINARY}
 

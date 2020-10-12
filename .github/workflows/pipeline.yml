@@ -2,8 +2,8 @@ name: Basic pipeline
 on: push
 
 jobs:
-  test:
-    name: Test
+  CI:
+    name: CI
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -11,6 +11,9 @@ jobs:
 
       - name: Format code
         run: make format
+
+      - name: Quality checks
+        run: make quality
 
       - name: Build and test plugin
         run: make e2e
