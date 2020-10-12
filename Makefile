@@ -8,7 +8,7 @@ format:
 	go fmt github.com/IBM/argocd-vault-plugin/...
 
 quality:
-	go vet
+	go vet github.com/IBM/argocd-vault-plugin/...
 
 build:
 	go build -o ${BINARY}
