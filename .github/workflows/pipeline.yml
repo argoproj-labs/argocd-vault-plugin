@@ -1,5 +1,5 @@
 name: Basic pipeline
-on: push
+on: [push, pull_request]
 
 jobs:
   CI:
