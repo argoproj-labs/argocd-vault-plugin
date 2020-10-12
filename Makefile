@@ -4,9 +4,6 @@ OS_ARCH=darwin_amd64
 
 default: build
 
-format: 
-	go fmt github.com/IBM/argocd-vault-plugin/...
-
 quality:
 	go vet github.com/IBM/argocd-vault-plugin/...
 
