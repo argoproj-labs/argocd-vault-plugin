@@ -6,6 +6,7 @@ default: build
 
 quality:
 	go vet github.com/IBM/argocd-vault-plugin/...
+	go test -v ./...
 
 build:
 	go build -o ${BINARY}
