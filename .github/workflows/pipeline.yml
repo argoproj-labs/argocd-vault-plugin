@@ -1,5 +1,11 @@
 name: Pipeline
-on: [pull_request]
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches: [main]
 
 jobs:
   CI:
@@ -15,6 +21,9 @@ jobs:
 
       - name: Quality checks
         run: make quality
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
 
       - name: Build and test plugin
         run: make e2e
