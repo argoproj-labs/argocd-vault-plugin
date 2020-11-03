@@ -6,7 +6,8 @@ default: build
 
 quality:
 	go vet github.com/IBM/argocd-vault-plugin/...
-	go test -v ./...
+	go test -v -coverprofile cover.out ./...
+	bash <(curl -s https://codecov.io/bash)
 
 build:
 	go build -o ${BINARY}
