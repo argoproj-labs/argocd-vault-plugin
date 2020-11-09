@@ -9,14 +9,14 @@ quality:
 	go test -v -coverprofile cover.out ./...
 
 build:
-	go build -o ${BINARY}
+	go build -o ${BINARY} .
 
 release:
 	GOOS=darwin GOARCH=amd64 go build -o ./bin/${BINARY}_${VERSION}_darwin_amd64
 	GOOS=linux GOARCH=amd64 go build -o ./bin/${BINARY}_${VERSION}_linux_amd64
 
 install: build
-	# TODO: add logic to copy binary to where ArgoCD expects it
+	cp ${GOPATH}/bin/${BINARY} .
 
 e2e: install
 	./argocd-vault-plugin

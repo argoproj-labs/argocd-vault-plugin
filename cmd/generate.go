@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -22,15 +23,29 @@ import (
 // NewGenerateCommand Initializes the generate command
 func NewGenerateCommand() *cobra.Command {
 	var command = &cobra.Command{
-		Use:   "generate",
-		Short: "Generate YAML files from template with Vault values",
+		Use:   "generate <path>",
+		Short: "Generate manifests from templates with Vault values",
 		RunE: func(cmd *cobra.Command, args []string) error {
+
+			// Read YAML
 			path := args[0]
 			files := listYamlFiles(path)
-			secrets := readFilesAsSecrets(files)
-			generated := generateSecrets(&secrets)
-			results := secretsAsYaml(generated)
-			fmt.Print(results)
+			if len(files) < 1 {
+				return fmt.Errorf("No YAML files were found in %s", path)
+			}
+
+			// TODO: dispatch on `kind` of each manifest, to find/replace from proper path in Vault
+			// TODO: read manifests into well-defined structs
+			// secrets := readFilesAsSecrets(files)
+			// generated := generateSecrets(&secrets)
+			// results := secretsAsYaml(generated)
+			// fmt.Print(results)
+			return nil
+		},
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return errors.New("<path> argument is required to generate manifests")
+			}
 			return nil
 		},
 	}
