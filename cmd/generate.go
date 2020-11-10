@@ -44,7 +44,7 @@ func NewGenerateCommand() *cobra.Command {
 		},
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 1 {
-				return errors.New("<path> argument is required to generate manifests")
+				return errors.New("<path> argument required to generate manifests")
 			}
 			return nil
 		},
