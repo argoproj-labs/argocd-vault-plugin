@@ -33,10 +33,27 @@ func NewGenerateCommand() *cobra.Command {
 			if len(files) < 1 {
 				return fmt.Errorf("No YAML files were found in %s", path)
 			}
+			manifests := readFilesAsManifests(files)
+			var resource Resource
+			var resourcelist []Resource
 
 			// TODO: dispatch on `kind` of each manifest, to find/replace from proper path in Vault
-			// TODO: read manifests into well-defined structs
-			// secrets := readFilesAsSecrets(files)
+			for _, manifest := range manifests {
+				fmt.Printf("Kind is: %s\n", manifest["kind"])
+				switch manifest["kind"] {
+				case "Deployment":
+					resource = NewDeployment(manifest)
+					resourcelist = append(resourcelist, resource)
+				case "Service":
+				case "Secret":
+				case "ConfigMap":
+				}
+			}
+
+			resource.Replace()
+
+			resource.ToYAML()
+
 			// generated := generateSecrets(&secrets)
 			// results := secretsAsYaml(generated)
 			// fmt.Print(results)
@@ -51,6 +68,11 @@ func NewGenerateCommand() *cobra.Command {
 	}
 
 	return command
+}
+
+type Resource interface {
+	Replace() interface{}
+	ToYAML() string
 }
 
 func listYamlFiles(root string) []string {
@@ -69,26 +91,26 @@ func listYamlFiles(root string) []string {
 	return files
 }
 
-func readFilesAsSecrets(paths []string) []map[string]interface{} {
+func readFilesAsManifests(paths []string) []map[string]interface{} {
 	var result []map[string]interface{}
 
 	for _, path := range paths {
-		result = append(result, readFileAsSecret(path))
+		result = append(result, readFileAsManifest(path))
 	}
 
 	return result
 }
 
-func readFileAsSecret(path string) map[string]interface{} {
+func readFileAsManifest(path string) map[string]interface{} {
 	dat, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}
 
-	return secretFromYaml(dat)
+	return manifestFromYaml(dat)
 }
 
-func secretFromYaml(data []byte) map[string]interface{} {
+func manifestFromYaml(data []byte) map[string]interface{} {
 	var value map[string]interface{}
 
 	err := yaml.Unmarshal(data, &value)
