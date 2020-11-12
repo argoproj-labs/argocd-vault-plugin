@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	yaml2 "github.com/ghodss/yaml"
+	"github.com/mitchellh/mapstructure"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -17,7 +18,7 @@ type Deployment struct {
 	vaultdata map[string]string
 }
 
-func NewDeployment(data map[interface{}]interface{}) *Deployment {
+func NewDeployment(data map[string]interface{}) *Deployment {
 	d := Deployment{
 		data: data,
 		vaultdata: map[string]string{
@@ -32,13 +33,15 @@ func NewDeployment(data map[interface{}]interface{}) *Deployment {
 }
 
 func (d *Deployment) Replace() interface{} {
+	fmt.Println("Originally had: ")
+	fmt.Println(d.data)
 	d.replaceinner(&d.data)
 	fmt.Println("Struct has the following: ")
 	fmt.Println(d.data)
 	return nil
 }
 
-func (d *Deployment) replaceinner(block *map[interface{}]interface{}) interface{} {
+func (d *Deployment) replaceinner(block *map[string]interface{}) interface{} {
 	// obj, _ := (*block).(map[interface{}]interface{})
 	obj := (*block)
 	for key, value := range obj {
@@ -46,12 +49,12 @@ func (d *Deployment) replaceinner(block *map[interface{}]interface{}) interface{
 
 		if valuetype == reflect.Map {
 			// fmt.Printf("key: %s, need to recurse since value is %s\n", key, value)
-			inner := value.(map[interface{}]interface{})
+			inner := value.(map[string]interface{})
 			d.replaceinner(&inner)
 		} else if valuetype == reflect.Slice {
-			// fmt.Printf("key: %s, need to iterate and recurse since value is %s\n", key, value)
+			fmt.Printf("key: %s, need to iterate and recurse since value is %s\n", key, value)
 			for _, elm := range value.([]interface{}) {
-				inner := elm.(map[interface{}]interface{})
+				inner := elm.(map[string]interface{})
 				d.replaceinner(&inner)
 			}
 		} else if valuetype == reflect.String {
@@ -88,34 +91,25 @@ func (d *Deployment) replacestring(value string) (string, error) {
 
 func (d *Deployment) toKubeResource() *appsv1.Deployment {
 
-	metadata := d.data["metadata"].(map[interface{}]interface{})
-	// spec := d.data["spec"].(map[interface{}]interface{})
+	metadata := d.data["metadata"].(map[string]interface{})
+	spec := d.data["spec"].(map[string]interface{})
 	var objectmeta metav1.ObjectMeta
-	// var deploymentspec appsv1.DeploymentSpec
+	var deploymentspec appsv1.DeploymentSpec
 
-	jsonmetadata, err := json.Marshal(metadata)
-	if err != nil {
-		fmt.Printf("Err with marshal: %s\n", err)
+	var specdecodemetata mapstructure.Metadata
+	specdecodeconfig := mapstructure.DecoderConfig{
+		ErrorUnused: true,
+		TagName:     "json",
+		Result:      &deploymentspec,
+		Metadata:    &specdecodemetata,
 	}
-	err = json.Unmarshal(jsonmetadata, &objectmeta)
+	specdecoder, _ := mapstructure.NewDecoder(&specdecodeconfig)
+
+	mapstructure.Decode(metadata, &objectmeta)
+	err := specdecoder.Decode(spec)
 	if err != nil {
-		fmt.Printf("Err with unmarshal: %s\n", err)
+		fmt.Printf("Err: %s\n", err)
 	}
-
-	// var specdecodemetata mapstructure.Metadata
-	// specdecodeconfig := mapstructure.DecoderConfig{
-	// 	ErrorUnused: true,
-	// 	TagName:     "json",
-	// 	Result:      &deploymentspec,
-	// 	Metadata:    &specdecodemetata,
-	// }
-	// specdecoder, _ := mapstructure.NewDecoder(&specdecodeconfig)
-
-	// mapstructure.Decode(metadata, &objectmeta)
-	// err := specdecoder.Decode(spec)
-	// if err != nil {
-	// 	fmt.Printf("Err: %s\n", err)
-	// }
 
 	deployment := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -127,6 +121,10 @@ func (d *Deployment) toKubeResource() *appsv1.Deployment {
 	}
 	return deployment
 }
+
+// func (d *Deployment) ToYAML() string {
+// 	return ""
+// }
 
 // func (d *Deployment) ToYAML() string {
 // 	kubedeployment := d.toKubeResource()
@@ -151,12 +149,3 @@ func (d *Deployment) ToYAML() string {
 	fmt.Printf("YAML output is: \n%s", string(yaml))
 	return string(yaml)
 }
-
-// func (d *Deployment) ToYAML() string {
-// 	yaml, err := yaml2.Marshal(&d.data)
-// 	if err != nil {
-// 		fmt.Printf("Error: %s", err)
-// 	}
-// 	fmt.Printf("YAML output is: \n %s", string(yaml))
-// 	return string(yaml)
-// }

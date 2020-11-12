@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,9 +11,11 @@ import (
 	"time"
 
 	yaml2 "github.com/ghodss/yaml"
+
+	yaml3 "github.com/beego/goyaml2"
+
 	api "github.com/hashicorp/vault/api"
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -95,30 +95,35 @@ func readFilesAsManifests(paths []string) []map[string]interface{} {
 	var result []map[string]interface{}
 
 	for _, path := range paths {
-		result = append(result, readFileAsManifest(path))
+		result = append(result, manifestFromYaml(path))
 	}
 
 	return result
 }
 
-func readFileAsManifest(path string) map[string]interface{} {
-	dat, err := ioutil.ReadFile(path)
+func manifestFromYaml(path string) map[string]interface{} {
+	file, err := os.Open(path)
 	if err != nil {
 		panic(err)
 	}
+	defer file.Close()
+	// var value map[interface{}]interface{}
 
-	return manifestFromYaml(dat)
-}
+	// err := yaml.Unmarshal(data, &value)
+	// if err != nil {
+	// 	log.Fatalf("error: %v", err)
+	// }
 
-func manifestFromYaml(data []byte) map[string]interface{} {
-	var value map[string]interface{}
+	// TEMP
+	var value2 map[string]interface{}
+	manifest, _ := yaml3.Read(file)
+	value2 = manifest.(map[string]interface{})
 
-	err := yaml.Unmarshal(data, &value)
-	if err != nil {
-		log.Fatalf("error: %v", err)
-	}
+	fmt.Println(value2["kind"])
+	fmt.Println(value2["metadata"])
+	fmt.Println(value2["metadata"].(map[string]interface{})["name"])
 
-	return value
+	return value2
 }
 
 func generateSecrets(templates *[]map[string]interface{}) *[]corev1.Secret {
