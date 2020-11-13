@@ -81,9 +81,9 @@ Or you can pass the config-management-plugin flag to the Argo CD CLI app create 
 `argocd app create <appName> --config-management-plugin argocd-vault-plugin`
 
 ### As a CLI
-The plugin can be used as just a cli tool if you are using a CI/CD system other than vault. You just run the tool like:
+The plugin can be used as just a cli tool if you are using a CI/CD system other than argo. You just run the tool like:
 
-`avp generate ./path-to-templates`
+`argocd-vault-plugin generate ./path-to-templates`
 
 And it will output the generated yaml files to standard out.
 
