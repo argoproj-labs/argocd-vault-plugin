@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -11,8 +13,7 @@ import (
 	"time"
 
 	yaml2 "github.com/ghodss/yaml"
-
-	yaml3 "github.com/beego/goyaml2"
+	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 
 	api "github.com/hashicorp/vault/api"
 	"github.com/spf13/cobra"
@@ -50,9 +51,9 @@ func NewGenerateCommand() *cobra.Command {
 				}
 			}
 
-			resource.Replace()
+			fmt.Println(resource.Replace())
 
-			resource.ToYAML()
+			fmt.Printf(resource.ToYAML())
 
 			// generated := generateSecrets(&secrets)
 			// results := secretsAsYaml(generated)
@@ -71,7 +72,7 @@ func NewGenerateCommand() *cobra.Command {
 }
 
 type Resource interface {
-	Replace() interface{}
+	Replace() error
 	ToYAML() string
 }
 
@@ -102,28 +103,21 @@ func readFilesAsManifests(paths []string) []map[string]interface{} {
 }
 
 func manifestFromYaml(path string) map[string]interface{} {
-	file, err := os.Open(path)
+	// Read as byte string
+	rawdata, err := ioutil.ReadFile(path)
 	if err != nil {
-		panic(err)
+
 	}
-	defer file.Close()
-	// var value map[interface{}]interface{}
 
-	// err := yaml.Unmarshal(data, &value)
-	// if err != nil {
-	// 	log.Fatalf("error: %v", err)
-	// }
+	decoder := k8yaml.NewYAMLOrJSONDecoder(bytes.NewReader(rawdata), 1000)
+	var manifest map[string]interface{}
+	_ = decoder.Decode(&manifest)
 
-	// TEMP
-	var value2 map[string]interface{}
-	manifest, _ := yaml3.Read(file)
-	value2 = manifest.(map[string]interface{})
+	fmt.Println(manifest["kind"])
+	fmt.Println(manifest["metadata"])
+	fmt.Println(manifest["metadata"].(map[string]interface{})["name"])
 
-	fmt.Println(value2["kind"])
-	fmt.Println(value2["metadata"])
-	fmt.Println(value2["metadata"].(map[string]interface{})["name"])
-
-	return value2
+	return manifest
 }
 
 func generateSecrets(templates *[]map[string]interface{}) *[]corev1.Secret {
