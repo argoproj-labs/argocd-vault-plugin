@@ -40,7 +40,7 @@ func Test_generate_empty(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected := "No YAML files were found in ./fixtures/empty/"
+	expected := "no YAML files were found in ./fixtures/empty/"
 
 	if !strings.Contains(string(out), expected) {
 		t.Fatalf("expected to contain: %s but got %s", expected, out)

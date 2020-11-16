@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewGenerateCommand Initializes the generate command
+// NewGenerateCommand initializes the generate command
 func NewGenerateCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "generate <path>",
@@ -24,11 +24,16 @@ func NewGenerateCommand() *cobra.Command {
 			path := args[0]
 			files := listYamlFiles(path)
 			if len(files) < 1 {
-				return fmt.Errorf("No YAML files were found in %s", path)
+				return fmt.Errorf("no YAML files were found in %s", path)
 			}
-			manifests := readFilesAsManifests(files)
-			var resource kube.Template
+			manifests, errs := readFilesAsManifests(files)
+			if len(errs) != 0 {
 
+				// TODO: handle multiple errors nicely
+				return fmt.Errorf("could not read YAML files: %s", errs)
+			}
+
+			var resource kube.Template
 			for _, manifest := range manifests {
 				switch manifest["kind"] {
 				case "Deployment":
@@ -83,26 +88,31 @@ func listYamlFiles(root string) []string {
 	return files
 }
 
-func readFilesAsManifests(paths []string) []map[string]interface{} {
-	var result []map[string]interface{}
+func readFilesAsManifests(paths []string) (result []map[string]interface{}, errs []error) {
 
 	for _, path := range paths {
-		result = append(result, manifestFromYaml(path))
+		manifest, err := manifestFromYAML(path)
+		if err != nil {
+			errs = append(errs, err)
+		}
+		result = append(result, manifest)
 	}
 
-	return result
+	return result, errs
 }
 
-func manifestFromYaml(path string) map[string]interface{} {
-	// Read as byte string
+func manifestFromYAML(path string) (map[string]interface{}, error) {
 	rawdata, err := ioutil.ReadFile(path)
 	if err != nil {
-
+		return nil, fmt.Errorf("could not read YAML: %s from disk: %s", path, err)
 	}
 
 	decoder := k8yaml.NewYAMLOrJSONDecoder(bytes.NewReader(rawdata), 1000)
 	var manifest map[string]interface{}
-	_ = decoder.Decode(&manifest)
+	err = decoder.Decode(&manifest)
+	if err != nil {
+		return nil, fmt.Errorf("could not read YAML: %s into a manifest: %s", path, err)
+	}
 
-	return manifest
+	return manifest, nil
 }
