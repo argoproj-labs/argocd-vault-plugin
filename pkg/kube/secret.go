@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 
+	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	corev1 "k8s.io/api/core/v1"
 	k8yamldecoder "k8s.io/apimachinery/pkg/util/yaml"
 	k8yaml "sigs.k8s.io/yaml"
@@ -15,20 +17,19 @@ type SecretTemplate struct {
 	Resource
 }
 
-func NewSecretTemplate(data map[string]interface{}) *SecretTemplate {
+func NewSecretTemplate(template map[string]interface{}, vault vault.VaultType) (*SecretTemplate, error) {
+	path := os.Getenv("VAULT_PATH_PREFIX")
+	data, err := vault.GetSecrets(path)
+	if err != nil {
+		return nil, err
+	}
 
-	// TODO: add logic to connect to Vault and pull values for this resource
 	return &SecretTemplate{
 		Resource{
-			templateData: data,
-			vaultData: map[string]interface{}{
-				"namespace":        "default",
-				"name":             "inspector",
-				"secret-var-value": "foo",
-				"secret-num":       5,
-			},
+			templateData: template,
+			vaultData:    data,
 		},
-	}
+	}, nil
 }
 
 func (d *SecretTemplate) Replace() error {

@@ -5,7 +5,31 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 )
+
+func CreateTemplate(manifest map[string]interface{}, vault vault.VaultType) (Template, error) {
+	switch manifest["kind"] {
+	case "Deployment":
+		{
+			template, err := NewDeploymentTemplate(manifest, vault)
+			if err != nil {
+				return nil, err
+			}
+			return template, nil
+		}
+	case "Secret":
+		{
+			template, err := NewSecretTemplate(manifest, vault)
+			if err != nil {
+				return nil, err
+			}
+			return template, nil
+		}
+	}
+	return nil, fmt.Errorf("unsupported kind: %s", manifest["kind"])
+}
 
 func replaceInner(
 	r *Resource,
