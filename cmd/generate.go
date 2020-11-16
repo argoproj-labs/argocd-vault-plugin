@@ -1,14 +1,8 @@
 package cmd
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
-	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 
 	kube "github.com/IBM/argocd-vault-plugin/pkg/kube"
 	"github.com/spf13/cobra"
@@ -22,10 +16,14 @@ func NewGenerateCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 
 			path := args[0]
-			files := listYamlFiles(path)
+			files, err := listYamlFiles(path)
 			if len(files) < 1 {
 				return fmt.Errorf("no YAML files were found in %s", path)
 			}
+			if err != nil {
+				return err
+			}
+
 			manifests, errs := readFilesAsManifests(files)
 			if len(errs) != 0 {
 
@@ -33,20 +31,14 @@ func NewGenerateCommand() *cobra.Command {
 				return fmt.Errorf("could not read YAML files: %s", errs)
 			}
 
-			var resource kube.Template
 			for _, manifest := range manifests {
-				switch manifest["kind"] {
-				case "Deployment":
-					{
-						resource = kube.NewDeploymentTemplate(manifest)
-					}
-				case "Secret":
-					{
-						resource = kube.NewSecretTemplate(manifest)
-					}
+
+				resource, err := createTemplate(manifest)
+				if err != nil {
+					return err
 				}
 
-				err := resource.Replace()
+				err = resource.Replace()
 				if err != nil {
 					return err
 				}
@@ -72,47 +64,16 @@ func NewGenerateCommand() *cobra.Command {
 	return command
 }
 
-func listYamlFiles(root string) []string {
-	var files []string
-
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if filepath.Ext(path) == ".yaml" {
-			files = append(files, path)
+func createTemplate(manifest map[string]interface{}) (kube.Template, error) {
+	switch manifest["kind"] {
+	case "Deployment":
+		{
+			return kube.NewDeploymentTemplate(manifest), nil
 		}
-		return nil
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	return files
-}
-
-func readFilesAsManifests(paths []string) (result []map[string]interface{}, errs []error) {
-
-	for _, path := range paths {
-		manifest, err := manifestFromYAML(path)
-		if err != nil {
-			errs = append(errs, err)
+	case "Secret":
+		{
+			return kube.NewSecretTemplate(manifest), nil
 		}
-		result = append(result, manifest)
 	}
-
-	return result, errs
-}
-
-func manifestFromYAML(path string) (map[string]interface{}, error) {
-	rawdata, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("could not read YAML: %s from disk: %s", path, err)
-	}
-
-	decoder := k8yaml.NewYAMLOrJSONDecoder(bytes.NewReader(rawdata), 1000)
-	var manifest map[string]interface{}
-	err = decoder.Decode(&manifest)
-	if err != nil {
-		return nil, fmt.Errorf("could not read YAML: %s into a manifest: %s", path, err)
-	}
-
-	return manifest, nil
+	return nil, fmt.Errorf("unsupported kind: %s", manifest["kind"])
 }
