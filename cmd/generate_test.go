@@ -3,23 +3,46 @@ package cmd
 import (
 	"bytes"
 	"io/ioutil"
+	"strings"
 	"testing"
 )
 
-func Test_generate(t *testing.T) {
-	cmd := NewGenerateCommand() // Initialize generate command
+func Test_generate_noargs(t *testing.T) {
+	args := []string{}
+	cmd := NewGenerateCommand()
 
 	b := bytes.NewBufferString("")
-	cmd.SetOut(b) // Set command output to buffer
-
-	cmd.Execute() // Execute command
-
+	cmd.SetArgs(args)
+	cmd.SetOut(b)
+	cmd.Execute()
 	out, err := ioutil.ReadAll(b) // Read buffer to bytes
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if string(out) != "Generate YAML" { // Compare output with expected
-		t.Fatalf("expected \"%s\" got \"%s\"", "Generate YAML", string(out))
+	expected := "<path> argument required to generate manifests"
+
+	if !strings.Contains(string(out), expected) {
+		t.Fatalf("expected to contain: %s but got %s", expected, out)
+	}
+}
+
+func Test_generate_empty(t *testing.T) {
+	args := []string{"./fixtures/empty/"}
+	cmd := NewGenerateCommand()
+
+	b := bytes.NewBufferString("")
+	cmd.SetArgs(args)
+	cmd.SetOut(b)
+	cmd.Execute()
+	out, err := ioutil.ReadAll(b) // Read buffer to bytes
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	expected := "no YAML files were found in ./fixtures/empty/"
+
+	if !strings.Contains(string(out), expected) {
+		t.Fatalf("expected to contain: %s but got %s", expected, out)
 	}
 }
