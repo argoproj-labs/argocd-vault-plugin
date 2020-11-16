@@ -6,6 +6,12 @@ import (
 
 	kube "github.com/IBM/argocd-vault-plugin/pkg/kube"
 	"github.com/spf13/cobra"
+
+	vault "github.com/IBM/argocd-vault-plugin/pkg/vault"
+)
+
+var (
+	vaultAddress = "https://vserv-test.sos.ibm.com:8200"
 )
 
 // NewGenerateCommand initializes the generate command
@@ -14,6 +20,7 @@ func NewGenerateCommand() *cobra.Command {
 		Use:   "generate <path>",
 		Short: "Generate manifests from templates with Vault values",
 		RunE: func(cmd *cobra.Command, args []string) error {
+<<<<<<< HEAD
 
 			path := args[0]
 			files, err := listYamlFiles(path)
@@ -57,6 +64,30 @@ func NewGenerateCommand() *cobra.Command {
 			if len(args) < 1 {
 				return errors.New("<path> argument required to generate manifests")
 			}
+
+			// check for env vars
+			// get type of vault from env vars
+			// perform appropriate authentication method if token doesn already exist
+			// josh: read values from vault using token and then format into map string interface
+			// josh: perform find and replace on yaml files
+			// josh: output yaml files to standard out
+			// path := args[0]
+			// accessToken := args[1]
+			//
+			// githubClient := auth.GithubAuthMethod{
+			// 	VaultAddress: vaultAddress,
+			// }
+			//
+			// token, _ := githubClient.GetVaultToken(accessToken)
+			//
+			// results := getValues(path, token)
+			// fmt.Print(results)
+			// var thing vault.VaultType
+			//
+			// thing = &vault.Github{}
+			// token, _ := thing.Login("token")
+			// secrets, _ := thing.GetSecrets(token)
+			// fmt.Print(secrets)
 			return nil
 		},
 	}
@@ -64,6 +95,7 @@ func NewGenerateCommand() *cobra.Command {
 	return command
 }
 
+<<<<<<< HEAD
 func createTemplate(manifest map[string]interface{}) (kube.Template, error) {
 	switch manifest["kind"] {
 	case "Deployment":
@@ -77,3 +109,22 @@ func createTemplate(manifest map[string]interface{}) (kube.Template, error) {
 	}
 	return nil, fmt.Errorf("unsupported kind: %s", manifest["kind"])
 }
+
+// func getValues(path string, token string) map[string]interface{} {
+// 	var httpClient = &http.Client{
+// 		Timeout: 10 * time.Second,
+// 	}
+//
+// 	client, err := vault.NewClient(&vault.Config{Address: vaultAddress, HttpClient: httpClient})
+// 	if err != nil {
+// 		panic(err)
+// 	}
+//
+// 	client.SetToken(token)
+// 	data, err := client.Logical().Read("generic/user/jawernette/test-secret")
+// 	if err != nil {
+// 		panic(err)
+// 	}
+//
+// 	return data.Data
+// }
