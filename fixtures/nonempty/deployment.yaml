@@ -5,11 +5,12 @@ metadata:
   namespace: <namespace>
   labels:
     app: <name>
+    version: <version>
 spec:
   selector:
     matchLabels:
       app: <name>
-  replicas: 1
+  replicas: <replicas>
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -25,5 +26,5 @@ spec:
     spec:
       containers:
       - name: <name>
-        image: foo.com/image:<tag>
+        image: foo.com/<name>:<tag>
         imagePullPolicy: Always
