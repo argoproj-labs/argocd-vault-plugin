@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 
+	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	appsv1 "k8s.io/api/apps/v1"
 	k8yamldecoder "k8s.io/apimachinery/pkg/util/yaml"
 	k8yaml "sigs.k8s.io/yaml"
@@ -14,21 +16,20 @@ type DeploymentTemplate struct {
 	Resource
 }
 
-func NewDeploymentTemplate(data map[string]interface{}) *DeploymentTemplate {
-
+func NewDeploymentTemplate(template map[string]interface{}, vault vault.VaultType) (*DeploymentTemplate, error) {
 	// TODO: add logic to connect to Vault and pull values for this resource
+	path := os.Getenv("VAULT_PATH_PREFIX")
+	data, err := vault.GetSecrets(path)
+	if err != nil {
+		return nil, err
+	}
+
 	return &DeploymentTemplate{
 		Resource{
-			templateData: data,
-			vaultData: map[string]interface{}{
-				"namespace": "default",
-				"name":      "inspector",
-				"tag":       "123",
-				"version":   "alpha",
-				"replicas":  3,
-			},
+			templateData: template,
+			vaultData:    data,
 		},
-	}
+	}, nil
 }
 
 func (d *DeploymentTemplate) Replace() error {

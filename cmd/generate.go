@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 
 	kube "github.com/IBM/argocd-vault-plugin/pkg/kube"
+	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	"github.com/spf13/cobra"
 )
 
@@ -13,8 +13,13 @@ func NewGenerateCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "generate <path>",
 		Short: "Generate manifests from templates with Vault values",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return fmt.Errorf("<path> argument required to generate manifests")
+			}
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-
 			path := args[0]
 			files, err := listYamlFiles(path)
 			if len(files) < 1 {
@@ -31,9 +36,20 @@ func NewGenerateCommand() *cobra.Command {
 				return fmt.Errorf("could not read YAML files: %s", errs)
 			}
 
+			config, err := vault.NewConfig()
+			if err != nil {
+				return err
+			}
+
+			vaultClient := config.Type
+			err = vaultClient.Login()
+			if err != nil {
+				return err
+			}
+
 			for _, manifest := range manifests {
 
-				resource, err := createTemplate(manifest)
+				resource, err := kube.CreateTemplate(manifest, vaultClient)
 				if err != nil {
 					return err
 				}
@@ -53,27 +69,7 @@ func NewGenerateCommand() *cobra.Command {
 
 			return nil
 		},
-		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) < 1 {
-				return errors.New("<path> argument required to generate manifests")
-			}
-			return nil
-		},
 	}
 
 	return command
-}
-
-func createTemplate(manifest map[string]interface{}) (kube.Template, error) {
-	switch manifest["kind"] {
-	case "Deployment":
-		{
-			return kube.NewDeploymentTemplate(manifest), nil
-		}
-	case "Secret":
-		{
-			return kube.NewSecretTemplate(manifest), nil
-		}
-	}
-	return nil, fmt.Errorf("unsupported kind: %s", manifest["kind"])
 }
