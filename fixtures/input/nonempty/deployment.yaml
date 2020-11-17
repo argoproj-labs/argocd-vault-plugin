@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: <name>
+  namespace: <namespace>
+  labels:
+    app: <name>
+    version: <version>
+spec:
+  selector:
+    matchLabels:
+      app: <name>
+  replicas: <replicas>
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5
+  revisionHistoryLimit: 10
+  template:
+    metadata:
+      name: <name>
+      labels:
+        app: <name>
+    spec:
+      containers:
+      - name: <name>
+        image: foo.com/<name>:<tag>
+        imagePullPolicy: Always
