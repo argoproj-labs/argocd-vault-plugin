@@ -2,7 +2,6 @@ package kube
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	corev1 "k8s.io/api/core/v1"
@@ -15,9 +14,8 @@ type SecretTemplate struct {
 }
 
 // NewSecretTemplate returns a *SecretTemplate given the template's data, and a VaultType
-func NewSecretTemplate(template map[string]interface{}, vault vault.VaultType) (*SecretTemplate, error) {
-	path := os.Getenv("VAULT_PATH_PREFIX")
-	data, err := vault.GetSecrets(path)
+func NewSecretTemplate(template map[string]interface{}, prefix string, vault vault.VaultType) (*SecretTemplate, error) {
+	data, err := vault.GetSecrets(prefix + "/secrets")
 	if err != nil {
 		return nil, err
 	}

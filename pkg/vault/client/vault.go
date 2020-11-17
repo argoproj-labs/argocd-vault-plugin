@@ -1,36 +1,16 @@
 package client
 
 import (
-	"net/http"
-	"os"
-	"time"
-
 	"github.com/hashicorp/vault/api"
 )
 
-// Client is used to make API calls to Vault in a standard way
-type Client struct {
-	client *api.Client
+// VaultClient is used to make API calls to Vault in a standard way
+type VaultClient struct {
+	VaultAPIClient *api.Client
 }
 
-// NewVaultClient initilizes an instance of VaultClient
-func NewVaultClient() (*Client, error) {
-	var httpClient = &http.Client{
-		Timeout: 10 * time.Second,
-	}
-
-	client, err := api.NewClient(&api.Config{Address: os.Getenv("VAULT_ADDR"), HttpClient: httpClient})
-	if err != nil {
-		return nil, err
-	}
-
-	return &Client{
-		client: client,
-	}, nil
-}
-
-func (v *Client) Write(path string, payload map[string]interface{}) (*api.Secret, error) {
-	data, err := v.client.Logical().Write(path, payload)
+func (v *VaultClient) Write(path string, payload map[string]interface{}) (*api.Secret, error) {
+	data, err := v.VaultAPIClient.Logical().Write(path, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -38,9 +18,9 @@ func (v *Client) Write(path string, payload map[string]interface{}) (*api.Secret
 	return data, nil
 }
 
-func (v *Client) Read(path string, token string) (map[string]interface{}, error) {
-	v.client.SetToken(token)
-	data, err := v.client.Logical().Read(path)
+func (v *VaultClient) Read(path string, token string) (map[string]interface{}, error) {
+	v.VaultAPIClient.SetToken(token)
+	data, err := v.VaultAPIClient.Logical().Read(path)
 	if err != nil {
 		return nil, err
 	}
