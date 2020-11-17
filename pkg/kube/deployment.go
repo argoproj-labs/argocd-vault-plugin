@@ -17,7 +17,6 @@ type DeploymentTemplate struct {
 }
 
 func NewDeploymentTemplate(template map[string]interface{}, vault vault.VaultType) (*DeploymentTemplate, error) {
-	// TODO: add logic to connect to Vault and pull values for this resource
 	path := os.Getenv("VAULT_PATH_PREFIX")
 	data, err := vault.GetSecrets(path)
 	if err != nil {
