@@ -59,6 +59,37 @@ func TestGenericReplacement_simpleString(t *testing.T) {
 	assertSuccessfulReplacement(&dummyResource, &expected, t)
 }
 
+func TestGenericReplacement_multiString(t *testing.T) {
+	dummyResource := Resource{
+		templateData: map[string]interface{}{
+			"namespace": "<namespace>",
+			"image":     "foo.io/<name>:<tag>",
+		},
+		vaultData: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.templateData, genericReplacement)
+
+	expected := Resource{
+		templateData: map[string]interface{}{
+			"namespace": "default",
+			"image":     "foo.io/app:latest",
+		},
+		vaultData: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
 func TestGenericReplacement_nestedString(t *testing.T) {
 	dummyResource := Resource{
 		templateData: map[string]interface{}{

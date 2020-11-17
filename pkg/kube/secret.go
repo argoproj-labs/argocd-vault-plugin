@@ -70,6 +70,10 @@ func secretReplacement(key, value string, vaultData map[string]interface{}) (_ i
 		{
 			byteData = []byte(strconv.Itoa(res.(int)))
 		}
+	case bool:
+		{
+			byteData = []byte(strconv.FormatBool(res.(bool)))
+		}
 	case string:
 		{
 			byteData = []byte(res.(string))
