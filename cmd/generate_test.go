@@ -39,7 +39,7 @@ func Test_generate_noargs(t *testing.T) {
 }
 
 func Test_generate_empty(t *testing.T) {
-	args := []string{"./fixtures/empty/"}
+	args := []string{"./fixtures/input/empty/"}
 	cmd := NewGenerateCommand()
 
 	b := bytes.NewBufferString("")
@@ -51,7 +51,7 @@ func Test_generate_empty(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	expected := "no YAML files were found in ./fixtures/empty/"
+	expected := "no YAML files were found in ./fixtures/input/empty/"
 	if !strings.Contains(string(out), expected) {
 		t.Fatalf("expected to contain: %s but got %s", expected, out)
 	}

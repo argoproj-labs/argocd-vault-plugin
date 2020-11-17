@@ -9,6 +9,8 @@ import (
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 )
 
+// CreateTemplate will attempt to create the appropriate Template from a Kubernetes manifest.
+// It will throw an error for unsupported manifest Kind's
 func CreateTemplate(manifest map[string]interface{}, vault vault.VaultType) (Template, error) {
 	switch manifest["kind"] {
 	case "Deployment":
