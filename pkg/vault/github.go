@@ -26,7 +26,7 @@ func (g *Github) Login() error {
 
 // GetSecrets gets secrets from vault and returns the formatted data
 func (g *Github) GetSecrets(path string) (map[string]interface{}, error) {
-	data, err := g.VaultClient.Read(path, g.token)
+	data, err := g.VaultClient.Read(g.VaultClient.PathPrefix+path, g.token)
 	if err != nil {
 		return nil, err
 	}

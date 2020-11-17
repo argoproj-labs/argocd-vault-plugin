@@ -49,7 +49,7 @@ func NewGenerateCommand() *cobra.Command {
 
 			for _, manifest := range manifests {
 
-				resource, err := kube.CreateTemplate(manifest, config.PathPrefix, vaultClient)
+				resource, err := kube.CreateTemplate(manifest, vaultClient)
 				if err != nil {
 					return err
 				}

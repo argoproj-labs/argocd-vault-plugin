@@ -14,8 +14,8 @@ type SecretTemplate struct {
 }
 
 // NewSecretTemplate returns a *SecretTemplate given the template's data, and a VaultType
-func NewSecretTemplate(template map[string]interface{}, prefix string, vault vault.VaultType) (*SecretTemplate, error) {
-	data, err := vault.GetSecrets(prefix + "/secrets")
+func NewSecretTemplate(template map[string]interface{}, vault vault.VaultType) (*SecretTemplate, error) {
+	data, err := vault.GetSecrets("/secret")
 	if err != nil {
 		return nil, err
 	}

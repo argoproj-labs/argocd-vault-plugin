@@ -14,9 +14,9 @@ type DeploymentTemplate struct {
 }
 
 // NewDeploymentTemplate returns a *DeploymentTemplate given the template's data, and a VaultType
-func NewDeploymentTemplate(template map[string]interface{}, prefix string, vault vault.VaultType) (*DeploymentTemplate, error) {
+func NewDeploymentTemplate(template map[string]interface{}, vault vault.VaultType) (*DeploymentTemplate, error) {
 
-	data, err := vault.GetSecrets(prefix + "/deployment")
+	data, err := vault.GetSecrets("/deployment")
 	if err != nil {
 		return nil, err
 	}

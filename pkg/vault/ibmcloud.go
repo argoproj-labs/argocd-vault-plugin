@@ -26,7 +26,7 @@ func (s *SecretManager) Login() error {
 
 // GetSecrets gets secrets from IBM Secret Manager and returns the formatted data
 func (s *SecretManager) GetSecrets(path string) (map[string]interface{}, error) {
-	data, err := s.VaultClient.Read(path, s.token)
+	data, err := s.VaultClient.Read(s.VaultClient.PathPrefix+path, s.token)
 	if err != nil {
 		return nil, err
 	}
