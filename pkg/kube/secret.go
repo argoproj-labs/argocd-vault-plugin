@@ -13,10 +13,12 @@ import (
 	k8yaml "sigs.k8s.io/yaml"
 )
 
+// SecretTemplate is the template for Kubernetes Secrets
 type SecretTemplate struct {
 	Resource
 }
 
+// NewSecretTemplate returns a *SecretTemplate given the template's data, and a VaultType
 func NewSecretTemplate(template map[string]interface{}, vault vault.VaultType) (*SecretTemplate, error) {
 	path := os.Getenv("VAULT_PATH_PREFIX")
 	data, err := vault.GetSecrets(path)
@@ -32,6 +34,8 @@ func NewSecretTemplate(template map[string]interface{}, vault vault.VaultType) (
 	}, nil
 }
 
+// Replace will replace the <placeholders> in the template's data with values from Vault.
+// It will return an aggregrate of any errors encountered during the replacements
 func (d *SecretTemplate) Replace() error {
 
 	// Replace metadata normally
@@ -59,6 +63,7 @@ func (d *SecretTemplate) Replace() error {
 	return nil
 }
 
+// Ensures the replacements for the Secret data are in the right format
 func secretReplacement(key, value string, vaultData map[string]interface{}) (_ interface{}, err []error) {
 	var byteData []byte
 	res, err := genericReplacement(key, value, vaultData)
@@ -70,6 +75,10 @@ func secretReplacement(key, value string, vaultData map[string]interface{}) (_ i
 		{
 			byteData = []byte(strconv.Itoa(res.(int)))
 		}
+	case bool:
+		{
+			byteData = []byte(strconv.FormatBool(res.(bool)))
+		}
 	case string:
 		{
 			byteData = []byte(res.(string))
@@ -79,6 +88,7 @@ func secretReplacement(key, value string, vaultData map[string]interface{}) (_ i
 	return byteData, err
 }
 
+// ToYAML seralizes the completed template into YAML to be consumed by Kubernetes
 func (d *SecretTemplate) ToYAML() (string, error) {
 	jsondata, _ := json.Marshal(d.templateData)
 	decoder := k8yamldecoder.NewYAMLOrJSONDecoder(bytes.NewReader(jsondata), 1000)

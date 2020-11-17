@@ -12,12 +12,13 @@ import (
 	k8yaml "sigs.k8s.io/yaml"
 )
 
+// DeploymentTemplate is the template for Kubernetes Deployments
 type DeploymentTemplate struct {
 	Resource
 }
 
+// NewDeploymentTemplate returns a *DeploymentTemplate given the template's data, and a VaultType
 func NewDeploymentTemplate(template map[string]interface{}, vault vault.VaultType) (*DeploymentTemplate, error) {
-	// TODO: add logic to connect to Vault and pull values for this resource
 	path := os.Getenv("VAULT_PATH_PREFIX")
 	data, err := vault.GetSecrets(path)
 	if err != nil {
@@ -32,6 +33,8 @@ func NewDeploymentTemplate(template map[string]interface{}, vault vault.VaultTyp
 	}, nil
 }
 
+// Replace will replace the <placeholders> in the template's data with values from Vault.
+// It will return an aggregrate of any errors encountered during the replacements
 func (d *DeploymentTemplate) Replace() error {
 	replaceInner(&d.Resource, &d.templateData, genericReplacement)
 	if len(d.replacementErrors) != 0 {
@@ -42,6 +45,7 @@ func (d *DeploymentTemplate) Replace() error {
 	return nil
 }
 
+// ToYAML seralizes the completed template into YAML to be consumed by Kubernetes
 func (d *DeploymentTemplate) ToYAML() (string, error) {
 	jsondata, _ := json.Marshal(d.templateData)
 	decoder := k8yamldecoder.NewYAMLOrJSONDecoder(bytes.NewReader(jsondata), 1000)
