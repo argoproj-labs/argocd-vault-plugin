@@ -31,7 +31,7 @@ func NewConfig() (*Config, error) {
 				AccessToken: getEnv("GITHUB_TOKEN", ""),
 			}
 		default:
-			return nil, errors.New("Must provide a supported Athentication Type")
+			return nil, errors.New("Must provide a supported Authentication Type")
 		}
 	case "secretmanager":
 		config.Type = &SecretManager{
