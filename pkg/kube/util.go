@@ -1,37 +1,15 @@
 package kube
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"regexp"
 	"strings"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/vault"
+	k8yamldecoder "k8s.io/apimachinery/pkg/util/yaml"
 )
-
-// CreateTemplate will attempt to create the appropriate Template from a Kubernetes manifest.
-// It will throw an error for unsupported manifest Kind's
-func CreateTemplate(manifest map[string]interface{}, vault vault.VaultType) (Template, error) {
-	switch manifest["kind"] {
-	case "Deployment":
-		{
-			template, err := NewDeploymentTemplate(manifest, vault)
-			if err != nil {
-				return nil, err
-			}
-			return template, nil
-		}
-	case "Secret":
-		{
-			template, err := NewSecretTemplate(manifest, vault)
-			if err != nil {
-				return nil, err
-			}
-			return template, nil
-		}
-	}
-	return nil, fmt.Errorf("unsupported kind: %s", manifest["kind"])
-}
 
 func replaceInner(
 	r *Resource,
@@ -102,4 +80,10 @@ func genericReplacement(key, value string, vaultData map[string]interface{}) (_ 
 		return nonStringReplacement, err
 	}
 	return string(res), err
+}
+
+func kubeResourceDecoder(data *map[string]interface{}) *k8yamldecoder.YAMLOrJSONDecoder {
+	jsondata, _ := json.Marshal(data)
+	decoder := k8yamldecoder.NewYAMLOrJSONDecoder(bytes.NewReader(jsondata), 1000)
+	return decoder
 }

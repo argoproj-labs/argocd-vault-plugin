@@ -1,14 +1,11 @@
 package kube
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	appsv1 "k8s.io/api/apps/v1"
-	k8yamldecoder "k8s.io/apimachinery/pkg/util/yaml"
 	k8yaml "sigs.k8s.io/yaml"
 )
 
@@ -47,10 +44,8 @@ func (d *DeploymentTemplate) Replace() error {
 
 // ToYAML seralizes the completed template into YAML to be consumed by Kubernetes
 func (d *DeploymentTemplate) ToYAML() (string, error) {
-	jsondata, _ := json.Marshal(d.templateData)
-	decoder := k8yamldecoder.NewYAMLOrJSONDecoder(bytes.NewReader(jsondata), 1000)
 	kubeResource := appsv1.Deployment{}
-	err := decoder.Decode(&kubeResource)
+	err := kubeResourceDecoder(&d.templateData).Decode(&kubeResource)
 	if err != nil {
 		return "", fmt.Errorf("ToYAML: could not convert replaced template into Deployment: %s", err)
 	}

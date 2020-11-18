@@ -1,15 +1,12 @@
 package kube
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	corev1 "k8s.io/api/core/v1"
-	k8yamldecoder "k8s.io/apimachinery/pkg/util/yaml"
 	k8yaml "sigs.k8s.io/yaml"
 )
 
@@ -90,10 +87,8 @@ func secretReplacement(key, value string, vaultData map[string]interface{}) (_ i
 
 // ToYAML seralizes the completed template into YAML to be consumed by Kubernetes
 func (d *SecretTemplate) ToYAML() (string, error) {
-	jsondata, _ := json.Marshal(d.templateData)
-	decoder := k8yamldecoder.NewYAMLOrJSONDecoder(bytes.NewReader(jsondata), 1000)
 	kubeResource := corev1.Secret{}
-	err := decoder.Decode(&kubeResource)
+	err := kubeResourceDecoder(&d.templateData).Decode(&kubeResource)
 	if err != nil {
 		return "", fmt.Errorf("ToYAML: could not convert replaced template into Secret: %s", err)
 	}
