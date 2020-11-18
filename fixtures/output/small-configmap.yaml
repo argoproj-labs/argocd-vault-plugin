@@ -1,0 +1,7 @@
+data:
+  MY_NONSECRET_NUM: "5"
+  MY_NONSECRET_STRING: foo
+metadata:
+  creationTimestamp: null
+  name: my-app
+  namespace: default

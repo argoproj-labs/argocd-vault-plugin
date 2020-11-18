@@ -94,3 +94,45 @@ func TestToYAML_Secret(t *testing.T) {
 		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
 	}
 }
+
+func TestToYAML_ConfigMap(t *testing.T) {
+	d := ConfigMapTemplate{
+		Resource{
+			templateData: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"namespace": "default",
+					"name":      "<name>",
+				},
+				"data": map[string]interface{}{
+					"MY_NONSECRET_STRING": "<string>",
+					"MY_NONSECRET_NUM":    "<num>",
+				},
+			},
+			vaultData: map[string]interface{}{
+				"name":   "my-app",
+				"string": "foo",
+				"num":    5,
+			},
+		},
+	}
+
+	err := d.Replace()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-configmap.yaml")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expected := string(expectedData)
+	actual, err := d.ToYAML()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if !strings.Contains(actual, expected) {
+		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
+	}
+}
