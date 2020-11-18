@@ -3,7 +3,6 @@ package kube
 import (
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	corev1 "k8s.io/api/core/v1"
@@ -51,20 +50,7 @@ func configMapReplacement(key, value string, vaultData map[string]interface{}) (
 		return nil, err
 	}
 	// configMap data values must be strings
-	switch res.(type) {
-	case int:
-		{
-			return strconv.Itoa(res.(int)), err
-		}
-	case bool:
-		{
-			return strconv.FormatBool(res.(bool)), err
-		}
-	default:
-		{
-			return res.(string), err
-		}
-	}
+	return stringify(res), err
 }
 
 // ToYAML seralizes the completed template into YAML to be consumed by Kubernetes

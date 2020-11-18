@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 
 	k8yamldecoder "k8s.io/apimachinery/pkg/util/yaml"
@@ -80,6 +81,23 @@ func genericReplacement(key, value string, vaultData map[string]interface{}) (_ 
 		return nonStringReplacement, err
 	}
 	return string(res), err
+}
+
+func stringify(input interface{}) string {
+	switch input.(type) {
+	case int:
+		{
+			return strconv.Itoa(input.(int))
+		}
+	case bool:
+		{
+			return strconv.FormatBool(input.(bool))
+		}
+	default:
+		{
+			return input.(string)
+		}
+	}
 }
 
 func kubeResourceDecoder(data *map[string]interface{}) *k8yamldecoder.YAMLOrJSONDecoder {

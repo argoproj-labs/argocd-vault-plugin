@@ -3,7 +3,6 @@ package kube
 import (
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	corev1 "k8s.io/api/core/v1"
@@ -62,25 +61,11 @@ func (d *SecretTemplate) Replace() error {
 
 // Ensures the replacements for the Secret data are in the right format
 func secretReplacement(key, value string, vaultData map[string]interface{}) (_ interface{}, err []error) {
-	var byteData []byte
 	res, err := genericReplacement(key, value, vaultData)
 
 	// We have to return []byte for k8s secrets,
 	// so we convert whatever is in Vault
-	switch res.(type) {
-	case int:
-		{
-			byteData = []byte(strconv.Itoa(res.(int)))
-		}
-	case bool:
-		{
-			byteData = []byte(strconv.FormatBool(res.(bool)))
-		}
-	case string:
-		{
-			byteData = []byte(res.(string))
-		}
-	}
+	byteData := []byte(stringify(res))
 
 	return byteData, err
 }
