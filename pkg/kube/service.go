@@ -2,7 +2,6 @@ package kube
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	corev1 "k8s.io/api/core/v1"
@@ -16,8 +15,7 @@ type ServiceTemplate struct {
 
 // NewServiceTemplate returns a *ServiceTemplate given the template's data, and a VaultType
 func NewServiceTemplate(template map[string]interface{}, vault vault.VaultType) (*ServiceTemplate, error) {
-	path := os.Getenv("VAULT_PATH_PREFIX")
-	data, err := vault.GetSecrets(path)
+	data, err := vault.GetSecrets("/service")
 	if err != nil {
 		return nil, err
 	}
