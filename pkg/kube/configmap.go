@@ -2,7 +2,6 @@ package kube
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	corev1 "k8s.io/api/core/v1"
@@ -16,8 +15,7 @@ type ConfigMapTemplate struct {
 
 // NewConfigMapTemplate returns a *ConfigMapTemplate given the template's data, and a VaultType
 func NewConfigMapTemplate(template map[string]interface{}, vault vault.VaultType) (*ConfigMapTemplate, error) {
-	path := os.Getenv("VAULT_PATH_PREFIX")
-	data, err := vault.GetSecrets(path)
+	data, err := vault.GetSecrets("/config")
 	if err != nil {
 		return nil, err
 	}
