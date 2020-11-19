@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/vault/client"
 	"github.com/hashicorp/vault/api"
 )
 
@@ -33,7 +32,7 @@ func NewConfig() (*Config, error) {
 		return nil, err
 	}
 
-	client := &client.VaultClient{
+	client := &Client{
 		VaultAPIClient: apiClient,
 		PathPrefix:     config.PathPrefix,
 	}
@@ -44,22 +43,22 @@ func NewConfig() (*Config, error) {
 		switch auth {
 		case "approle":
 			config.Type = &AppRole{
-				RoleID:      getEnv("AVP_ROLE_ID", ""),
-				SecretID:    getEnv("AVP_SECRET_ID", ""),
-				VaultClient: client,
+				RoleID:   getEnv("AVP_ROLE_ID", ""),
+				SecretID: getEnv("AVP_SECRET_ID", ""),
+				Client:   client,
 			}
 		case "github":
 			config.Type = &Github{
 				AccessToken: getEnv("AVP_GITHUB_TOKEN", ""),
-				VaultClient: client,
+				Client:      client,
 			}
 		default:
 			return nil, errors.New("Must provide a supported Authentication Type")
 		}
 	case "secretmanager":
 		config.Type = &SecretManager{
-			IAMToken:    getEnv("AVP_IAM_TOKEN", ""),
-			VaultClient: client,
+			IAMToken: getEnv("AVP_IAM_TOKEN", ""),
+			Client:   client,
 		}
 	default:
 		return nil, errors.New("Must provide a supported Vault Type")
