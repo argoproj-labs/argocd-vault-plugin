@@ -1,0 +1,11 @@
+kind: Service
+metadata:
+  creationTimestamp: null
+  name: my-app
+  namespace: default
+spec:
+  ports:
+  - port: 8080
+    targetPort: 0
+  selector:
+    app: my-app
