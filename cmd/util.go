@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -33,26 +34,33 @@ func readFilesAsManifests(paths []string) (result []map[string]interface{}, errs
 		if err != nil {
 			errs = append(errs, err)
 		}
-		result = append(result, manifest)
+		result = append(result, manifest...)
 	}
 
 	return result, errs
 }
 
-func manifestFromYAML(path string) (map[string]interface{}, error) {
+func manifestFromYAML(path string) ([]map[string]interface{}, error) {
 	rawdata, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not read YAML: %s from disk: %s", path, err)
 	}
+	decoder := k8yaml.NewYAMLToJSONDecoder(bytes.NewReader(rawdata))
+	var manifests []map[string]interface{}
 
-	decoder := k8yaml.NewYAMLOrJSONDecoder(bytes.NewReader(rawdata), 1000)
-	var manifest map[string]interface{}
-	err = decoder.Decode(&manifest)
-	if err != nil {
-		return nil, fmt.Errorf("could not read YAML: %s into a manifest: %s", path, err)
+	for {
+		nxtManifest := make(map[string]interface{})
+		err := decoder.Decode(&nxtManifest)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("could not read YAML: %s into a manifest: %s", path, err)
+		}
+		manifests = append(manifests, nxtManifest)
 	}
 
-	return manifest, nil
+	return manifests, nil
 }
 
 func stringInSlice(a string, list []string) bool {

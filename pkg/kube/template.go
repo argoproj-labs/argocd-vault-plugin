@@ -33,6 +33,14 @@ func CreateTemplate(manifest map[string]interface{}, vault vault.VaultType) (Tem
 			}
 			return template, nil
 		}
+	case "Service":
+		{
+			template, err := NewServiceTemplate(manifest, vault)
+			if err != nil {
+				return nil, err
+			}
+			return template, nil
+		}
 	case "Secret":
 		{
 			template, err := NewSecretTemplate(manifest, vault)

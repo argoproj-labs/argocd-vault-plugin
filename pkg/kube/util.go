@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	k8yamldecoder "k8s.io/apimachinery/pkg/util/yaml"
+	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
 func replaceInner(
@@ -100,8 +100,8 @@ func stringify(input interface{}) string {
 	}
 }
 
-func kubeResourceDecoder(data *map[string]interface{}) *k8yamldecoder.YAMLOrJSONDecoder {
+func kubeResourceDecoder(data *map[string]interface{}) *k8yaml.YAMLToJSONDecoder {
 	jsondata, _ := json.Marshal(data)
-	decoder := k8yamldecoder.NewYAMLOrJSONDecoder(bytes.NewReader(jsondata), 1000)
+	decoder := k8yaml.NewYAMLToJSONDecoder(bytes.NewReader(jsondata))
 	return decoder
 }
