@@ -2,40 +2,63 @@ package vault
 
 import (
 	"errors"
+	"net/http"
 	"os"
+	"time"
+
+	"github.com/hashicorp/vault/api"
 )
 
 // Config TODO
 type Config struct {
-	Address string
-	Type    VaultType
+	Address    string
+	PathPrefix string
+	Type       VaultType
 }
 
 // NewConfig returns a new Config struct
 func NewConfig() (*Config, error) {
 	config := &Config{
-		Address: getEnv("VAULT_ADDR", ""),
+		Address:    getEnv("AVP_VAULT_ADDR", ""),
+		PathPrefix: getEnv("AVP_PATH_PREFIX", ""),
 	}
 
-	switch getEnv("VAULT_TYPE", "") {
+	var httpClient = &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	apiClient, err := api.NewClient(&api.Config{Address: config.Address, HttpClient: httpClient})
+	if err != nil {
+		return nil, err
+	}
+
+	client := &Client{
+		VaultAPIClient: apiClient,
+		PathPrefix:     config.PathPrefix,
+	}
+
+	switch getEnv("AVP_TYPE", "") {
 	case "vault":
-		auth := getEnv("AUTH_TYPE", "")
+		auth := getEnv("AVP_AUTH_TYPE", "")
 		switch auth {
 		case "approle":
 			config.Type = &AppRole{
-				RoleID:   getEnv("ROLE_ID", ""),
-				SecretID: getEnv("SECRET_ID", ""),
+				RoleID:   getEnv("AVP_ROLE_ID", ""),
+				SecretID: getEnv("AVP_SECRET_ID", ""),
+				Client:   client,
 			}
 		case "github":
 			config.Type = &Github{
-				AccessToken: getEnv("GITHUB_TOKEN", ""),
+				AccessToken: getEnv("AVP_GITHUB_TOKEN", ""),
+				Client:      client,
 			}
 		default:
 			return nil, errors.New("Must provide a supported Authentication Type")
 		}
 	case "secretmanager":
 		config.Type = &SecretManager{
-			IAMToken: getEnv("IAM_TOKEN", ""),
+			IAMToken: getEnv("AVP_IAM_TOKEN", ""),
+			Client:   client,
 		}
 	default:
 		return nil, errors.New("Must provide a supported Vault Type")

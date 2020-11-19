@@ -2,7 +2,6 @@ package kube
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	appsv1 "k8s.io/api/apps/v1"
@@ -16,8 +15,8 @@ type DeploymentTemplate struct {
 
 // NewDeploymentTemplate returns a *DeploymentTemplate given the template's data, and a VaultType
 func NewDeploymentTemplate(template map[string]interface{}, vault vault.VaultType) (*DeploymentTemplate, error) {
-	path := os.Getenv("VAULT_PATH_PREFIX")
-	data, err := vault.GetSecrets(path)
+
+	data, err := vault.GetSecrets("/deployment")
 	if err != nil {
 		return nil, err
 	}

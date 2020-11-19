@@ -1,0 +1,6 @@
+data:
+  configManagementPlugins: |-
+    - name: argocd-vault-plugin
+      generate:
+        command: [sh, -c]
+        args: ["argocd-vault-plugin generate ."]
