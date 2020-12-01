@@ -1,0 +1,9 @@
+metadata:
+  creationTimestamp: null
+  name: my-app
+  namespace: default
+spec:
+  tls:
+  - hosts:
+    - mysubdomain.foo.com
+    secretName: foo-secret

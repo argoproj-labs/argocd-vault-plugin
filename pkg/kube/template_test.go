@@ -185,6 +185,55 @@ func TestToYAML_ConfigMap(t *testing.T) {
 	}
 }
 
+func TestToYAML_Ingress(t *testing.T) {
+	d := IngressTemplate{
+		Resource{
+			templateData: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"namespace": "default",
+					"name":      "<name>",
+				},
+				"spec": map[string]interface{}{
+					"tls": []interface{}{
+						map[string]interface{}{
+							"hosts": []interface{}{
+								"mysubdomain.<host>",
+							},
+							"secretName": "<secret>",
+						},
+					},
+				},
+			},
+			vaultData: map[string]interface{}{
+				"name":   "my-app",
+				"host":   "foo.com",
+				"secret": "foo-secret",
+			},
+		},
+	}
+
+	err := d.Replace()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-ingress.yaml")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expected := string(expectedData)
+	actual, err := d.ToYAML()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if !strings.Contains(actual, expected) {
+		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
+	}
+
+}
+
 func TestToYAML_DeploymentBad(t *testing.T) {
 	d := DeploymentTemplate{
 		Resource{
