@@ -49,6 +49,22 @@ func CreateTemplate(manifest map[string]interface{}, vault vault.VaultType) (Tem
 			}
 			return template, nil
 		}
+	case "CronJob":
+		{
+			template, err := NewCronJobTemplate(manifest, vault)
+			if err != nil {
+				return nil, err
+			}
+			return template, nil
+		}
+	case "Job":
+		{
+			template, err := NewJobTemplate(manifest, vault)
+			if err != nil {
+				return nil, err
+			}
+			return template, nil
+		}
 	case "Secret":
 		{
 			template, err := NewSecretTemplate(manifest, vault)

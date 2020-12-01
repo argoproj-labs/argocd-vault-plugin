@@ -1,0 +1,12 @@
+metadata:
+  creationTimestamp: null
+  name: my-app
+spec:
+  template:
+    metadata:
+      creationTimestamp: null
+    spec:
+      containers:
+      - image: my-app:latest
+        name: my-app
+        resources: {}

@@ -1,0 +1,17 @@
+metadata:
+  creationTimestamp: null
+  name: my-app
+spec:
+  jobTemplate:
+    metadata:
+      creationTimestamp: null
+    spec:
+      template:
+        metadata:
+          creationTimestamp: null
+        spec:
+          containers:
+          - image: my-app:latest
+            name: my-app
+            resources: {}
+  schedule: 0 0 0 0 0

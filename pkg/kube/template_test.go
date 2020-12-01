@@ -231,9 +231,108 @@ func TestToYAML_Ingress(t *testing.T) {
 	if !strings.Contains(actual, expected) {
 		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
 	}
-
 }
 
+func TestToYAML_CronJob(t *testing.T) {
+	d := CronJobTemplate{
+		Resource{
+			templateData: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name": "<name>",
+				},
+				"spec": map[string]interface{}{
+					"schedule": "0 0 0 0 0",
+					"jobTemplate": map[string]interface{}{
+						"spec": map[string]interface{}{
+							"template": map[string]interface{}{
+								"spec": map[string]interface{}{
+									"containers": []interface{}{
+										map[string]interface{}{
+											"image": "<name>:<tag>",
+											"name":  "<name>",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			vaultData: map[string]interface{}{
+				"name": "my-app",
+				"tag":  "latest",
+			},
+		},
+	}
+
+	err := d.Replace()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-cronjob.yaml")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expected := string(expectedData)
+	actual, err := d.ToYAML()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if !strings.Contains(actual, expected) {
+		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
+	}
+}
+
+func TestToYAML_Job(t *testing.T) {
+	d := JobTemplate{
+		Resource{
+			templateData: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name": "<name>",
+				},
+				"spec": map[string]interface{}{
+					"template": map[string]interface{}{
+						"spec": map[string]interface{}{
+							"containers": []interface{}{
+								map[string]interface{}{
+									"image": "<name>:<tag>",
+									"name":  "<name>",
+								},
+							},
+						},
+					},
+				},
+			},
+			vaultData: map[string]interface{}{
+				"name": "my-app",
+				"tag":  "latest",
+			},
+		},
+	}
+
+	err := d.Replace()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-job.yaml")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expected := string(expectedData)
+	actual, err := d.ToYAML()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if !strings.Contains(actual, expected) {
+		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
+	}
+}
 func TestToYAML_DeploymentBad(t *testing.T) {
 	d := DeploymentTemplate{
 		Resource{
