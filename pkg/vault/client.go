@@ -7,7 +7,6 @@ import (
 // Client is used to make API calls to Vault in a standard way
 type Client struct {
 	VaultAPIClient *api.Client
-	PathPrefix     string
 }
 
 func (c *Client) Write(path string, payload map[string]interface{}) (*api.Secret, error) {

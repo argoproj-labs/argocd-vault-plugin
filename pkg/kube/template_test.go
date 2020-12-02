@@ -7,9 +7,12 @@ import (
 )
 
 func TestToYAML_Deployment(t *testing.T) {
-	d := DeploymentTemplate{
+	d := Template{
 		Resource{
-			templateData: map[string]interface{}{
+			Kind: "Deployment",
+			TemplateData: map[string]interface{}{
+				"apiVersion": "apps/v1",
+				"kind":       "Deployment",
 				"metadata": map[string]interface{}{
 					"namespace": "default",
 					"name":      "<name>",
@@ -25,7 +28,7 @@ func TestToYAML_Deployment(t *testing.T) {
 					},
 				},
 			},
-			vaultData: map[string]interface{}{
+			VaultData: map[string]interface{}{
 				"replicas": 3,
 				"name":     "my-app",
 			},
@@ -54,10 +57,12 @@ func TestToYAML_Deployment(t *testing.T) {
 }
 
 func TestToYAML_Service(t *testing.T) {
-	d := ServiceTemplate{
+	d := Template{
 		Resource{
-			templateData: map[string]interface{}{
-				"kind": "Service",
+			Kind: "Service",
+			TemplateData: map[string]interface{}{
+				"kind":       "Service",
+				"apiVersion": "v1",
 				"metadata": map[string]interface{}{
 					"namespace": "default",
 					"name":      "<name>",
@@ -73,7 +78,7 @@ func TestToYAML_Service(t *testing.T) {
 					},
 				},
 			},
-			vaultData: map[string]interface{}{
+			VaultData: map[string]interface{}{
 				"name": "my-app",
 				"port": 8080,
 			},
@@ -102,9 +107,12 @@ func TestToYAML_Service(t *testing.T) {
 }
 
 func TestToYAML_Secret(t *testing.T) {
-	d := SecretTemplate{
+	d := Template{
 		Resource{
-			templateData: map[string]interface{}{
+			Kind: "Secret",
+			TemplateData: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "Secret",
 				"metadata": map[string]interface{}{
 					"namespace": "default",
 					"name":      "<name>",
@@ -114,7 +122,7 @@ func TestToYAML_Secret(t *testing.T) {
 					"MY_SECRET_NUM":    "<num>",
 				},
 			},
-			vaultData: map[string]interface{}{
+			VaultData: map[string]interface{}{
 				"name":   "my-app",
 				"string": "foo",
 				"num":    5,
@@ -144,9 +152,12 @@ func TestToYAML_Secret(t *testing.T) {
 }
 
 func TestToYAML_ConfigMap(t *testing.T) {
-	d := ConfigMapTemplate{
+	d := Template{
 		Resource{
-			templateData: map[string]interface{}{
+			Kind: "ConfigMap",
+			TemplateData: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "ConfigMap",
 				"metadata": map[string]interface{}{
 					"namespace": "default",
 					"name":      "<name>",
@@ -156,7 +167,7 @@ func TestToYAML_ConfigMap(t *testing.T) {
 					"MY_NONSECRET_NUM":    "<num>",
 				},
 			},
-			vaultData: map[string]interface{}{
+			VaultData: map[string]interface{}{
 				"name":   "my-app",
 				"string": "foo",
 				"num":    5,
@@ -185,10 +196,169 @@ func TestToYAML_ConfigMap(t *testing.T) {
 	}
 }
 
-func TestToYAML_DeploymentBad(t *testing.T) {
-	d := DeploymentTemplate{
+func TestToYAML_Ingress(t *testing.T) {
+	d := Template{
 		Resource{
-			templateData: map[string]interface{}{
+			Kind: "Ingress",
+			TemplateData: map[string]interface{}{
+				"apiVersion": "networking.k8s.io/v1",
+				"kind":       "Ingress",
+				"metadata": map[string]interface{}{
+					"namespace": "default",
+					"name":      "<name>",
+				},
+				"spec": map[string]interface{}{
+					"tls": []interface{}{
+						map[string]interface{}{
+							"hosts": []interface{}{
+								"mysubdomain.<host>",
+							},
+							"secretName": "<secret>",
+						},
+					},
+				},
+			},
+			VaultData: map[string]interface{}{
+				"name":   "my-app",
+				"host":   "foo.com",
+				"secret": "foo-secret",
+			},
+		},
+	}
+
+	err := d.Replace()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-ingress.yaml")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expected := string(expectedData)
+	actual, err := d.ToYAML()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if !strings.Contains(actual, expected) {
+		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
+	}
+}
+
+func TestToYAML_CronJob(t *testing.T) {
+	d := Template{
+		Resource{
+			Kind: "CronJob",
+			TemplateData: map[string]interface{}{
+				"apiVersion": "batch/v1beta1",
+				"kind":       "CronJob",
+				"metadata": map[string]interface{}{
+					"name": "<name>",
+				},
+				"spec": map[string]interface{}{
+					"schedule": "0 0 0 0 0",
+					"jobTemplate": map[string]interface{}{
+						"spec": map[string]interface{}{
+							"template": map[string]interface{}{
+								"spec": map[string]interface{}{
+									"containers": []interface{}{
+										map[string]interface{}{
+											"image": "<name>:<tag>",
+											"name":  "<name>",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			VaultData: map[string]interface{}{
+				"name": "my-app",
+				"tag":  "latest",
+			},
+		},
+	}
+
+	err := d.Replace()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-cronjob.yaml")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expected := string(expectedData)
+	actual, err := d.ToYAML()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if !strings.Contains(actual, expected) {
+		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
+	}
+}
+
+func TestToYAML_Job(t *testing.T) {
+	d := Template{
+		Resource{
+			Kind: "Job",
+			TemplateData: map[string]interface{}{
+				"apiVersion": "batch/v1",
+				"kind":       "Job",
+				"metadata": map[string]interface{}{
+					"name": "<name>",
+				},
+				"spec": map[string]interface{}{
+					"template": map[string]interface{}{
+						"spec": map[string]interface{}{
+							"containers": []interface{}{
+								map[string]interface{}{
+									"image": "<name>:<tag>",
+									"name":  "<name>",
+								},
+							},
+						},
+					},
+				},
+			},
+			VaultData: map[string]interface{}{
+				"name": "my-app",
+				"tag":  "latest",
+			},
+		},
+	}
+
+	err := d.Replace()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-job.yaml")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expected := string(expectedData)
+	actual, err := d.ToYAML()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if !strings.Contains(actual, expected) {
+		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
+	}
+}
+
+func TestToYAML_DeploymentBad(t *testing.T) {
+	d := Template{
+		Resource{
+			Kind: "Deployment",
+			TemplateData: map[string]interface{}{
 				"metadata": map[string]interface{}{
 					"namespace": "default",
 					"name":      "<name>",
@@ -205,7 +375,7 @@ func TestToYAML_DeploymentBad(t *testing.T) {
 					},
 				},
 			},
-			vaultData: map[string]interface{}{
+			VaultData: map[string]interface{}{
 				"replicas":        3,
 				"minReadySeconds": "one hundred",
 				"name":            "!!@#@.---.",
@@ -223,7 +393,7 @@ func TestToYAML_DeploymentBad(t *testing.T) {
 		t.Fatalf("Expected ToYAML error but got %s", actual)
 	}
 
-	if !strings.Contains(err.Error(), "DeploymentSpec.spec.minReadySeconds of type int32") {
-		t.Fatalf("Expected error with minReadySeconds, got: %s", err.Error())
+	if !strings.Contains(err.Error(), "Object 'Kind' is missing") {
+		t.Fatalf("Expected error 'Object 'Kind' is missing', got: %s", err.Error())
 	}
 }

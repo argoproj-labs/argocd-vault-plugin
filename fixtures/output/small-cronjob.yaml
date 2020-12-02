@@ -1,0 +1,13 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: my-app
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - image: my-app:latest
+            name: my-app
+  schedule: 0 0 0 0 0

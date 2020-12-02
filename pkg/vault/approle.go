@@ -25,7 +25,7 @@ func (a *AppRole) Login() error {
 
 // GetSecrets gets secrets from vault and returns the formatted data
 func (a *AppRole) GetSecrets(path string) (map[string]interface{}, error) {
-	data, err := a.Client.Read(a.Client.PathPrefix + path)
+	data, err := a.Client.Read(path)
 	if err != nil {
 		return nil, err
 	}

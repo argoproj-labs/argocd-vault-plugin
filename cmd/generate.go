@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	kube "github.com/IBM/argocd-vault-plugin/pkg/kube"
+	"github.com/IBM/argocd-vault-plugin/pkg/kube"
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	"github.com/spf13/cobra"
 )
@@ -49,17 +49,17 @@ func NewGenerateCommand() *cobra.Command {
 
 			for _, manifest := range manifests {
 
-				resource, err := kube.CreateTemplate(manifest, vaultClient)
+				template, err := kube.NewTemplate(manifest, vaultClient, config.PathPrefix)
 				if err != nil {
 					return err
 				}
 
-				err = resource.Replace()
+				err = template.Replace()
 				if err != nil {
 					return err
 				}
 
-				output, err := resource.ToYAML()
+				output, err := template.ToYAML()
 				if err != nil {
 					return err
 				}

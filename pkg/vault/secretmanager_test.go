@@ -10,7 +10,6 @@ func TestSecretManagerGetSecrets(t *testing.T) {
 	defer ln.Close()
 
 	vc := &Client{
-		PathPrefix:     "secret",
 		VaultAPIClient: client,
 	}
 
@@ -23,7 +22,7 @@ func TestSecretManagerGetSecrets(t *testing.T) {
 		"secret": "bar",
 	}
 
-	data, err := sm.GetSecrets("/foo")
+	data, err := sm.GetSecrets("secret/foo")
 	if err != nil {
 		t.Fatalf("expected 0 errors but got: %s", err)
 	}

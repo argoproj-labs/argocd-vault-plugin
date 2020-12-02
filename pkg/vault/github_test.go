@@ -10,7 +10,6 @@ func TestGithubGetSecrets(t *testing.T) {
 	defer ln.Close()
 
 	vc := &Client{
-		PathPrefix:     "secret",
 		VaultAPIClient: client,
 	}
 
@@ -23,7 +22,7 @@ func TestGithubGetSecrets(t *testing.T) {
 		"secret": "bar",
 	}
 
-	data, err := github.GetSecrets("/foo")
+	data, err := github.GetSecrets("secret/foo")
 	if err != nil {
 		t.Fatalf("expected 0 errors but got: %s", err)
 	}
