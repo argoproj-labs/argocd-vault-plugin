@@ -1,16 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  creationTimestamp: null
   name: my-app
   namespace: default
 spec:
   replicas: 3
-  selector: null
-  strategy: {}
   template:
     metadata:
-      creationTimestamp: null
       labels:
         app: my-app
-    spec:
-      containers: null
-status: {}

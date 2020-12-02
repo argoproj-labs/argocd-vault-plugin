@@ -1,0 +1,10 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-app
+  namespace: default
+spec:
+  tls:
+  - hosts:
+    - mysubdomain.foo.com
+    secretName: foo-secret

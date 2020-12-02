@@ -28,22 +28,36 @@ func replaceInner(
 			}
 			replaceInner(r, &inner, replacerFunc)
 		} else if valueType == reflect.Slice {
-
-			// Iterate and recurse through maps in a slice
-			for _, elm := range value.([]interface{}) {
-				inner, ok := elm.(map[string]interface{})
-				if !ok {
-					panic(fmt.Sprintf("Deserialized YAML list node is non map[string]interface{}"))
+			for idx, elm := range value.([]interface{}) {
+				switch elm.(type) {
+				case map[string]interface{}:
+					{
+						inner := elm.(map[string]interface{})
+						replaceInner(r, &inner, replacerFunc)
+					}
+				case string:
+					{
+						// Base case, replace templated strings
+						replacement, err := replacerFunc(key, elm.(string), r.VaultData)
+						if len(err) != 0 {
+							r.replacementErrors = append(r.replacementErrors, err...)
+						}
+						value.([]interface{})[idx] = replacement
+					}
+				default:
+					{
+						panic(fmt.Sprintf("Deserialized YAML list node is non map[string]interface{} nor string"))
+					}
 				}
-				replaceInner(r, &inner, replacerFunc)
 			}
 		} else if valueType == reflect.String {
 
 			// Base case, replace templated strings
-			replacement, err := replacerFunc(key, value.(string), r.vaultData)
+			replacement, err := replacerFunc(key, value.(string), r.VaultData)
 			if len(err) != 0 {
 				r.replacementErrors = append(r.replacementErrors, err...)
 			}
+
 			obj[key] = replacement
 		}
 	}
@@ -100,7 +114,8 @@ func stringify(input interface{}) string {
 	}
 }
 
-func kubeResourceDecoder(data *map[string]interface{}) *k8yaml.YAMLToJSONDecoder {
+// KubeResourceDecoder TODO
+func KubeResourceDecoder(data *map[string]interface{}) *k8yaml.YAMLToJSONDecoder {
 	jsondata, _ := json.Marshal(data)
 	decoder := k8yaml.NewYAMLToJSONDecoder(bytes.NewReader(jsondata))
 	return decoder

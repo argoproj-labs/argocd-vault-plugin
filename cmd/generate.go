@@ -6,6 +6,7 @@ import (
 	kube "github.com/IBM/argocd-vault-plugin/pkg/kube"
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 // NewGenerateCommand initializes the generate command
@@ -49,17 +50,38 @@ func NewGenerateCommand() *cobra.Command {
 
 			for _, manifest := range manifests {
 
-				resource, err := kube.CreateTemplate(manifest, vaultClient)
+				obj := &unstructured.Unstructured{}
+				err := kube.KubeResourceDecoder(&manifest).Decode(&obj)
+				if err != nil {
+					return fmt.Errorf("ToYAML: could not convert replaced template into %s: %s", obj.GetKind(), err)
+				}
+
+				path := fmt.Sprintf("%s/%s", config.PathPrefix, obj.GetKind())
+
+				annotations := obj.GetAnnotations()
+				if avpPath, ok := annotations["avp_path"]; ok {
+					path = avpPath
+				}
+
+				vaultData, err := vaultClient.GetSecrets(path)
 				if err != nil {
 					return err
 				}
 
-				err = resource.Replace()
+				template := &kube.Template{
+					Resource: kube.Resource{
+						Kind:         obj.GetKind(),
+						TemplateData: manifest,
+						VaultData:    vaultData,
+					},
+				}
+
+				err = template.Replace()
 				if err != nil {
 					return err
 				}
 
-				output, err := resource.ToYAML()
+				output, err := template.ToYAML()
 				if err != nil {
 					return err
 				}

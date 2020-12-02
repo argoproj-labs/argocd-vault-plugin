@@ -10,7 +10,6 @@ func TestAppRoleGetSecrets(t *testing.T) {
 	defer ln.Close()
 
 	vc := &Client{
-		PathPrefix:     "secret",
 		VaultAPIClient: client,
 	}
 
@@ -24,7 +23,7 @@ func TestAppRoleGetSecrets(t *testing.T) {
 		"secret": "bar",
 	}
 
-	data, err := appRole.GetSecrets("/foo")
+	data, err := appRole.GetSecrets("secret/foo")
 	if err != nil {
 		t.Fatalf("expected 0 errors but got: %s", err)
 	}

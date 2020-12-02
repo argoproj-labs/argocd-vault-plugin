@@ -34,7 +34,6 @@ func NewConfig() (*Config, error) {
 
 	client := &Client{
 		VaultAPIClient: apiClient,
-		PathPrefix:     config.PathPrefix,
 	}
 
 	switch getEnv("AVP_TYPE", "") {
