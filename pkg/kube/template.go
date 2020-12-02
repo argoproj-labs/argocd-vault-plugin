@@ -3,6 +3,7 @@ package kube
 import (
 	"fmt"
 
+	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8yaml "sigs.k8s.io/yaml"
 )
@@ -21,19 +22,33 @@ type Template struct {
 }
 
 // NewTemplate returns a *Template given the template's data, and a VaultType
-// func NewTemplate(template map[string]interface{}, vault vault.VaultType) (*Template, error) {
-// 	data, err := vault.GetSecrets("/config")
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	return &Template{
-// 		Resource{
-// 			TemplateData: template,
-// 			VaultData:    data,
-// 		},
-// 	}, nil
-// }
+func NewTemplate(template map[string]interface{}, vault vault.VaultType, prefix string) (*Template, error) {
+	obj := &unstructured.Unstructured{}
+	err := KubeResourceDecoder(&template).Decode(&obj)
+	if err != nil {
+		return nil, fmt.Errorf("ToYAML: could not convert replaced template into %s: %s", obj.GetKind(), err)
+	}
+
+	path := fmt.Sprintf("%s/%s", prefix, obj.GetKind())
+
+	annotations := obj.GetAnnotations()
+	if avpPath, ok := annotations["avp_path"]; ok {
+		path = avpPath
+	}
+
+	data, err := vault.GetSecrets(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Template{
+		Resource{
+			Kind:         obj.GetKind(),
+			TemplateData: template,
+			VaultData:    data,
+		},
+	}, nil
+}
 
 // Replace will replace the <placeholders> in the template's data with values from Vault.
 // It will return an aggregrate of any errors encountered during the replacements
