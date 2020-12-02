@@ -24,7 +24,7 @@ type Template struct {
 // NewTemplate returns a *Template given the template's data, and a VaultType
 func NewTemplate(template map[string]interface{}, vault vault.VaultType, prefix string) (*Template, error) {
 	obj := &unstructured.Unstructured{}
-	err := KubeResourceDecoder(&template).Decode(&obj)
+	err := kubeResourceDecoder(&template).Decode(&obj)
 	if err != nil {
 		return nil, fmt.Errorf("ToYAML: could not convert replaced template into %s: %s", obj.GetKind(), err)
 	}
@@ -121,7 +121,7 @@ func (t *Template) secretReplace() error {
 // ToYAML seralizes the completed template into YAML to be consumed by Kubernetes
 func (t *Template) ToYAML() (string, error) {
 	obj := &unstructured.Unstructured{}
-	err := KubeResourceDecoder(&t.TemplateData).Decode(&obj)
+	err := kubeResourceDecoder(&t.TemplateData).Decode(&obj)
 	if err != nil {
 		return "", fmt.Errorf("ToYAML: could not convert replaced template into %s: %s", obj.GetKind(), err)
 	}

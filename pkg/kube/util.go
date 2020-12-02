@@ -114,8 +114,7 @@ func stringify(input interface{}) string {
 	}
 }
 
-// KubeResourceDecoder TODO
-func KubeResourceDecoder(data *map[string]interface{}) *k8yaml.YAMLToJSONDecoder {
+func kubeResourceDecoder(data *map[string]interface{}) *k8yaml.YAMLToJSONDecoder {
 	jsondata, _ := json.Marshal(data)
 	decoder := k8yaml.NewYAMLToJSONDecoder(bytes.NewReader(jsondata))
 	return decoder
