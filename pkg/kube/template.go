@@ -2,6 +2,7 @@ package kube
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -29,7 +30,7 @@ func NewTemplate(template map[string]interface{}, vault vault.VaultType, prefix 
 		return nil, fmt.Errorf("ToYAML: could not convert replaced template into %s: %s", obj.GetKind(), err)
 	}
 
-	path := fmt.Sprintf("%s/%s", prefix, obj.GetKind())
+	path := fmt.Sprintf("%s/%s", prefix, strings.ToLower(obj.GetKind()))
 
 	annotations := obj.GetAnnotations()
 	if avpPath, ok := annotations["avp_path"]; ok {
