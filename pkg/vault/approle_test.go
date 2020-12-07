@@ -5,17 +5,37 @@ import (
 	"testing"
 )
 
-func TestAppRoleGetSecrets(t *testing.T) {
-	ln, client := CreateTestVault(t)
-	defer ln.Close()
+func TestAppRoleLogin(t *testing.T) {
+	cluster, role, secret := CreateTestAppRoleVault(t)
+	defer cluster.Cleanup()
 
 	vc := &Client{
-		VaultAPIClient: client,
+		VaultAPIClient: cluster.Cores[0].Client,
 	}
 
 	appRole := AppRole{
-		RoleID:   "role",
-		SecretID: "secret",
+		RoleID:   role,
+		SecretID: secret,
+		Client:   vc,
+	}
+
+	err := appRole.Login()
+	if err != nil {
+		t.Fatalf("expected no errors but got: %s", err)
+	}
+}
+
+func TestAppRoleGetSecrets(t *testing.T) {
+	cluster, role, secret := CreateTestAppRoleVault(t)
+	defer cluster.Cleanup()
+
+	vc := &Client{
+		VaultAPIClient: cluster.Cores[0].Client,
+	}
+
+	appRole := AppRole{
+		RoleID:   role,
+		SecretID: secret,
 		Client:   vc,
 	}
 
