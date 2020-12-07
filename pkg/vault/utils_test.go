@@ -38,5 +38,42 @@ func CreateTestVault(t *testing.T) (net.Listener, *api.Client) {
 		t.Fatal(err)
 	}
 
+	// Setup required secrets, policies, etc.
+	_, err = client.Logical().Write("secret/ibm/arbitrary/groups/1", map[string]interface{}{
+		"secrets": []map[string]interface{}{
+			map[string]interface{}{
+				"id": "1",
+			},
+			map[string]interface{}{
+				"id": "2",
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Setup required secrets, policies, etc.
+	_, err = client.Logical().Write("secret/ibm/arbitrary/groups/1/1", map[string]interface{}{
+		"name": "secret",
+		"secret_data": map[string]interface{}{
+			"payload": "value",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Setup required secrets, policies, etc.
+	_, err = client.Logical().Write("secret/ibm/arbitrary/groups/1/2", map[string]interface{}{
+		"name": "secret2",
+		"secret_data": map[string]interface{}{
+			"payload": "value2",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	return ln, client
 }

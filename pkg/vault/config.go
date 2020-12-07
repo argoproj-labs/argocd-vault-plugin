@@ -36,9 +36,10 @@ func NewConfig() (*Config, error) {
 		VaultAPIClient: apiClient,
 	}
 
+	auth := getEnv("AVP_AUTH_TYPE", "")
+
 	switch getEnv("AVP_TYPE", "") {
 	case "vault":
-		auth := getEnv("AVP_AUTH_TYPE", "")
 		switch auth {
 		case "approle":
 			config.Type = &AppRole{
@@ -55,9 +56,14 @@ func NewConfig() (*Config, error) {
 			return nil, errors.New("Must provide a supported Authentication Type")
 		}
 	case "secretmanager":
-		config.Type = &SecretManager{
-			IAMToken: getEnv("AVP_IAM_TOKEN", ""),
-			Client:   client,
+		switch auth {
+		case "iam":
+			config.Type = &SecretManager{
+				IBMCloudAPIKey: getEnv("AVP_IBM_API_KEY", ""),
+				Client:         client,
+			}
+		default:
+			return nil, errors.New("Must provide a supported Authentication Type")
 		}
 	default:
 		return nil, errors.New("Must provide a supported Vault Type")

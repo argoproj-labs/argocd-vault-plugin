@@ -31,6 +31,7 @@ func TestNewConfig(t *testing.T) {
 		{
 			map[string]interface{}{
 				"AVP_TYPE":      "secretmanager",
+				"AVP_AUTH_TYPE": "iam",
 				"AVP_IAM_TOKEN": "token",
 			},
 			"*vault.SecretManager",
