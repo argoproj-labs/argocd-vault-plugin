@@ -129,7 +129,7 @@ spec:
       env:
         - name: AVP_PATH_PREFIX # Optional: Can be added to resource or a env var via a kubernetes secret
           value: some/path/to/vault
-    repoURL: <repo>
+    repoURL: http://your-repo/
     targetRevision: HEAD
   project: default
 ```
