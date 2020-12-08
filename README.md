@@ -21,7 +21,7 @@ apiVersion: v1
 metadata:
   name: example-secret
   annotations:
-    path: "path/to/vault"
+    avp_path: "path/to/secret"
 type: Opaque
 data:
   password: <password-vault-key>
@@ -34,7 +34,7 @@ apiVersion: v1
 metadata:
   name: example-secret
   annotations:
-    path: "path/to/vault"
+    avp_path: "path/to/secret"
 type: Opaque
 data:
   password: cGFzc3dvcmQK # The Value from the key password-vault-key in vault
@@ -58,20 +58,58 @@ Make sure that these environment variables are available to the plugin when runn
 This plugin is meant to be used with Argo CD. In order to use the plugin you can add it to your Argo CD instance as a volume mount or build your own Argo CD image.
 The Argo CD docs provide information on how to get started https://argoproj.github.io/argo-cd/operator-manual/custom_tools/.
 
+Will look something like:
+```
+containers:
+- name: argocd-repo-server
+  volumeMounts:
+  - name: custom-tools
+    mountPath: /usr/local/bin/argocd-vault-plugin
+    subPath: argocd-vault-plugin
+  envFrom:
+    - secretRef:
+        name: argocd-vault-plugin-credentials
+volumes:
+- name: custom-tools
+  emptyDir: {}
+initContainers:
+- name: download-tools
+  image: alpine:3.8
+  command: [sh, -c]
+  args:
+    - wget -O argocd-vault-plugin
+      https://github.com/IBM/argocd-vault-plugin/releases/download/v0.1.0/argocd-vault-plugin_0.1.0_linux_amd64
+
+      mv argocd-vault-plugin /custom-tools/
+  volumeMounts:
+    - mountPath: /custom-tools
+      name: custom-tools
+```
+
 After making the plugin available, you must then register the plugin, documentation can be found at https://argoproj.github.io/argo-cd/user-guide/config-management-plugins/#plugins on how to do that.
 
 For this plugin, you would add this:
 ```
 data:
   configManagementPlugins: |-
-    - name: argocd-vault-plugin
+    - name: argocd-vault
       generate:
-        command: [sh, -c]
-        args: ["argocd-vault-plugin generate ."]
+        command: ["argocd-vault-plugin"]
+        args: ["generate", "./"]
 ```
+
+If you are using helm you might add something like:
+```
+configManagementPlugins: |
+  - name: argocd-vault-helm
+    generate:
+      command: [sh, -c]
+      args: ["helm template . > all.yaml && argocd-vault-plugin generate all.yaml"]
+```
+
 to the `argocd-cm` configMap.
 
-Once that is done, the plugin has been registed with Argo CD and can be used by Applications.
+Once that is done, the plugin has been registered with Argo CD and can be used by Applications.
 
 To tell you Argo Cd Application to use the plugin you would specify it in the Application CRD
 ```
@@ -88,7 +126,10 @@ spec:
     path: .
     plugin:
       name: argocd-vault-plugin
-    repoURL: <repo>
+      env:
+        - name: AVP_PATH_PREFIX # Optional: Can be added to resource or a env var via a kubernetes secret
+          value: some/path/to/vault
+    repoURL: http://your-repo/
     targetRevision: HEAD
   project: default
 ```
