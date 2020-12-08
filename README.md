@@ -11,7 +11,7 @@ This plugin is aimed at helping to solve the issue of secret management with Git
 ## How it works
 The argocd-vault-plugin works by taking a directory of yaml files that have been templated out using the pattern of `<thing-to-fill-in>` where you would want a value from Vault to go. The inside of the `<>` would be the actual key in vault.
 
-An annotation is used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `path: "path/to/vault"`.
+An annotation is used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp_path: "path/to/vault"`. This is optional and the path prefix environment variable can be used instead (See [Environment Variables](#environment-variables))
 
 For example, if you have a secret with the key `password` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/vault/password-vault-key` and inject it into the secret yaml.
 
@@ -41,6 +41,18 @@ data:
 ```
 
 ## Usage
+
+### Environment Variables
+The plugin requires a certain set of Environment Variables to be able to run correctly.
+
+| Name            | Description                | Supported            |
+| --------------- | -------------------------- | -------------------- |
+| AVP_VAULT_ADDR  | Address of your Vault      | N/A                  |
+| AVP_PATH_PREFIX | Prefix of the vault path to look for the secrets | N/A       |
+| AVP_TYPE        | The type of Vault backend  | `vault` and `secretmanager` |
+| AVP_AUTH_TYPE   | The type of authentication | vault: `approle, github`   secretmanager: `iam` |
+
+Make sure that these environment variables are available to the plugin when running it, whether that is in Argo CD or as a CLI tool.
 
 ### As a Vault Plugin
 This plugin is meant to be used with Argo CD. In order to use the plugin you can add it to your Argo CD instance as a volume mount or build your own Argo CD image.
