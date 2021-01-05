@@ -30,9 +30,9 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":      "secretmanager",
-				"AVP_AUTH_TYPE": "iam",
-				"AVP_IAM_TOKEN": "token",
+				"AVP_TYPE":        "secretmanager",
+				"AVP_AUTH_TYPE":   "iam",
+				"AVP_IBM_API_KEY": "token",
 			},
 			"*vault.SecretManager",
 		},
@@ -44,6 +44,7 @@ func TestNewConfig(t *testing.T) {
 		config, err := NewConfig()
 		if err != nil {
 			t.Error(err)
+			t.FailNow()
 		}
 		xType := fmt.Sprintf("%T", config.Type)
 		if xType != tc.expectedType {
@@ -73,4 +74,50 @@ func TestNewConfigNoAuthType(t *testing.T) {
 		t.Errorf("expected error %s to be thrown, got %s", expectedError, err)
 	}
 	os.Unsetenv("AVP_TYPE")
+}
+
+func TestNewConfigMissingParameter(t *testing.T) {
+	testCases := []struct {
+		environment  map[string]interface{}
+		expectedType string
+	}{
+		{
+			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "github",
+				"AVP_GH_TOKEN":  "token",
+			},
+			"*vault.Github",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "approle",
+				"AVP_ROLEID":    "role_id",
+				"AVP_SECRET_ID": "secret_id",
+			},
+			"*vault.AppRole",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":        "secretmanager",
+				"AVP_AUTH_TYPE":   "iam",
+				"AVP_IAM_API_KEY": "token",
+			},
+			"*vault.SecretManager",
+		},
+	}
+	for _, tc := range testCases {
+		for k, v := range tc.environment {
+			os.Setenv(k, v.(string))
+		}
+		_, err := NewConfig()
+		if err == nil {
+			t.Fatalf("%s should not instantiate", tc.expectedType)
+		}
+		for k := range tc.environment {
+			os.Unsetenv(k)
+		}
+	}
+
 }
