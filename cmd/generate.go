@@ -6,10 +6,13 @@ import (
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // NewGenerateCommand initializes the generate command
 func NewGenerateCommand() *cobra.Command {
+	var configPath = ""
+
 	var command = &cobra.Command{
 		Use:   "generate <path>",
 		Short: "Generate manifests from templates with Vault values",
@@ -36,6 +39,13 @@ func NewGenerateCommand() *cobra.Command {
 				return fmt.Errorf("could not read YAML files: %s", errs)
 			}
 
+			if configPath != "" {
+				viper.SetConfigFile(configPath)
+				err := viper.ReadInConfig()
+				if err != nil {
+					return err
+				}
+			}
 			config, err := vault.NewConfig()
 			if err != nil {
 				return err
@@ -71,5 +81,6 @@ func NewGenerateCommand() *cobra.Command {
 		},
 	}
 
+	command.Flags().StringVarP(&configPath, "config-path", "c", "", "path to a configuration file (YAML, JSON, envfile) to use")
 	return command
 }

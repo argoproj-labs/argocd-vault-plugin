@@ -24,8 +24,6 @@ func setupViper() {
 	viper.BindEnv("RoleID", "AVP_ROLE_ID")
 	viper.BindEnv("SecretID", "AVP_SECRET_ID")
 	viper.BindEnv("GithubToken", "AVP_GITHUB_TOKEN")
-
-	// TODO: Should we fallback to using the BX CLI default name, i.e, BX_API_KEY ?
 	viper.BindEnv("IBMCloudAPIKey", "AVP_IBM_API_KEY")
 }
 
