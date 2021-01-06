@@ -1,6 +1,8 @@
 package client
 
 import (
+	"context"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -26,7 +28,7 @@ func NewClient() (*Client, error) {
 }
 
 func (c *Client) ReadSecret(name string) ([]byte, error) {
-	s, err := c.client.CoreV1().Secrets("argocd").Get(name, metav1.GetOptions{})
+	s, err := c.client.CoreV1().Secrets("argocd").Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
