@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/client"
@@ -40,17 +41,17 @@ func NewGenerateCommand() *cobra.Command {
 				return fmt.Errorf("could not read YAML files: %s", errs)
 			}
 
-			// Read config from Kubernetes, and failing that, a file path
 			if secretName != "" {
 				localClient, err := client.NewClient()
 				if err != nil {
 					return err
 				}
-				buf, err := localClient.ReadSecret(secretName)
+				yaml, err := localClient.ReadSecret(secretName)
 				if err != nil {
 					return err
 				}
-				viper.ReadConfig(buf)
+				viper.SetConfigType("yaml")
+				viper.ReadConfig(bytes.NewBuffer(yaml))
 			}
 			if configPath != "" {
 				viper.SetConfigFile(configPath)
@@ -96,6 +97,6 @@ func NewGenerateCommand() *cobra.Command {
 	}
 
 	command.Flags().StringVarP(&configPath, "config-path", "c", "", "path to a configuration file (YAML, JSON, envfile) to use")
-	command.Flags().StringVarP(&secretName, "secret-name", "s", "", "name of a Kubernetes Secret in the argocd namespace of your ArgoCD host")
+	command.Flags().StringVarP(&secretName, "secret-name", "s", "", "name of a Kubernetes Secret containing Vault configuration data in the argocd namespace of your ArgoCD host")
 	return command
 }

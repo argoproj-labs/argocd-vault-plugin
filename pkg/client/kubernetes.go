@@ -1,8 +1,6 @@
 package client
 
 import (
-	"bytes"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -27,12 +25,12 @@ func NewClient() (*Client, error) {
 	}, nil
 }
 
-func (c *Client) ReadSecret(name string) (*bytes.Buffer, error) {
+func (c *Client) ReadSecret(name string) ([]byte, error) {
 	s, err := c.client.CoreV1().Secrets("argocd").Get(name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
-	var decoded map[string]string
+	decoded := make(map[string]string)
 	for key, value := range s.Data {
 		decoded[key] = string(value)
 	}
@@ -40,5 +38,5 @@ func (c *Client) ReadSecret(name string) (*bytes.Buffer, error) {
 	if err != nil {
 		return nil, err
 	}
-	return bytes.NewBuffer(res), nil
+	return res, nil
 }
