@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/client"
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
+	"github.com/IBM/argocd-vault-plugin/pkg/kubernetesclient"
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -42,7 +42,7 @@ func NewGenerateCommand() *cobra.Command {
 			}
 
 			if secretName != "" {
-				localClient, err := client.NewClient()
+				localClient, err := kubernetesclient.NewClient()
 				if err != nil {
 					return err
 				}
@@ -96,7 +96,7 @@ func NewGenerateCommand() *cobra.Command {
 		},
 	}
 
-	command.Flags().StringVarP(&configPath, "config-path", "c", "", "path to a configuration file (YAML, JSON, envfile) to use")
-	command.Flags().StringVarP(&secretName, "secret-name", "s", "", "name of a Kubernetes Secret containing Vault configuration data in the argocd namespace of your ArgoCD host")
+	command.Flags().StringVarP(&configPath, "config-path", "c", "", "path to a file containing Vault configuration (YAML, JSON, envfile) to use")
+	command.Flags().StringVarP(&secretName, "secret-name", "s", "", "name of a Kubernetes Secret containing Vault configuration data in the argocd namespace of your ArgoCD host (Only available when used in ArgoCD)")
 	return command
 }
