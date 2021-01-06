@@ -42,7 +42,10 @@ func NewGenerateCommand() *cobra.Command {
 
 			// Read config from Kubernetes, and failing that, a file path
 			if secretName != "" {
-				localClient := client.NewClient()
+				localClient, err := client.NewClient()
+				if err != nil {
+					return err
+				}
 				buf, err := localClient.ReadSecret(secretName)
 				if err != nil {
 					return err

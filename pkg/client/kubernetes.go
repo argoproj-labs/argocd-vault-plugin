@@ -13,18 +13,18 @@ type Client struct {
 	client *kubernetes.Clientset
 }
 
-func NewClient() *Client {
+func NewClient() (*Client, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
 	return &Client{
 		client: clientset,
-	}
+	}, nil
 }
 
 func (c *Client) ReadSecret(name string) (*bytes.Buffer, error) {
