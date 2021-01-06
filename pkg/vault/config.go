@@ -3,10 +3,10 @@ package vault
 import (
 	"errors"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/hashicorp/vault/api"
+	"github.com/spf13/viper"
 )
 
 // Config TODO
@@ -16,18 +16,25 @@ type Config struct {
 	Type       VaultType
 }
 
+func setupViper() {
+	viper.SetEnvPrefix("AVP")
+	viper.AutomaticEnv()
+}
+
 // NewConfig returns a new Config struct
 func NewConfig() (*Config, error) {
+	setupViper()
+
 	config := &Config{
-		Address:    getEnv("AVP_VAULT_ADDR", ""),
-		PathPrefix: getEnv("AVP_PATH_PREFIX", ""),
+		Address:    viper.GetString("VAULT_ADDR"),
+		PathPrefix: viper.GetString("PATH_PREFIX"),
 	}
 
 	var httpClient = &http.Client{
 		Timeout: 10 * time.Second,
 	}
 
-	apiClient, err := api.NewClient(&api.Config{Address: config.Address, HttpClient: httpClient})
+	apiClient, err := api.NewClient(&api.Config{Address: viper.GetString("VAULT_ADDR"), HttpClient: httpClient})
 	if err != nil {
 		return nil, err
 	}
@@ -36,21 +43,29 @@ func NewConfig() (*Config, error) {
 		VaultAPIClient: apiClient,
 	}
 
-	auth := getEnv("AVP_AUTH_TYPE", "")
+	auth := viper.GetString("AUTH_TYPE")
 
-	switch getEnv("AVP_TYPE", "") {
+	switch viper.GetString("TYPE") {
 	case "vault":
 		switch auth {
 		case "approle":
-			config.Type = &AppRole{
-				RoleID:   getEnv("AVP_ROLE_ID", ""),
-				SecretID: getEnv("AVP_SECRET_ID", ""),
-				Client:   client,
+			if viper.IsSet("ROLE_ID") && viper.IsSet("SECRET_ID") {
+				config.Type = &AppRole{
+					RoleID:   viper.GetString("ROLE_ID"),
+					SecretID: viper.GetString("SECRET_ID"),
+					Client:   client,
+				}
+			} else {
+				return nil, errors.New("ROLE_ID and SECRET_ID for approle authentication cannot be empty")
 			}
 		case "github":
-			config.Type = &Github{
-				AccessToken: getEnv("AVP_GITHUB_TOKEN", ""),
-				Client:      client,
+			if viper.IsSet("GITHUB_TOKEN") {
+				config.Type = &Github{
+					AccessToken: viper.GetString("GITHUB_TOKEN"),
+					Client:      client,
+				}
+			} else {
+				return nil, errors.New("GITHUB_TOKEN for github authentication cannot be empty")
 			}
 		default:
 			return nil, errors.New("Must provide a supported Authentication Type")
@@ -58,9 +73,13 @@ func NewConfig() (*Config, error) {
 	case "secretmanager":
 		switch auth {
 		case "iam":
-			config.Type = &SecretManager{
-				IBMCloudAPIKey: getEnv("AVP_IBM_API_KEY", ""),
-				Client:         client,
+			if viper.IsSet("IBM_API_KEY") {
+				config.Type = &SecretManager{
+					IBMCloudAPIKey: viper.GetString("IBM_API_KEY"),
+					Client:         client,
+				}
+			} else {
+				return nil, errors.New("IBM_API_KEY for iam authentication cannot be empty")
 			}
 		default:
 			return nil, errors.New("Must provide a supported Authentication Type")
@@ -70,13 +89,4 @@ func NewConfig() (*Config, error) {
 	}
 
 	return config, nil
-}
-
-// Simple helper function to read an environment or return a default value
-func getEnv(key string, defaultVal string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-
-	return defaultVal
 }

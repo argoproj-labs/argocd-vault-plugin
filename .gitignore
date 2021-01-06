@@ -1,3 +1,6 @@
 argocd-vault-plugin
+bin
+.DS_Store
+.chglog
 test
 cover.out

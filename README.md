@@ -11,7 +11,7 @@ This plugin is aimed at helping to solve the issue of secret management with Git
 ## How it works
 The argocd-vault-plugin works by taking a directory of yaml files that have been templated out using the pattern of `<thing-to-fill-in>` where you would want a value from Vault to go. The inside of the `<>` would be the actual key in vault.
 
-An annotation is used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp_path: "path/to/vault"`. This is optional and the path prefix environment variable can be used instead (See [Environment Variables](#environment-variables))
+An annotation is used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp_path: "path/to/vault"`. This is optional and the path prefix can be configured instead (See [Configuration](#configuration))
 
 For example, if you have a secret with the key `password` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/vault/password-vault-key` and inject it into the secret yaml.
 
@@ -42,17 +42,58 @@ data:
 
 ## Usage
 
-### Environment Variables
-The plugin requires a certain set of Environment Variables to be able to run correctly.
+### Configuration
+The plugin requires some configuration to connect to Vault. The parameters are:
 
-| Name            | Description                | Supported            |
+| Name            | Description                | Notes                |
 | --------------- | -------------------------- | -------------------- |
-| AVP_VAULT_ADDR  | Address of your Vault      | N/A                  |
-| AVP_PATH_PREFIX | Prefix of the vault path to look for the secrets | N/A       |
-| AVP_TYPE        | The type of Vault backend  | `vault` and `secretmanager` |
-| AVP_AUTH_TYPE   | The type of authentication | vault: `approle, github`   secretmanager: `iam` |
+| VAULT_ADDR     | Address of your Vault      | N/A                  |
+| PATH_PREFIX    | Prefix of the vault path to look for the secrets | N/A       |
+| TYPE           | The type of Vault backend  | Supported values: `vault` and `secretmanager` |
+| AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |
+| GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
+| ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
+| SECRET_ID      | Vault AppRole Secret_ID    | Required with `AUTH_TYPE` of `approle` |
+| IBM_API_KEY    | IBM Cloud IAM API Key      | Required with `TYPE` of `secretmanager` and `AUTH_TYPE` of `iam` |
 
-Make sure that these environment variables are available to the plugin when running it, whether that is in Argo CD or as a CLI tool.
+#### Secrets in the cluster hosting Argo CD
+You can define a Secret in the `argocd` namespace of your Argo CD cluster with the Vault configuration. The keys of the secret's `data` 
+should be the exact names given above, case-sensitive:
+```yaml
+apiVersion: v1
+data:
+  VAULT_ADDR: Zm9v
+  AUTH_TYPE: Zm9v
+  GITHUB_TOKEN: Zm9v
+  TYPE: Zm9v
+kind: Secret
+metadata:
+  name: vault-configuration
+  namespace: argocd
+type: Opaque
+```
+
+You can use it like this: `argocd-vault-plugin generate /some/path -s vault-configuration`. 
+
+Note that this requires the `argocd-repo-server` to have a service account token mounted in the standard location. 
+
+#### File on disk
+The configuration can be given in a file reachable from the plugin, in any Viper supported format (YAML, JSON, etc.):
+```yaml
+  VAULT_ADDR: Zm9v
+  AUTH_TYPE: Zm9v
+  GITHUB_TOKEN: Zm9v
+  TYPE: Zm9v
+```
+You can use it like this: `argocd-vault-plugin generate /some/path -c /path/to/config/file.yaml`. This can be useful for usecases not involving Argo CD.
+
+#### Environment variables
+The configuration can be set via environment variables, where each key is prefixed by `AVP_`:
+```
+AVP_TYPE=vault # corresponds to TYPE key
+```
+Make sure that these environment variables are available to the plugin when running it, whether that is in Argo CD or as a CLI tool. Note that any _set_
+environment variables take precedence over configuration pulled from a Kubernetes Secret or a file.
 
 ### As a Vault Plugin
 This plugin is meant to be used with Argo CD. In order to use the plugin you can add it to your Argo CD instance as a volume mount or build your own Argo CD image.

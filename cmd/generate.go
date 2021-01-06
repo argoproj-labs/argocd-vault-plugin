@@ -1,15 +1,20 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
+	"github.com/IBM/argocd-vault-plugin/pkg/kubernetesclient"
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // NewGenerateCommand initializes the generate command
 func NewGenerateCommand() *cobra.Command {
+	var configPath, secretName string
+
 	var command = &cobra.Command{
 		Use:   "generate <path>",
 		Short: "Generate manifests from templates with Vault values",
@@ -34,6 +39,26 @@ func NewGenerateCommand() *cobra.Command {
 
 				// TODO: handle multiple errors nicely
 				return fmt.Errorf("could not read YAML files: %s", errs)
+			}
+
+			if secretName != "" {
+				localClient, err := kubernetesclient.NewClient()
+				if err != nil {
+					return err
+				}
+				yaml, err := localClient.ReadSecret(secretName)
+				if err != nil {
+					return err
+				}
+				viper.SetConfigType("yaml")
+				viper.ReadConfig(bytes.NewBuffer(yaml))
+			}
+			if configPath != "" {
+				viper.SetConfigFile(configPath)
+				err := viper.ReadInConfig()
+				if err != nil {
+					return err
+				}
 			}
 
 			config, err := vault.NewConfig()
@@ -71,5 +96,7 @@ func NewGenerateCommand() *cobra.Command {
 		},
 	}
 
+	command.Flags().StringVarP(&configPath, "config-path", "c", "", "path to a file containing Vault configuration (YAML, JSON, envfile) to use")
+	command.Flags().StringVarP(&secretName, "secret-name", "s", "", "name of a Kubernetes Secret containing Vault configuration data in the argocd namespace of your ArgoCD host (Only available when used in ArgoCD)")
 	return command
 }
