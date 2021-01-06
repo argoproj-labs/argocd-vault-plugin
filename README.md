@@ -73,7 +73,7 @@ metadata:
 type: Opaque
 ```
 
-And use it like this: `argocd-vault-plugin generate /some/path -s vault-configuration`. 
+You can use it like this: `argocd-vault-plugin generate /some/path -s vault-configuration`. 
 
 Note that this requires the `argocd-repo-server` to have a service account token mounted in the standard location. 
 
@@ -85,7 +85,7 @@ The configuration can be given in a file reachable from the plugin, in any Viper
   GITHUB_TOKEN: Zm9v
   TYPE: Zm9v
 ```
-This can be useful for usecases not involving Argo CD.
+You can use it like this: `argocd-vault-plugin generate /some/path -c /path/to/config/file.yaml`. This can be useful for usecases not involving Argo CD.
 
 #### Environment variables
 The configuration can be set via environment variables, where each key is prefixed by `AVP_`:
