@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -9,14 +10,17 @@ import (
 	k8yaml "sigs.k8s.io/yaml"
 )
 
+// Client contains the Kubernetes client for connecting
+// to the cluster hosting ArgoCD
 type Client struct {
 	client *kubernetes.Clientset
 }
 
+// NewClient returns a Client ready to call the local Kubernetes API
 func NewClient() (*Client, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not connect to local Kubernetes cluster to read Secret: %s", err)
 	}
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
@@ -27,6 +31,8 @@ func NewClient() (*Client, error) {
 	}, nil
 }
 
+// ReadSecret reads the specified Secret from the `argocd` namespace
+// and returns a YAML []byte containing its data, decoded from base64
 func (c *Client) ReadSecret(name string) ([]byte, error) {
 	s, err := c.client.CoreV1().Secrets("argocd").Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
