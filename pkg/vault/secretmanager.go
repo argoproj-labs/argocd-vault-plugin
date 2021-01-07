@@ -32,7 +32,7 @@ func (s *SecretManager) Login() error {
 		return err
 	}
 
-	s.Client.VaultAPIClient.SetToken(data.Auth.ClientToken)
+	SetToken(s.Client, data.Auth.ClientToken)
 	return nil
 }
 

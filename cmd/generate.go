@@ -41,40 +41,26 @@ func NewGenerateCommand() *cobra.Command {
 				return fmt.Errorf("could not read YAML files: %s", errs)
 			}
 
-			if secretName != "" {
-				localClient, err := kubernetesclient.NewClient()
-				if err != nil {
-					return err
-				}
-				yaml, err := localClient.ReadSecret(secretName)
-				if err != nil {
-					return err
-				}
-				viper.SetConfigType("yaml")
-				viper.ReadConfig(bytes.NewBuffer(yaml))
+			err = setConfig(secretName, configPath)
+			if err != nil {
+				return err
 			}
-			if configPath != "" {
-				viper.SetConfigFile(configPath)
-				err := viper.ReadInConfig()
-				if err != nil {
-					return err
-				}
-			}
-
-			config, err := vault.NewConfig()
+			//
+			vaultConfig, err := vault.NewConfig()
 			if err != nil {
 				return err
 			}
 
-			vaultClient := config.Type
-			err = vaultClient.Login()
+			vaultClient := vaultConfig.Type
+
+			err = vault.Login(vaultClient, vaultConfig)
 			if err != nil {
 				return err
 			}
 
 			for _, manifest := range manifests {
 
-				template, err := kube.NewTemplate(manifest, vaultClient, config.PathPrefix)
+				template, err := kube.NewTemplate(manifest, vaultClient, vaultConfig.PathPrefix)
 				if err != nil {
 					return err
 				}
@@ -99,4 +85,31 @@ func NewGenerateCommand() *cobra.Command {
 	command.Flags().StringVarP(&configPath, "config-path", "c", "", "path to a file containing Vault configuration (YAML, JSON, envfile) to use")
 	command.Flags().StringVarP(&secretName, "secret-name", "s", "", "name of a Kubernetes Secret containing Vault configuration data in the argocd namespace of your ArgoCD host (Only available when used in ArgoCD)")
 	return command
+}
+
+func setConfig(secretName, configPath string) error {
+	// If a secret name is passed, pull config from Kubernetes
+	if secretName != "" {
+		localClient, err := kubernetesclient.NewClient()
+		if err != nil {
+			return err
+		}
+		yaml, err := localClient.ReadSecret(secretName)
+		if err != nil {
+			return err
+		}
+		viper.SetConfigType("yaml")
+		viper.ReadConfig(bytes.NewBuffer(yaml))
+	}
+
+	// If a config file path is passed, read in that file and overwrite all other
+	if configPath != "" {
+		viper.SetConfigFile(configPath)
+		err := viper.ReadInConfig()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

@@ -14,6 +14,7 @@ type Config struct {
 	Address    string
 	PathPrefix string
 	Type       VaultType
+	*Client
 }
 
 func setupViper() {
@@ -42,6 +43,7 @@ func NewConfig() (*Config, error) {
 	client := &Client{
 		VaultAPIClient: apiClient,
 	}
+	config.Client = client
 
 	auth := viper.GetString("AUTH_TYPE")
 
