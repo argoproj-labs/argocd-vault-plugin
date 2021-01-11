@@ -2,13 +2,9 @@ package vault
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"time"
-
-	"github.com/spf13/viper"
 )
 
 // Login TODO
@@ -23,7 +19,7 @@ func Login(vaultClient VaultType, vaultConfig *Config) error {
 		// Open our jsonFile
 		jsonFile, err := os.Open(avpConfigPath)
 		if err != nil {
-			fmt.Println(err)
+			return err
 		}
 		// defer the closing of our jsonFile so that we can parse it later on
 		defer jsonFile.Close()
@@ -34,22 +30,20 @@ func Login(vaultClient VaultType, vaultConfig *Config) error {
 		json.Unmarshal([]byte(byteValue), &result)
 
 		vaultConfig.VaultAPIClient.SetToken(result["vault_token"].(string))
-		tokenself, _ := vaultConfig.VaultAPIClient.Auth().Token().LookupSelf()
-		expireTime := tokenself.Data["expire_time"]
-		today := time.Now()
-		myDate, _ := time.Parse("2021-01-08T08:21:27.195176037Z", expireTime.(string))
-
-		if today.Before(myDate) {
+		_, err = vaultConfig.VaultAPIClient.Auth().Token().LookupSelf()
+		if err != nil {
 			err = vaultClient.Login()
 			if err != nil {
 				return err
 			}
 		}
-	} else {
-		err = vaultClient.Login()
-		if err != nil {
-			return err
-		}
+
+		return nil
+	}
+
+	err = vaultClient.Login()
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -67,8 +61,11 @@ func SetToken(client *Client, token string) error {
 		os.Mkdir(path, 0755)
 	}
 
-	viper.Set("VAULT_TOKEN", token)
-	err = viper.WriteConfigAs(filepath.Join(path, "config.json"))
+	data := map[string]interface{}{
+		"vault_token": token,
+	}
+	file, _ := json.MarshalIndent(data, "", " ")
+	err = ioutil.WriteFile(filepath.Join(path, "config.json"), file, 0644)
 	if err != nil {
 		return err
 	}
