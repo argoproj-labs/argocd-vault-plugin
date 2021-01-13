@@ -44,7 +44,7 @@ func NewGenerateCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			//
+
 			vaultConfig, err := vault.NewConfig(viper)
 			if err != nil {
 				return err
