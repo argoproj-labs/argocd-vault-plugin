@@ -7,7 +7,8 @@ import (
 	"path/filepath"
 )
 
-// Login TODO
+// Login takes a VaultType interface and logs in, while writting the config file
+// And setting the token in the client
 func Login(vaultClient VaultType, vaultConfig *Config) error {
 	home, err := os.UserHomeDir()
 	if err != nil {

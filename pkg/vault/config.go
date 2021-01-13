@@ -17,14 +17,10 @@ type Config struct {
 	*Client
 }
 
-func setupViper() {
+// NewConfig returns a new Config struct
+func NewConfig(viper *viper.Viper) (*Config, error) {
 	viper.SetEnvPrefix("AVP")
 	viper.AutomaticEnv()
-}
-
-// NewConfig returns a new Config struct
-func NewConfig() (*Config, error) {
-	setupViper()
 
 	config := &Config{
 		Address:    viper.GetString("VAULT_ADDR"),

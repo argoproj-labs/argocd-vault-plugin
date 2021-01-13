@@ -1,19 +1,22 @@
-package vault
+package vault_test
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
+	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 )
 
 func TestAppRoleLogin(t *testing.T) {
-	cluster, role, secret := CreateTestAppRoleVault(t)
+	cluster, role, secret := helpers.CreateTestAppRoleVault(t)
 	defer cluster.Cleanup()
 
-	vc := &Client{
+	vc := &vault.Client{
 		VaultAPIClient: cluster.Cores[0].Client,
 	}
 
-	appRole := AppRole{
+	appRole := vault.AppRole{
 		RoleID:   role,
 		SecretID: secret,
 		Client:   vc,
@@ -26,14 +29,14 @@ func TestAppRoleLogin(t *testing.T) {
 }
 
 func TestAppRoleGetSecrets(t *testing.T) {
-	cluster, role, secret := CreateTestAppRoleVault(t)
+	cluster, role, secret := helpers.CreateTestAppRoleVault(t)
 	defer cluster.Cleanup()
 
-	vc := &Client{
+	vc := &vault.Client{
 		VaultAPIClient: cluster.Cores[0].Client,
 	}
 
-	appRole := AppRole{
+	appRole := vault.AppRole{
 		RoleID:   role,
 		SecretID: secret,
 		Client:   vc,
