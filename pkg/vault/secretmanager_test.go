@@ -1,20 +1,23 @@
-package vault
+package vault_test
 
 import (
 	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
+	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 )
 
 func TestSecretManagerGetSecrets(t *testing.T) {
-	ln, client := CreateTestVault(t)
+	ln, client := helpers.CreateTestVault(t)
 	defer ln.Close()
 
-	vc := &Client{
+	vc := &vault.Client{
 		VaultAPIClient: client,
 	}
 
-	sm := SecretManager{
+	sm := vault.SecretManager{
 		IBMCloudAPIKey: "token",
 		Client:         vc,
 	}
@@ -35,14 +38,14 @@ func TestSecretManagerGetSecrets(t *testing.T) {
 }
 
 func TestSecretManagerGetSecretsFail(t *testing.T) {
-	ln, client := CreateTestVault(t)
+	ln, client := helpers.CreateTestVault(t)
 	defer ln.Close()
 
-	vc := &Client{
+	vc := &vault.Client{
 		VaultAPIClient: client,
 	}
 
-	sm := SecretManager{
+	sm := vault.SecretManager{
 		IBMCloudAPIKey: "token",
 		Client:         vc,
 	}

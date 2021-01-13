@@ -19,7 +19,7 @@ func (a *AppRole) Login() error {
 		return err
 	}
 
-	a.Client.VaultAPIClient.SetToken(data.Auth.ClientToken)
+	SetToken(a.Client, data.Auth.ClientToken)
 	return nil
 }
 

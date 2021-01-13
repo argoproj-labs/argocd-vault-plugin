@@ -14,16 +14,13 @@ type Config struct {
 	Address    string
 	PathPrefix string
 	Type       VaultType
-}
-
-func setupViper() {
-	viper.SetEnvPrefix("AVP")
-	viper.AutomaticEnv()
+	*Client
 }
 
 // NewConfig returns a new Config struct
-func NewConfig() (*Config, error) {
-	setupViper()
+func NewConfig(viper *viper.Viper) (*Config, error) {
+	viper.SetEnvPrefix("AVP")
+	viper.AutomaticEnv()
 
 	config := &Config{
 		Address:    viper.GetString("VAULT_ADDR"),
@@ -42,6 +39,7 @@ func NewConfig() (*Config, error) {
 	client := &Client{
 		VaultAPIClient: apiClient,
 	}
+	config.Client = client
 
 	auth := viper.GetString("AUTH_TYPE")
 

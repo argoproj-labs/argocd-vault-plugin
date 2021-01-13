@@ -1,9 +1,12 @@
-package vault
+package vault_test
 
 import (
 	"fmt"
 	"os"
 	"testing"
+
+	"github.com/IBM/argocd-vault-plugin/pkg/vault"
+	"github.com/spf13/viper"
 )
 
 func TestNewConfig(t *testing.T) {
@@ -41,7 +44,8 @@ func TestNewConfig(t *testing.T) {
 		for k, v := range tc.environment {
 			os.Setenv(k, v.(string))
 		}
-		config, err := NewConfig()
+		viper := viper.New()
+		config, err := vault.NewConfig(viper)
 		if err != nil {
 			t.Error(err)
 			t.FailNow()
@@ -57,7 +61,8 @@ func TestNewConfig(t *testing.T) {
 }
 
 func TestNewConfigNoType(t *testing.T) {
-	_, err := NewConfig()
+	viper := viper.New()
+	_, err := vault.NewConfig(viper)
 	expectedError := "Must provide a supported Vault Type"
 
 	if err.Error() != expectedError {
@@ -67,7 +72,8 @@ func TestNewConfigNoType(t *testing.T) {
 
 func TestNewConfigNoAuthType(t *testing.T) {
 	os.Setenv("AVP_TYPE", "vault")
-	_, err := NewConfig()
+	viper := viper.New()
+	_, err := vault.NewConfig(viper)
 	expectedError := "Must provide a supported Authentication Type"
 
 	if err.Error() != expectedError {
@@ -111,7 +117,8 @@ func TestNewConfigMissingParameter(t *testing.T) {
 		for k, v := range tc.environment {
 			os.Setenv(k, v.(string))
 		}
-		_, err := NewConfig()
+		viper := viper.New()
+		_, err := vault.NewConfig(viper)
 		if err == nil {
 			t.Fatalf("%s should not instantiate", tc.expectedType)
 		}

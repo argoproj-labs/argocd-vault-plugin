@@ -17,7 +17,7 @@ func (g *Github) Login() error {
 		return err
 	}
 
-	g.Client.VaultAPIClient.SetToken(data.Auth.ClientToken)
+	SetToken(g.Client, data.Auth.ClientToken)
 	return nil
 }
 

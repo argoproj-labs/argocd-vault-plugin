@@ -1,15 +1,18 @@
-package vault
+package vault_test
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
+	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 )
 
 func TestVaultRead(t *testing.T) {
-	ln, client := CreateTestVault(t)
+	ln, client := helpers.CreateTestVault(t)
 	defer ln.Close()
 
-	vc := &Client{
+	vc := &vault.Client{
 		VaultAPIClient: client,
 	}
 
