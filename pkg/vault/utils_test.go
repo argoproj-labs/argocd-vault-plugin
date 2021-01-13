@@ -1,135 +1,148 @@
-package vault
+package vault_test
 
 import (
-	"net"
+	"encoding/json"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"testing"
 
-	"github.com/hashicorp/vault/api"
-	credAppRole "github.com/hashicorp/vault/builtin/credential/approle"
-	"github.com/hashicorp/vault/http"
-	"github.com/hashicorp/vault/sdk/logical"
-	"github.com/hashicorp/vault/vault"
+	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
+	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 )
 
-func CreateTestVault(t *testing.T) (net.Listener, *api.Client) {
-	t.Helper()
-
-	// Create an in-memory, unsealed core (the "backend", if you will).
-	core, keyShares, rootToken := vault.TestCoreUnsealed(t)
-	_ = keyShares
-
-	// Start an HTTP server for the core.
-	ln, addr := http.TestServer(t, core)
-
-	// Create a client that talks to the server, initially authenticating with
-	// the root token.
-	conf := api.DefaultConfig()
-	conf.Address = addr
-
-	client, err := api.NewClient(conf)
+func writeToken(token string) error {
+	home, err := os.UserHomeDir()
 	if err != nil {
-		t.Fatal(err)
+		return err
 	}
-	client.SetToken(rootToken)
-
-	// Setup required secrets, policies, etc.
-	_, err = client.Logical().Write("secret/foo", map[string]interface{}{
-		"secret": "bar",
-	})
+	path := filepath.Join(home, ".avp")
+	os.Mkdir(path, 0755)
+	data := map[string]interface{}{
+		"vault_token": token,
+	}
+	file, _ := json.MarshalIndent(data, "", " ")
+	err = ioutil.WriteFile(filepath.Join(path, "config.json"), file, 0644)
 	if err != nil {
-		t.Fatal(err)
+		return err
 	}
-
-	// Setup required secrets, policies, etc.
-	_, err = client.Logical().Write("secret/ibm/arbitrary/groups/1", map[string]interface{}{
-		"secrets": []map[string]interface{}{
-			map[string]interface{}{
-				"id": "1",
-			},
-			map[string]interface{}{
-				"id": "2",
-			},
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Setup required secrets, policies, etc.
-	_, err = client.Logical().Write("secret/ibm/arbitrary/groups/1/1", map[string]interface{}{
-		"name": "secret",
-		"secret_data": map[string]interface{}{
-			"payload": "value",
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Setup required secrets, policies, etc.
-	_, err = client.Logical().Write("secret/ibm/arbitrary/groups/1/2", map[string]interface{}{
-		"name": "secret2",
-		"secret_data": map[string]interface{}{
-			"payload": "value2",
-		},
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return ln, client
+	return nil
 }
 
-func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
-	t.Helper()
+func removeToken() error {
+	home, _ := os.UserHomeDir()
+	path := filepath.Join(home, ".avp")
+	err := os.RemoveAll(path)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
-	coreConfig := &vault.CoreConfig{
-		CredentialBackends: map[string]logical.Factory{
-			"approle": credAppRole.Factory,
+func readToken() interface{} {
+	home, _ := os.UserHomeDir()
+	path := filepath.Join(home, ".avp", "config.json")
+	dat, _ := ioutil.ReadFile(path)
+	var result map[string]interface{}
+	json.Unmarshal([]byte(dat), &result)
+	return result["vault_token"]
+}
+
+func TestSetToken(t *testing.T) {
+	cluster, _, _ := helpers.CreateTestAppRoleVault(t)
+	defer cluster.Cleanup()
+
+	vc := &vault.Client{
+		VaultAPIClient: cluster.Cores[0].Client,
+	}
+
+	err := vault.SetToken(vc, "token")
+	if err != nil {
+		t.Errorf("expected token to be written, got: %s.", err)
+	}
+
+	err = removeToken()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestLoginWithNoToken(t *testing.T) {
+	cluster, role, secret := helpers.CreateTestAppRoleVault(t)
+	defer cluster.Cleanup()
+
+	vc := &vault.Client{
+		VaultAPIClient: cluster.Cores[0].Client,
+	}
+
+	cf := &vault.Config{
+		Address:    "address",
+		PathPrefix: "prefix",
+		Type: &vault.AppRole{
+			RoleID:   role,
+			SecretID: secret,
+			Client:   vc,
 		},
+		Client: vc,
 	}
 
-	cluster := vault.NewTestCluster(t, coreConfig, &vault.TestClusterOptions{
-		HandlerFunc: http.Handler,
-	})
-
-	cluster.Start()
-
-	vault.TestWaitActive(t, cluster.Cores[0].Core)
-
-	client := cluster.Cores[0].Client
-	if err := client.Sys().EnableAuthWithOptions("approle", &api.EnableAuthOptions{
-		Type: "approle",
-	}); err != nil {
-		t.Fatal(err)
-	}
-
-	_, err := client.Logical().Write("auth/approle/role/role1", map[string]interface{}{
-		"bind_secret_id": "true",
-		"period":         "300",
-	})
+	err := removeToken()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = client.Logical().Write("secret/foo", map[string]interface{}{
-		"secret": "bar",
-	})
+	err = vault.Login(cf.Type, cf)
+	if err != nil {
+		t.Errorf("expected: %s, got: %s.", "", err)
+	}
+
+	token := readToken()
+	if token == "" {
+		t.Errorf("expected a vault token, got: %s.", token.(string))
+	}
+
+	err = removeToken()
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestLoginWithOldToken(t *testing.T) {
+	cluster, role, secret := helpers.CreateTestAppRoleVault(t)
+	defer cluster.Cleanup()
+
+	vc := &vault.Client{
+		VaultAPIClient: cluster.Cores[0].Client,
+	}
+
+	cf := &vault.Config{
+		Address:    "address",
+		PathPrefix: "prefix",
+		Type: &vault.AppRole{
+			RoleID:   role,
+			SecretID: secret,
+			Client:   vc,
+		},
+		Client: vc,
+	}
+
+	err := writeToken("token")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	secret, err := client.Logical().Write("auth/approle/role/role1/secret-id", nil)
+	err = vault.Login(cf.Type, cf)
+	if err != nil {
+		t.Errorf("expected: %s, got: %s.", "", err)
+	}
+
+	token := readToken()
+	if token == "" {
+		t.Errorf("expected a vault token, got: %s.", token.(string))
+	}
+
+	err = removeToken()
 	if err != nil {
 		t.Fatal(err)
 	}
-	secretID := secret.Data["secret_id"].(string)
-
-	secret, err = client.Logical().Read("auth/approle/role/role1/role-id")
-	if err != nil {
-		t.Fatal(err)
-	}
-	roleID := secret.Data["role_id"].(string)
-
-	return cluster, roleID, secretID
 }

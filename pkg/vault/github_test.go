@@ -1,19 +1,22 @@
-package vault
+package vault_test
 
 import (
 	"reflect"
 	"testing"
+
+	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
+	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 )
 
 func TestGithubGetSecrets(t *testing.T) {
-	ln, client := CreateTestVault(t)
+	ln, client := helpers.CreateTestVault(t)
 	defer ln.Close()
 
-	vc := &Client{
+	vc := &vault.Client{
 		VaultAPIClient: client,
 	}
 
-	github := Github{
+	github := vault.Github{
 		AccessToken: "token",
 		Client:      vc,
 	}

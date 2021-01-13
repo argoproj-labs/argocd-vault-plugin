@@ -1,11 +1,9 @@
 package cmd
 
 import (
-	"bytes"
 	"fmt"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
-	"github.com/IBM/argocd-vault-plugin/pkg/kubernetesclient"
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -41,40 +39,27 @@ func NewGenerateCommand() *cobra.Command {
 				return fmt.Errorf("could not read YAML files: %s", errs)
 			}
 
-			if secretName != "" {
-				localClient, err := kubernetesclient.NewClient()
-				if err != nil {
-					return err
-				}
-				yaml, err := localClient.ReadSecret(secretName)
-				if err != nil {
-					return err
-				}
-				viper.SetConfigType("yaml")
-				viper.ReadConfig(bytes.NewBuffer(yaml))
-			}
-			if configPath != "" {
-				viper.SetConfigFile(configPath)
-				err := viper.ReadInConfig()
-				if err != nil {
-					return err
-				}
-			}
-
-			config, err := vault.NewConfig()
+			viper := viper.New()
+			err = setConfig(secretName, configPath, viper)
 			if err != nil {
 				return err
 			}
 
-			vaultClient := config.Type
-			err = vaultClient.Login()
+			vaultConfig, err := vault.NewConfig(viper)
+			if err != nil {
+				return err
+			}
+
+			vaultClient := vaultConfig.Type
+
+			err = vault.Login(vaultClient, vaultConfig)
 			if err != nil {
 				return err
 			}
 
 			for _, manifest := range manifests {
 
-				template, err := kube.NewTemplate(manifest, vaultClient, config.PathPrefix)
+				template, err := kube.NewTemplate(manifest, vaultClient, vaultConfig.PathPrefix)
 				if err != nil {
 					return err
 				}
