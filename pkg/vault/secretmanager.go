@@ -32,7 +32,11 @@ func (s *SecretManager) Login() error {
 		return err
 	}
 
-	SetToken(s.Client, data.Auth.ClientToken)
+	err = SetToken(s.Client, data.Auth.ClientToken)
+	if err != nil {
+		fmt.Print(err) // // Ignore this error as we dont want to stop the process
+	}
+
 	return nil
 }
 

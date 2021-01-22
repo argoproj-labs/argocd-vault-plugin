@@ -52,9 +52,12 @@ func NewGenerateCommand() *cobra.Command {
 
 			vaultClient := vaultConfig.Type
 
-			err = vault.Login(vaultClient, vaultConfig)
+			err = vault.CheckExistingToken(vaultClient, vaultConfig)
 			if err != nil {
-				return err
+				err = vaultClient.Login()
+				if err != nil {
+					return err
+				}
 			}
 
 			for _, manifest := range manifests {

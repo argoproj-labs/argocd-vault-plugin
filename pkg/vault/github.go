@@ -1,5 +1,7 @@
 package vault
 
+import "fmt"
+
 // Github is a struct for working with Vault that uses the Github Auth method
 type Github struct {
 	AccessToken string
@@ -17,7 +19,11 @@ func (g *Github) Login() error {
 		return err
 	}
 
-	SetToken(g.Client, data.Auth.ClientToken)
+	err = SetToken(g.Client, data.Auth.ClientToken)
+	if err != nil {
+		fmt.Print(err) // Ignore this error as we dont want to stop the process
+	}
+
 	return nil
 }
 
