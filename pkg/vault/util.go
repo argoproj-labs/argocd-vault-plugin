@@ -2,6 +2,7 @@ package vault
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -51,10 +52,13 @@ func Login(vaultClient VaultType, vaultConfig *Config) error {
 }
 
 // SetToken TODO
-func SetToken(client *Client, token string) error {
+func SetToken(client *Client, token string) {
+	// We want to set the token first
+	client.VaultAPIClient.SetToken(token)
+
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return err
+		fmt.Printf("Could not access home directory, will need to login to Vault on subsequent runs: %s", err.Error())
 	}
 
 	path := filepath.Join(home, ".avp")
@@ -68,10 +72,6 @@ func SetToken(client *Client, token string) error {
 	file, _ := json.MarshalIndent(data, "", " ")
 	err = ioutil.WriteFile(filepath.Join(path, "config.json"), file, 0644)
 	if err != nil {
-		return err
+		fmt.Printf("Could not write token to file, will need to login to Vault on subsequent runs: %s", err.Error())
 	}
-
-	client.VaultAPIClient.SetToken(token)
-
-	return nil
 }
