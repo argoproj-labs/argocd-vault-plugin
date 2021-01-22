@@ -56,12 +56,9 @@ func TestSetToken(t *testing.T) {
 		VaultAPIClient: cluster.Cores[0].Client,
 	}
 
-	err := vault.SetToken(vc, "token")
-	if err != nil {
-		t.Errorf("expected token to be written, got: %s.", err)
-	}
+	vault.SetToken(vc, "token")
 
-	err = removeToken()
+	err := removeToken()
 	if err != nil {
 		t.Fatal(err)
 	}
