@@ -17,7 +17,12 @@ func (g *Github) Login() error {
 		return err
 	}
 
-	SetToken(g.Client, data.Auth.ClientToken)
+	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
+	err = SetToken(g.Client, data.Auth.ClientToken)
+	if err != nil {
+		print(err)
+	}
+
 	return nil
 }
 
