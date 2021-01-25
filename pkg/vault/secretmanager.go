@@ -32,9 +32,10 @@ func (s *SecretManager) Login() error {
 		return err
 	}
 
+	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
 	err = SetToken(s.Client, data.Auth.ClientToken)
 	if err != nil {
-		fmt.Print(err) // // Ignore this error as we dont want to stop the process
+		print(err)
 	}
 
 	return nil

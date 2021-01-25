@@ -95,7 +95,7 @@ AVP_TYPE=vault # corresponds to TYPE key
 Make sure that these environment variables are available to the plugin when running it, whether that is in Argo CD or as a CLI tool. Note that any _set_
 environment variables take precedence over configuration pulled from a Kubernetes Secret or a file.
 
-### As a Vault Plugin
+### As an ArgoCD Plugin
 This plugin is meant to be used with Argo CD. In order to use the plugin you can add it to your Argo CD instance as a volume mount or build your own Argo CD image.
 The Argo CD docs provide information on how to get started https://argoproj.github.io/argo-cd/operator-manual/custom_tools/.
 
@@ -152,7 +152,7 @@ to the `argocd-cm` configMap.
 
 Once that is done, the plugin has been registered with Argo CD and can be used by Applications.
 
-To tell you Argo Cd Application to use the plugin you would specify it in the Application CRD
+To tell your ArgoCD Application to use the plugin you would specify it in the Application CR:
 ```
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -183,6 +183,14 @@ The plugin can be used as just a cli tool if you are using a CI/CD system other 
 `argocd-vault-plugin generate ./path-to-templates`
 
 And it will output the generated yaml files to standard out.
+
+
+
+
+
+## Notes
+
+- The plugin tries to cache the Vault token obtained from logging into Vault on the `argocd-repo-server`'s container's disk, at `/home/.avp/config.json` for the duration of the token's lifetime. This of course requires that the container user is able to write to that path. Some environments, like Openshift 4, will force a random user for containers to run with; therefore this feature will not work, and the plugin will attempt to login to Vault on every run. This can be fixed by ensuring the `argocd-repo-server`'s container runs with the user `argocd`. 
 
 ## Contributing
 

@@ -1,7 +1,5 @@
 package vault
 
-import "fmt"
-
 // AppRole is a struct for working with Vault that uses AppRole
 type AppRole struct {
 	RoleID   string
@@ -21,9 +19,10 @@ func (a *AppRole) Login() error {
 		return err
 	}
 
+	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
 	err = SetToken(a.Client, data.Auth.ClientToken)
 	if err != nil {
-		fmt.Print(err) // Ignore this error as we dont want to stop the process
+		print(err)
 	}
 
 	return nil
