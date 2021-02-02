@@ -57,7 +57,7 @@ The plugin requires some configuration to connect to Vault. The parameters are:
 | IBM_API_KEY    | IBM Cloud IAM API Key      | Required with `TYPE` of `secretmanager` and `AUTH_TYPE` of `iam` |
 
 #### Secrets in the cluster hosting Argo CD
-You can define a Secret in the `argocd` namespace of your Argo CD cluster with the Vault configuration. The keys of the secret's `data` 
+You can define a Secret in the `argocd` namespace of your Argo CD cluster with the Vault configuration. The keys of the secret's `data`
 should be the exact names given above, case-sensitive:
 ```yaml
 apiVersion: v1
@@ -73,9 +73,9 @@ metadata:
 type: Opaque
 ```
 
-You can use it like this: `argocd-vault-plugin generate /some/path -s vault-configuration`. 
+You can use it like this: `argocd-vault-plugin generate /some/path -s vault-configuration`.
 
-Note that this requires the `argocd-repo-server` to have a service account token mounted in the standard location. 
+Note that this requires the `argocd-repo-server` to have a service account token mounted in the standard location.
 
 #### File on disk
 The configuration can be given in a file reachable from the plugin, in any Viper supported format (YAML, JSON, etc.):
@@ -185,7 +185,7 @@ The plugin can be used as just a cli tool if you are using a CI/CD system other 
 And it will output the generated yaml files to standard out.
 
 ## Notes
-- The plugin tries to cache the Vault token obtained from logging into Vault on the `argocd-repo-server`'s container's disk, at `/home/.avp/config.json` for the duration of the token's lifetime. This of course requires that the container user is able to write to that path. Some environments, like Openshift 4, will force a random user for containers to run with; therefore this feature will not work, and the plugin will attempt to login to Vault on every run. This can be fixed by ensuring the `argocd-repo-server`'s container runs with the user `argocd`. 
+- The plugin tries to cache the Vault token obtained from logging into Vault on the `argocd-repo-server`'s container's disk, at `/home/.avp/config.json` for the duration of the token's lifetime. This of course requires that the container user is able to write to that path. Some environments, like Openshift 4, will force a random user for containers to run with; therefore this feature will not work, and the plugin will attempt to login to Vault on every run. This can be fixed by ensuring the `argocd-repo-server`'s container runs with the user `argocd`.
 
 ## Contributing
-You can view the documentation on contibuting [here](./Contributing.md)
+Interested in contributing? Please read our contributing documentation [here](./CONTRIBUTING.md) to get started!
