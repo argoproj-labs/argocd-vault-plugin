@@ -11,9 +11,9 @@ This plugin is aimed at helping to solve the issue of secret management with Git
 ## How it works
 The argocd-vault-plugin works by taking a directory of yaml files that have been templated out using the pattern of `<thing-to-fill-in>` where you would want a value from Vault to go. The inside of the `<>` would be the actual key in vault.
 
-An annotation is used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp_path: "path/to/vault"`. This is optional and the path prefix can be configured instead (See [Configuration](#configuration))
+An annotation is used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp_path: "path/to/secret"`. This is optional and the path prefix can be configured instead (See [Configuration](#configuration))
 
-For example, if you have a secret with the key `password` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/vault/password-vault-key` and inject it into the secret yaml.
+For example, if you have a secret with the key `password` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/secret/password-vault-key` and inject it into the secret yaml.
 
 ```
 kind: Secret
@@ -119,7 +119,7 @@ initContainers:
   command: [sh, -c]
   args:
     - wget -O argocd-vault-plugin
-      https://github.com/IBM/argocd-vault-plugin/releases/download/v0.1.0/argocd-vault-plugin_0.1.0_linux_amd64
+      https://github.com/IBM/argocd-vault-plugin/releases/download/v0.2.2/argocd-vault-plugin_0.2.2_linux_amd64
 
       chmod +x argocd-vault-plugin && mv argocd-vault-plugin /custom-tools/
   volumeMounts:
@@ -185,7 +185,7 @@ The plugin can be used as just a cli tool if you are using a CI/CD system other 
 And it will output the generated yaml files to standard out.
 
 ## Notes
-- The plugin tries to cache the Vault token obtained from logging into Vault on the `argocd-repo-server`'s container's disk, at `/home/.avp/config.json` for the duration of the token's lifetime. This of course requires that the container user is able to write to that path. Some environments, like Openshift 4, will force a random user for containers to run with; therefore this feature will not work, and the plugin will attempt to login to Vault on every run. This can be fixed by ensuring the `argocd-repo-server`'s container runs with the user `argocd`.
+- The plugin tries to cache the Vault token obtained from logging into Vault on the `argocd-repo-server`'s container's disk, at `~/.avp/config.json` for the duration of the token's lifetime. This of course requires that the container user is able to write to that path. Some environments, like Openshift 4, will force a random user for containers to run with; therefore this feature will not work, and the plugin will attempt to login to Vault on every run. This can be fixed by ensuring the `argocd-repo-server`'s container runs with the user `argocd`.
 
 ## Contributing
 Interested in contributing? Please read our contributing documentation [here](./CONTRIBUTING.md) to get started!
