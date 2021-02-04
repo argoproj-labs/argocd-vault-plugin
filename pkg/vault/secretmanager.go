@@ -42,11 +42,14 @@ func (s *SecretManager) Login() error {
 }
 
 // GetSecrets gets secrets from IBM Secret Manager and returns the formatted data
-func (s *SecretManager) GetSecrets(path string) (map[string]interface{}, error) {
-	data, err := s.Client.Read(path)
+func (s *SecretManager) GetSecrets(path, _ string) (map[string]interface{}, error) {
+	secret, err := s.Client.Read(path)
 	if err != nil {
 		return nil, err
 	}
+
+	var data map[string]interface{}
+	data = secret.Data
 
 	// Make sure the secret exists
 	if _, ok := data["secrets"]; !ok {
@@ -68,10 +71,14 @@ func (s *SecretManager) GetSecrets(path string) (map[string]interface{}, error) 
 	// Read each secret and get payload
 	secrets := make(map[string]interface{})
 	for _, j := range v {
-		data, err := s.Client.Read(fmt.Sprintf("%s/%s", path, j))
+		secret, err := s.Client.Read(fmt.Sprintf("%s/%s", path, j))
 		if err != nil {
 			return nil, err
 		}
+
+		var data map[string]interface{}
+		data = secret.Data
+
 		// Get name and data of secret and append to secrets map
 		secretName := data["name"].(string)
 		secretData := data["secret_data"].(map[string]interface{})

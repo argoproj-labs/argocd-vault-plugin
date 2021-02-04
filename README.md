@@ -50,11 +50,20 @@ The plugin requires some configuration to connect to Vault. The parameters are:
 | VAULT_ADDR     | Address of your Vault      | N/A                  |
 | PATH_PREFIX    | Prefix of the vault path to look for the secrets | N/A       |
 | TYPE           | The type of Vault backend  | Supported values: `vault` and `secretmanager` |
+| KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 1)|
 | AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |
 | GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
 | ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
 | SECRET_ID      | Vault AppRole Secret_ID    | Required with `AUTH_TYPE` of `approle` |
 | IBM_API_KEY    | IBM Cloud IAM API Key      | Required with `TYPE` of `secretmanager` and `AUTH_TYPE` of `iam` |
+
+#### Supported Annotation
+We support two different annotations that can be used inside a kubernetes resource. These annotations will override any corrisponding configuration set via Environment Variable or Configuration File.
+
+| Annotation | Description |  
+| ---------- | ----------- |  
+| avp_path | Path to the Vault Secret |
+| kvVersion | Version of the KV Secret Engine |
 
 #### Secrets in the cluster hosting Argo CD
 You can define a Secret in the `argocd` namespace of your Argo CD cluster with the Vault configuration. The keys of the secret's `data`
@@ -119,7 +128,7 @@ initContainers:
   command: [sh, -c]
   args:
     - wget -O argocd-vault-plugin
-      https://github.com/IBM/argocd-vault-plugin/releases/download/v0.2.2/argocd-vault-plugin_0.2.2_linux_amd64
+      https://github.com/IBM/argocd-vault-plugin/releases/download/v0.3.0/argocd-vault-plugin_0.3.0_linux_amd64
 
       chmod +x argocd-vault-plugin && mv argocd-vault-plugin /custom-tools/
   volumeMounts:

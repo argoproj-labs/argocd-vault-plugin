@@ -42,16 +42,33 @@ func TestAppRoleGetSecrets(t *testing.T) {
 		Client:   vc,
 	}
 
-	expected := map[string]interface{}{
-		"secret": "bar",
-	}
+	t.Run("will get data from vault with kv1", func(t *testing.T) {
+		data, err := appRole.GetSecrets("secret/foo", "1")
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
 
-	data, err := appRole.GetSecrets("secret/foo")
-	if err != nil {
-		t.Fatalf("expected 0 errors but got: %s", err)
-	}
+		expected := map[string]interface{}{
+			"secret": "bar",
+		}
 
-	if !reflect.DeepEqual(data, expected) {
-		t.Errorf("expected: %s, got: %s.", expected, data)
-	}
+		if !reflect.DeepEqual(data, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, data)
+		}
+	})
+
+	t.Run("will get data from vault with kv2", func(t *testing.T) {
+		data, err := appRole.GetSecrets("kv/data/test", "2")
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
+
+		expected := map[string]interface{}{
+			"hello": "world",
+		}
+
+		if !reflect.DeepEqual(data, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, data)
+		}
+	})
 }

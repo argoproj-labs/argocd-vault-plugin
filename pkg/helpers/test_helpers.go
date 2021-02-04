@@ -33,9 +33,25 @@ func CreateTestVault(t *testing.T) (net.Listener, *api.Client) {
 	}
 	client.SetToken(rootToken)
 
+	client.Sys().Mount("kv", &api.MountInput{
+		Type: "kv",
+		Options: map[string]string{
+			"version": "2",
+		},
+	})
+
 	// Setup required secrets, policies, etc.
 	_, err = client.Logical().Write("secret/foo", map[string]interface{}{
 		"secret": "bar",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("kv/data/test", map[string]interface{}{
+		"data": map[string]interface{}{
+			"hello": "world",
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -100,6 +116,14 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 	vault.TestWaitActive(t, cluster.Cores[0].Core)
 
 	client := cluster.Cores[0].Client
+
+	client.Sys().Mount("kv", &api.MountInput{
+		Type: "kv",
+		Options: map[string]string{
+			"version": "2",
+		},
+	})
+
 	if err := client.Sys().EnableAuthWithOptions("approle", &api.EnableAuthOptions{
 		Type: "approle",
 	}); err != nil {
@@ -116,6 +140,15 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 
 	_, err = client.Logical().Write("secret/foo", map[string]interface{}{
 		"secret": "bar",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("kv/data/test", map[string]interface{}{
+		"data": map[string]interface{}{
+			"hello": "world",
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
