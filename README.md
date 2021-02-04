@@ -13,7 +13,7 @@ The argocd-vault-plugin works by taking a directory of yaml files that have been
 
 An annotation is used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp_path: "path/to/vault"`. This is optional and the path prefix can be configured instead (See [Configuration](#configuration))
 
-For example, if you have a secret with the key `password` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/vault/password-vault-key` and inject it into the secret yaml.
+For example, if you have a secret with the key `password` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/secret/password-vault-key` and inject it into the secret yaml.
 
 ```
 kind: Secret
