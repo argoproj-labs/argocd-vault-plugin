@@ -23,7 +23,7 @@ metadata:
   annotations:
     avp_path: "path/to/secret"
 type: Opaque
-data:
+stringData:
   password: <password-vault-key>
 ```
 
@@ -36,7 +36,7 @@ metadata:
   annotations:
     avp_path: "path/to/secret"
 type: Opaque
-data:
+stringData:
   password: cGFzc3dvcmQK # The Value from the key password-vault-key in vault
 ```
 
