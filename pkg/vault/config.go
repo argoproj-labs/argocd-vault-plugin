@@ -36,8 +36,7 @@ func NewConfig(viper *viper.Viper) (*Config, error) {
 		return nil, err
 	}
 
-	kvVersion := "1"
-
+	kvVersion := "2"
 	if viper.IsSet("KV_VERSION") {
 		kvVersion = viper.GetString("KV_VERSION")
 	}

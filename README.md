@@ -50,7 +50,7 @@ The plugin requires some configuration to connect to Vault. The parameters are:
 | VAULT_ADDR     | Address of your Vault      | N/A                  |
 | PATH_PREFIX    | Prefix of the vault path to look for the secrets | N/A       |
 | TYPE           | The type of Vault backend  | Supported values: `vault` and `secretmanager` |
-| KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 1)|
+| KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2)|
 | AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |
 | GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
 | ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
