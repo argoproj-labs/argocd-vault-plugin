@@ -121,7 +121,7 @@ initContainers:
     - wget -O argocd-vault-plugin
       https://github.com/IBM/argocd-vault-plugin/releases/download/v0.2.2/argocd-vault-plugin_0.2.2_linux_amd64
 
-      mv argocd-vault-plugin /custom-tools/
+      chmod +x argocd-vault-plugin && mv argocd-vault-plugin /custom-tools/
   volumeMounts:
     - mountPath: /custom-tools
       name: custom-tools
