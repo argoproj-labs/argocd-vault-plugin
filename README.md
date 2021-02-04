@@ -119,7 +119,7 @@ initContainers:
   command: [sh, -c]
   args:
     - wget -O argocd-vault-plugin
-      https://github.com/IBM/argocd-vault-plugin/releases/download/v0.1.0/argocd-vault-plugin_0.1.0_linux_amd64
+      https://github.com/IBM/argocd-vault-plugin/releases/download/v0.2.2/argocd-vault-plugin_0.2.2_linux_amd64
 
       mv argocd-vault-plugin /custom-tools/
   volumeMounts:
