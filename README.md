@@ -9,9 +9,9 @@ An ArgoCD plugin to retrieve secrets from Hashicorp Vault and inject them into K
 This plugin is aimed at helping to solve the issue of secret management with GitOps and ArgoCD. We wanted to find a simple way to utilize Vault without having to rely on an operator or custom resource definition. This plugin can be used not just for secrets but also for deployments, configMaps or any other Kubernetes resource.
 
 ## How it works
-The argocd-vault-plugin works by taking a directory of yaml files that have been templated out using the pattern of `<thing-to-fill-in>` where you would want a value from Vault to go. The inside of the `<>` would be the actual key in vault.
+The argocd-vault-plugin works by taking a directory of yaml files that have been templated out using the pattern of `<thing-to-fill-in>` where you would want a value from Vault to go. The inside of the `<>` would be the actual key in Vault.
 
-An annotation is used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp_path: "path/to/secret"`. This is optional and the path prefix can be configured instead (See [Configuration](#configuration))
+An annotation is used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp_path: "path/to/secret"`. This is optional, and a path prefix to be used for all yaml files can be configured instead (See [Configuration](#configuration))
 
 For example, if you have a secret with the key `password` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/secret/password-vault-key` and inject it into the secret yaml.
 
@@ -48,7 +48,7 @@ The plugin requires some configuration to connect to Vault. The parameters are:
 | Name            | Description                | Notes                |
 | --------------- | -------------------------- | -------------------- |
 | VAULT_ADDR     | Address of your Vault      | N/A                  |
-| PATH_PREFIX    | Prefix of the vault path to look for the secrets | N/A       |
+| PATH_PREFIX    | Prefix of the vault path to look for the secrets | A `/` delimitted path to a secret in Vault. This value is concatenated with the `kind` of the given resource; e.g, replacing a Secret with `PATH_PREFIX` `my-team/my-app` will use the path `my-team/my-app/secret`       |
 | TYPE           | The type of Vault backend  | Supported values: `vault` and `secretmanager` |
 | KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2)|
 | AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |
