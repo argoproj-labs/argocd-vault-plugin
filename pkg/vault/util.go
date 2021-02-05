@@ -98,6 +98,9 @@ func ReadVaultSecret(client Client, path, kvVersion string) (map[string]interfac
 		if _, ok := secret.Data["data"]; ok {
 			return secret.Data["data"].(map[string]interface{}), nil
 		}
+		if len(secret.Data) == 0 {
+			return nil, fmt.Errorf("The Vault path: %s is empty - did you forget to include /data/ in the Vault path for kv-v2?", path)
+		}
 		return nil, errors.New("Could not get data from Vault, check that kv-v2 is the correct engine")
 	}
 
