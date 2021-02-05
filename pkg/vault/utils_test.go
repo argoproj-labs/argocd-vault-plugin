@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
@@ -61,5 +62,20 @@ func TestSetToken(t *testing.T) {
 	err := removeToken()
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestReadVaultSecret(t *testing.T) {
+	cluster, _, _ := helpers.CreateTestAppRoleVault(t)
+	defer cluster.Cleanup()
+
+	vc := &vault.Client{
+		VaultAPIClient: cluster.Cores[0].Client,
+	}
+
+	_, err := vault.ReadVaultSecret(*vc, "kv/data/test", "3")
+	expected := "Unsupported kvVersion specified"
+	if !reflect.DeepEqual(err.Error(), expected) {
+		t.Errorf("expected: %s, got: %s.", expected, err.Error())
 	}
 }

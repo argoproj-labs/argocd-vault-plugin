@@ -2,6 +2,7 @@ package vault
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -80,4 +81,29 @@ func SetToken(client *Client, token string) error {
 	}
 
 	return nil
+}
+
+// ReadVaultSecret calls the vault client and returns a data based on the KV Version
+func ReadVaultSecret(client Client, path, kvVersion string) (map[string]interface{}, error) {
+	secret, err := client.Read(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if secret == nil {
+		return map[string]interface{}{}, nil
+	}
+
+	if kvVersion == "2" {
+		if _, ok := secret.Data["data"]; ok {
+			return secret.Data["data"].(map[string]interface{}), nil
+		}
+		return nil, errors.New("Could not get data from Vault, check that kv-v2 is the correct engine")
+	}
+
+	if kvVersion == "1" {
+		return secret.Data, nil
+	}
+
+	return nil, errors.New("Unsupported kvVersion specified")
 }

@@ -18,15 +18,15 @@ func (c *Client) Write(path string, payload map[string]interface{}) (*api.Secret
 	return data, nil
 }
 
-func (c *Client) Read(path string) (map[string]interface{}, error) {
-	data, err := c.VaultAPIClient.Logical().Read(path)
+func (c *Client) Read(path string) (*api.Secret, error) {
+	secret, err := c.VaultAPIClient.Logical().Read(path)
 	if err != nil {
 		return nil, err
 	}
 
-	if data != nil {
-		return data.Data, nil
+	if secret == nil {
+		return &api.Secret{}, nil
 	}
-	// if nil throw error or empty map
-	return map[string]interface{}{}, nil
+
+	return secret, nil
 }

@@ -36,9 +36,15 @@ func NewConfig(viper *viper.Viper) (*Config, error) {
 		return nil, err
 	}
 
+	kvVersion := "2"
+	if viper.IsSet("KV_VERSION") {
+		kvVersion = viper.GetString("KV_VERSION")
+	}
+
 	client := &Client{
 		VaultAPIClient: apiClient,
 	}
+
 	config.Client = client
 
 	auth := viper.GetString("AUTH_TYPE")
@@ -49,9 +55,10 @@ func NewConfig(viper *viper.Viper) (*Config, error) {
 		case "approle":
 			if viper.IsSet("ROLE_ID") && viper.IsSet("SECRET_ID") {
 				config.Type = &AppRole{
-					RoleID:   viper.GetString("ROLE_ID"),
-					SecretID: viper.GetString("SECRET_ID"),
-					Client:   client,
+					RoleID:    viper.GetString("ROLE_ID"),
+					SecretID:  viper.GetString("SECRET_ID"),
+					KvVersion: kvVersion,
+					Client:    client,
 				}
 			} else {
 				return nil, errors.New("ROLE_ID and SECRET_ID for approle authentication cannot be empty")
@@ -60,6 +67,7 @@ func NewConfig(viper *viper.Viper) (*Config, error) {
 			if viper.IsSet("GITHUB_TOKEN") {
 				config.Type = &Github{
 					AccessToken: viper.GetString("GITHUB_TOKEN"),
+					KvVersion:   kvVersion,
 					Client:      client,
 				}
 			} else {

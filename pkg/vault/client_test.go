@@ -6,6 +6,7 @@ import (
 
 	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
 	"github.com/IBM/argocd-vault-plugin/pkg/vault"
+	"github.com/hashicorp/vault/api"
 )
 
 func TestVaultRead(t *testing.T) {
@@ -17,25 +18,25 @@ func TestVaultRead(t *testing.T) {
 	}
 
 	t.Run("will get data from vault", func(t *testing.T) {
-		data, err := vc.Read("secret/foo")
+		secret, err := vc.Read("secret/foo")
 		if err != nil {
 			t.Error(err)
 		}
 
-		if data["secret"] != "bar" {
-			t.Errorf("expected: %s, got: %s.", "bar", data["secret"])
+		if secret.Data["secret"] != "bar" {
+			t.Errorf("expected: %s, got: %s.", "bar", secret.Data["secret"])
 		}
 	})
 
 	t.Run("will get empty map if no path exists", func(t *testing.T) {
-		data, err := vc.Read("secret/bar")
+		secret, err := vc.Read("secret/bar")
 		if err != nil {
 			t.Error(err)
 		}
 
-		expected := map[string]interface{}{}
-		if !reflect.DeepEqual(data, expected) {
-			t.Errorf("expected: %s, got: %s.", expected, data)
+		expected := &api.Secret{}
+		if !reflect.DeepEqual(secret, expected) {
+			t.Errorf("expected: %v, got: %v.", expected, secret)
 		}
 	})
 
@@ -48,10 +49,12 @@ func TestVaultRead(t *testing.T) {
 			t.Error(err)
 		}
 
-		data, err := vc.Read("secret/bar")
+		secret, err := vc.Read("secret/bar")
 		if err != nil {
 			t.Error(err)
 		}
+
+		data := secret.Data
 
 		if !reflect.DeepEqual(data, payload) {
 			t.Errorf("expected: %s, got: %s.", payload, data)

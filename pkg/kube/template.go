@@ -37,7 +37,12 @@ func NewTemplate(template map[string]interface{}, vault vault.VaultType, prefix 
 		path = avpPath
 	}
 
-	data, err := vault.GetSecrets(path)
+	var kvVersion string
+	if kv, ok := annotations["kv_version"]; ok {
+		kvVersion = kv
+	}
+
+	data, err := vault.GetSecrets(path, kvVersion)
 	if err != nil {
 		return nil, err
 	}

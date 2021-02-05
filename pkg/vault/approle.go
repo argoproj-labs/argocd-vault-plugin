@@ -2,8 +2,9 @@ package vault
 
 // AppRole is a struct for working with Vault that uses AppRole
 type AppRole struct {
-	RoleID   string
-	SecretID string
+	RoleID    string
+	SecretID  string
+	KvVersion string
 	*Client
 }
 
@@ -29,11 +30,9 @@ func (a *AppRole) Login() error {
 }
 
 // GetSecrets gets secrets from vault and returns the formatted data
-func (a *AppRole) GetSecrets(path string) (map[string]interface{}, error) {
-	data, err := a.Client.Read(path)
-	if err != nil {
-		return nil, err
+func (a *AppRole) GetSecrets(path, kvVersion string) (map[string]interface{}, error) {
+	if kvVersion != "" {
+		a.KvVersion = kvVersion
 	}
-
-	return data, nil
+	return ReadVaultSecret(*a.Client, path, a.KvVersion)
 }

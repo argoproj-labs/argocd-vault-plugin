@@ -27,7 +27,7 @@ func TestSecretManagerGetSecrets(t *testing.T) {
 		"secret2": "value2",
 	}
 
-	data, err := sm.GetSecrets("secret/ibm/arbitrary/groups/1")
+	data, err := sm.GetSecrets("secret/ibm/arbitrary/groups/1", "")
 	if err != nil {
 		t.Fatalf("expected 0 errors but got: %s", err)
 	}
@@ -50,7 +50,7 @@ func TestSecretManagerGetSecretsFail(t *testing.T) {
 		Client:         vc,
 	}
 
-	_, err := sm.GetSecrets("secret/ibm/arbitrary/groups/3")
+	_, err := sm.GetSecrets("secret/ibm/arbitrary/groups/3", "")
 	if err == nil {
 		t.Fatalf("expected an error but did not recieve one")
 	}

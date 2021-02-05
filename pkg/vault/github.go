@@ -3,6 +3,7 @@ package vault
 // Github is a struct for working with Vault that uses the Github Auth method
 type Github struct {
 	AccessToken string
+	KvVersion   string
 	*Client
 }
 
@@ -27,11 +28,9 @@ func (g *Github) Login() error {
 }
 
 // GetSecrets gets secrets from vault and returns the formatted data
-func (g *Github) GetSecrets(path string) (map[string]interface{}, error) {
-	data, err := g.Client.Read(path)
-	if err != nil {
-		return nil, err
+func (g *Github) GetSecrets(path, kvVersion string) (map[string]interface{}, error) {
+	if kvVersion != "" {
+		g.KvVersion = kvVersion
 	}
-
-	return data, nil
+	return ReadVaultSecret(*g.Client, path, g.KvVersion)
 }
