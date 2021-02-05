@@ -79,3 +79,21 @@ func TestReadVaultSecret(t *testing.T) {
 		t.Errorf("expected: %s, got: %s.", expected, err.Error())
 	}
 }
+
+func TestReadVaultSecretWrongPath(t *testing.T) {
+	cluster, _, _ := helpers.CreateTestAppRoleVault(t)
+	defer cluster.Cleanup()
+
+	vc := &vault.Client{
+		VaultAPIClient: cluster.Cores[0].Client,
+	}
+
+	_, err := vault.ReadVaultSecret(*vc, "kv/test", "2")
+	expected := "The Vault path: kv/test is empty - did you forget to include /data/ in the Vault path for kv-v2?"
+	if err == nil {
+		t.Fatalf("Vault path kv/test should be non-existent for kv-v2 Vault")
+	}
+	if !reflect.DeepEqual(err.Error(), expected) {
+		t.Errorf("expected: %s, got: %s.", expected, err.Error())
+	}
+}
