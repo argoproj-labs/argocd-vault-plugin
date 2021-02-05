@@ -38,7 +38,7 @@ func NewTemplate(template map[string]interface{}, vault vault.VaultType, prefix 
 	}
 
 	var kvVersion string
-	if kv, ok := annotations["kvVersion"]; ok {
+	if kv, ok := annotations["kv_version"]; ok {
 		kvVersion = kv
 	}
 

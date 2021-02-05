@@ -63,7 +63,7 @@ We support two different annotations that can be used inside a kubernetes resour
 | Annotation | Description |  
 | ---------- | ----------- |  
 | avp_path | Path to the Vault Secret |
-| kvVersion | Version of the KV Secret Engine |
+| kv_version | Version of the KV Secret Engine |
 
 #### Secrets in the cluster hosting Argo CD
 You can define a Secret in the `argocd` namespace of your Argo CD cluster with the Vault configuration. The keys of the secret's `data`
