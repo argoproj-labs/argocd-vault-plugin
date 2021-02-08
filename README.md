@@ -151,7 +151,7 @@ data:
 If you are using helm you might add something like:
 ```
 configManagementPlugins: |
-  - name: argocd-vault-helm
+  - name: argocd-vault
     generate:
       command: [sh, -c]
       args: ["helm template . > all.yaml && argocd-vault-plugin generate all.yaml"]
@@ -175,7 +175,7 @@ spec:
   source:
     path: .
     plugin:
-      name: argocd-vault-plugin
+      name: argocd-vault
       env:
         - name: AVP_PATH_PREFIX # Optional: Can be added to resource or a env var via a kubernetes secret
           value: some/path/to/vault
@@ -184,7 +184,7 @@ spec:
   project: default
 ```
 Or you can pass the config-management-plugin flag to the Argo CD CLI app create command:  
-`argocd app create <appName> --config-management-plugin argocd-vault-plugin`
+`argocd app create <appName> --config-management-plugin argocd-vault`
 
 ### As a CLI
 The plugin can be used as just a cli tool if you are using a CI/CD system other than argo. You just run the tool like:
