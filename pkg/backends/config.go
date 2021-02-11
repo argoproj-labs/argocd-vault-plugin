@@ -1,10 +1,11 @@
-package vault
+package backends
 
 import (
 	"errors"
 	"net/http"
 	"time"
 
+	"github.com/IBM/argocd-vault-plugin/pkg/backends/auth"
 	"github.com/hashicorp/vault/api"
 	"github.com/spf13/viper"
 )
@@ -13,8 +14,8 @@ import (
 type Config struct {
 	Address    string
 	PathPrefix string
-	Type       VaultType
-	*Client
+	Backend
+	VaultClient *api.Client
 }
 
 // NewConfig returns a new Config struct
@@ -36,39 +37,35 @@ func NewConfig(viper *viper.Viper) (*Config, error) {
 		return nil, err
 	}
 
+	config.VaultClient = apiClient
+
 	kvVersion := "2"
 	if viper.IsSet("KV_VERSION") {
 		kvVersion = viper.GetString("KV_VERSION")
 	}
 
-	client := &Client{
-		VaultAPIClient: apiClient,
-	}
-
-	config.Client = client
-
-	auth := viper.GetString("AUTH_TYPE")
+	authType := viper.GetString("AUTH_TYPE")
 
 	switch viper.GetString("TYPE") {
 	case "vault":
-		switch auth {
+		vaultBackend := &Vault{
+			KvVersion:   kvVersion,
+			VaultClient: apiClient,
+		}
+		switch authType {
 		case "approle":
 			if viper.IsSet("ROLE_ID") && viper.IsSet("SECRET_ID") {
-				config.Type = &AppRole{
-					RoleID:    viper.GetString("ROLE_ID"),
-					SecretID:  viper.GetString("SECRET_ID"),
-					KvVersion: kvVersion,
-					Client:    client,
+				vaultBackend.AuthType = &auth.AppRole{
+					RoleID:   viper.GetString("ROLE_ID"),
+					SecretID: viper.GetString("SECRET_ID"),
 				}
 			} else {
 				return nil, errors.New("ROLE_ID and SECRET_ID for approle authentication cannot be empty")
 			}
 		case "github":
 			if viper.IsSet("GITHUB_TOKEN") {
-				config.Type = &Github{
+				vaultBackend.AuthType = &auth.Github{
 					AccessToken: viper.GetString("GITHUB_TOKEN"),
-					KvVersion:   kvVersion,
-					Client:      client,
 				}
 			} else {
 				return nil, errors.New("GITHUB_TOKEN for github authentication cannot be empty")
@@ -76,13 +73,14 @@ func NewConfig(viper *viper.Viper) (*Config, error) {
 		default:
 			return nil, errors.New("Must provide a supported Authentication Type")
 		}
+		config.Backend = vaultBackend
 	case "secretmanager":
-		switch auth {
+		switch authType {
 		case "iam":
 			if viper.IsSet("IBM_API_KEY") {
-				config.Type = &SecretManager{
+				config.Backend = &SecretManager{
 					IBMCloudAPIKey: viper.GetString("IBM_API_KEY"),
-					Client:         client,
+					VaultClient:    apiClient,
 				}
 			} else {
 				return nil, errors.New("IBM_API_KEY for iam authentication cannot be empty")

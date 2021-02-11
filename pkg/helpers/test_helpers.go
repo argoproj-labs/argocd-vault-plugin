@@ -154,6 +154,13 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 		t.Fatal(err)
 	}
 
+	_, err = client.Logical().Write("kv/data/bad_test", map[string]interface{}{
+		"hello": "world",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	secret, err := client.Logical().Write("auth/approle/role/role1/secret-id", nil)
 	if err != nil {
 		t.Fatal(err)

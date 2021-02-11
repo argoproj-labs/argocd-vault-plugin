@@ -1,4 +1,4 @@
-package vault
+package backends
 
 import (
 	"encoding/json"
@@ -8,12 +8,15 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/IBM/argocd-vault-plugin/pkg/utils"
+	"github.com/hashicorp/vault/api"
 )
 
 // SecretManager is a struct for working with IBM Secret Manager
 type SecretManager struct {
 	IBMCloudAPIKey string
-	*Client
+	VaultClient    *api.Client
 }
 
 // Login authenticates with IBM Cloud Secret Manager using IAM and returns a token
@@ -27,13 +30,13 @@ func (s *SecretManager) Login() error {
 		"token": accessToken,
 	}
 
-	data, err := s.Client.Write("auth/ibmcloud/login", payload)
+	data, err := s.VaultClient.Logical().Write("auth/ibmcloud/login", payload)
 	if err != nil {
 		return err
 	}
 
 	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
-	err = SetToken(s.Client, data.Auth.ClientToken)
+	err = utils.SetToken(s.VaultClient, data.Auth.ClientToken)
 	if err != nil {
 		print(err)
 	}
@@ -43,9 +46,13 @@ func (s *SecretManager) Login() error {
 
 // GetSecrets gets secrets from IBM Secret Manager and returns the formatted data
 func (s *SecretManager) GetSecrets(path, _ string) (map[string]interface{}, error) {
-	secret, err := s.Client.Read(path)
+	secret, err := s.VaultClient.Logical().Read(path)
 	if err != nil {
 		return nil, err
+	}
+
+	if secret == nil {
+		return nil, fmt.Errorf("Could not find secrets at path %s", path)
 	}
 
 	var data map[string]interface{}
@@ -71,7 +78,7 @@ func (s *SecretManager) GetSecrets(path, _ string) (map[string]interface{}, erro
 	// Read each secret and get payload
 	secrets := make(map[string]interface{})
 	for _, j := range v {
-		secret, err := s.Client.Read(fmt.Sprintf("%s/%s", path, j))
+		secret, err := s.VaultClient.Logical().Read(fmt.Sprintf("%s/%s", path, j))
 		if err != nil {
 			return nil, err
 		}
