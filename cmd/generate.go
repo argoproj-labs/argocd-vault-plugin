@@ -3,8 +3,9 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/IBM/argocd-vault-plugin/pkg/backends"
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
-	"github.com/IBM/argocd-vault-plugin/pkg/vault"
+	"github.com/IBM/argocd-vault-plugin/pkg/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -45,16 +46,16 @@ func NewGenerateCommand() *cobra.Command {
 				return err
 			}
 
-			vaultConfig, err := vault.NewConfig(viper)
+			config, err := backends.NewConfig(viper)
 			if err != nil {
 				return err
 			}
 
-			vaultClient := vaultConfig.Type
+			backend := config.Backend
 
-			err = vault.CheckExistingToken(vaultClient, vaultConfig)
+			err = utils.CheckExistingToken(config.VaultClient)
 			if err != nil {
-				err = vaultClient.Login()
+				err = backend.Login()
 				if err != nil {
 					return err
 				}
@@ -62,7 +63,7 @@ func NewGenerateCommand() *cobra.Command {
 
 			for _, manifest := range manifests {
 
-				template, err := kube.NewTemplate(manifest, vaultClient, vaultConfig.PathPrefix)
+				template, err := kube.NewTemplate(manifest, backend, config.PathPrefix)
 				if err != nil {
 					return err
 				}
