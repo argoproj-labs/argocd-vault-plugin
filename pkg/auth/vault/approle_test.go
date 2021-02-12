@@ -1,9 +1,9 @@
-package auth_test
+package vault_test
 
 import (
 	"testing"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/backends/auth"
+	"github.com/IBM/argocd-vault-plugin/pkg/auth/vault"
 	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
 )
 
@@ -11,7 +11,7 @@ func TestAppRoleLogin(t *testing.T) {
 	cluster, role, secret := helpers.CreateTestAppRoleVault(t)
 	defer cluster.Cleanup()
 
-	appRole := auth.AppRole{
+	appRole := vault.AppRoleAuth{
 		RoleID:   role,
 		SecretID: secret,
 	}

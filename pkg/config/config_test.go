@@ -1,11 +1,11 @@
-package backends_test
+package config_test
 
 import (
 	"fmt"
 	"os"
 	"testing"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/backends"
+	"github.com/IBM/argocd-vault-plugin/pkg/config"
 	"github.com/spf13/viper"
 )
 
@@ -37,7 +37,7 @@ func TestNewConfig(t *testing.T) {
 				"AVP_AUTH_TYPE":   "iam",
 				"AVP_IBM_API_KEY": "token",
 			},
-			"*backends.SecretManager",
+			"*backends.IBMSecretManager",
 		},
 	}
 	for _, tc := range testCases {
@@ -45,7 +45,7 @@ func TestNewConfig(t *testing.T) {
 			os.Setenv(k, v.(string))
 		}
 		viper := viper.New()
-		config, err := backends.NewConfig(viper)
+		config, err := config.New(viper)
 		if err != nil {
 			t.Error(err)
 			t.FailNow()
@@ -62,7 +62,7 @@ func TestNewConfig(t *testing.T) {
 
 func TestNewConfigNoType(t *testing.T) {
 	viper := viper.New()
-	_, err := backends.NewConfig(viper)
+	_, err := config.New(viper)
 	expectedError := "Must provide a supported Vault Type"
 
 	if err.Error() != expectedError {
@@ -73,7 +73,7 @@ func TestNewConfigNoType(t *testing.T) {
 func TestNewConfigNoAuthType(t *testing.T) {
 	os.Setenv("AVP_TYPE", "vault")
 	viper := viper.New()
-	_, err := backends.NewConfig(viper)
+	_, err := config.New(viper)
 	expectedError := "Must provide a supported Authentication Type"
 
 	if err.Error() != expectedError {
@@ -93,7 +93,7 @@ func TestNewConfigMissingParameter(t *testing.T) {
 				"AVP_AUTH_TYPE": "github",
 				"AVP_GH_TOKEN":  "token",
 			},
-			"*backends.Github",
+			"*backends.Vault",
 		},
 		{
 			map[string]interface{}{
@@ -102,7 +102,7 @@ func TestNewConfigMissingParameter(t *testing.T) {
 				"AVP_ROLEID":    "role_id",
 				"AVP_SECRET_ID": "secret_id",
 			},
-			"*backends.AppRole",
+			"*backends.Vault",
 		},
 		{
 			map[string]interface{}{
@@ -110,7 +110,7 @@ func TestNewConfigMissingParameter(t *testing.T) {
 				"AVP_AUTH_TYPE":   "iam",
 				"AVP_IAM_API_KEY": "token",
 			},
-			"*backends.SecretManager",
+			"*backends.IBMSecretManager",
 		},
 	}
 	for _, tc := range testCases {
@@ -118,7 +118,7 @@ func TestNewConfigMissingParameter(t *testing.T) {
 			os.Setenv(k, v.(string))
 		}
 		viper := viper.New()
-		_, err := backends.NewConfig(viper)
+		_, err := config.New(viper)
 		if err == nil {
 			t.Fatalf("%s should not instantiate", tc.expectedType)
 		}

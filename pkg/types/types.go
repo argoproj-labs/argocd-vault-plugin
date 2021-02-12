@@ -1,4 +1,4 @@
-package backends
+package types
 
 import (
 	"github.com/hashicorp/vault/api"
