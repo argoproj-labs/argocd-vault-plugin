@@ -8,14 +8,14 @@ import (
 	"github.com/hashicorp/vault/api"
 )
 
-// Vault TODO
+// Vault is a struct for working with a Vault backend
 type Vault struct {
 	types.AuthType
 	VaultClient *api.Client
 	KvVersion   string
 }
 
-// New initializes a new Vault Backend
+// NewVaultBackend initializes a new Vault Backend
 func NewVaultBackend(auth types.AuthType, client *api.Client, kv string) *Vault {
 	vault := &Vault{
 		KvVersion:   kv,
@@ -26,7 +26,7 @@ func NewVaultBackend(auth types.AuthType, client *api.Client, kv string) *Vault 
 	return vault
 }
 
-// Login TODO
+// Login authenticates with the auth type provided
 func (v *Vault) Login() error {
 	err := v.AuthType.Authenticate(v.VaultClient)
 	if err != nil {

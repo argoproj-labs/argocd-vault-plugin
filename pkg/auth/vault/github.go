@@ -10,7 +10,7 @@ type GithubAuth struct {
 	AccessToken string
 }
 
-// NewGithubAuth TODO
+// NewGithubAuth initializes a new GithubAuth with token
 func NewGithubAuth(token string) *GithubAuth {
 	githubAuth := &GithubAuth{
 		AccessToken: token,
