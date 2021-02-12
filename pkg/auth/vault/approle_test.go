@@ -8,13 +8,10 @@ import (
 )
 
 func TestAppRoleLogin(t *testing.T) {
-	cluster, role, secret := helpers.CreateTestAppRoleVault(t)
+	cluster, roleID, secretID := helpers.CreateTestAppRoleVault(t)
 	defer cluster.Cleanup()
 
-	appRole := vault.AppRoleAuth{
-		RoleID:   role,
-		SecretID: secret,
-	}
+	appRole := vault.NewAppRoleAuth(roleID, secretID)
 
 	err := appRole.Authenticate(cluster.Cores[0].Client)
 	if err != nil {
