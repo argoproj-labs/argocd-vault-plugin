@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/backends"
+	"github.com/IBM/argocd-vault-plugin/pkg/config"
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
 	"github.com/IBM/argocd-vault-plugin/pkg/utils"
 	"github.com/spf13/cobra"
@@ -46,7 +46,7 @@ func NewGenerateCommand() *cobra.Command {
 				return err
 			}
 
-			config, err := backends.NewConfig(viper)
+			config, err := config.New(viper)
 			if err != nil {
 				return err
 			}

@@ -1,17 +1,26 @@
-package auth
+package vault
 
 import (
 	"github.com/IBM/argocd-vault-plugin/pkg/utils"
 	"github.com/hashicorp/vault/api"
 )
 
-// Github is a struct for working with Vault that uses the Github Auth method
-type Github struct {
+// GithubAuth is a struct for working with Vault that uses the Github Auth method
+type GithubAuth struct {
 	AccessToken string
 }
 
+// NewGithubAuth TODO
+func NewGithubAuth(token string) *GithubAuth {
+	githubAuth := &GithubAuth{
+		AccessToken: token,
+	}
+
+	return githubAuth
+}
+
 // Authenticate authenticates with Vault and returns a token
-func (g *Github) Authenticate(vaultClient *api.Client) error {
+func (g *GithubAuth) Authenticate(vaultClient *api.Client) error {
 	payload := map[string]interface{}{
 		"token": g.AccessToken,
 	}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/backends"
+	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8yaml "sigs.k8s.io/yaml"
 )
@@ -23,7 +23,7 @@ type Template struct {
 }
 
 // NewTemplate returns a *Template given the template's data, and a VaultType
-func NewTemplate(template map[string]interface{}, backend backends.Backend, prefix string) (*Template, error) {
+func NewTemplate(template map[string]interface{}, backend types.Backend, prefix string) (*Template, error) {
 	obj := &unstructured.Unstructured{}
 	err := kubeResourceDecoder(&template).Decode(&obj)
 	if err != nil {

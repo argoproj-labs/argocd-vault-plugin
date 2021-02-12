@@ -1,10 +1,11 @@
-package backends
+package backends_test
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/backends/auth"
+	"github.com/IBM/argocd-vault-plugin/pkg/auth/vault"
+	"github.com/IBM/argocd-vault-plugin/pkg/backends"
 	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
 )
 
@@ -12,17 +13,17 @@ func TestVaultLogin(t *testing.T) {
 	cluster, role, secret := helpers.CreateTestAppRoleVault(t)
 	defer cluster.Cleanup()
 
-	vault := &Vault{
+	backend := &backends.Vault{
 		VaultClient: cluster.Cores[0].Client,
 	}
 
 	t.Run("will authenticate with approle", func(t *testing.T) {
-		vault.AuthType = &auth.AppRole{
+		backend.AuthType = &vault.AppRoleAuth{
 			RoleID:   role,
 			SecretID: secret,
 		}
 
-		err := vault.Login()
+		err := backend.Login()
 		if err != nil {
 			t.Fatalf("expected no errors but got: %s", err)
 		}
@@ -33,12 +34,12 @@ func TestVaultGetSecrets(t *testing.T) {
 	cluster, _, _ := helpers.CreateTestAppRoleVault(t)
 	defer cluster.Cleanup()
 
-	vault := &Vault{
+	backend := &backends.Vault{
 		VaultClient: cluster.Cores[0].Client,
 	}
 
 	t.Run("will get data from vault with kv1", func(t *testing.T) {
-		data, err := vault.GetSecrets("secret/foo", "1")
+		data, err := backend.GetSecrets("secret/foo", "1")
 		if err != nil {
 			t.Fatalf("expected 0 errors but got: %s", err)
 		}
@@ -53,7 +54,7 @@ func TestVaultGetSecrets(t *testing.T) {
 	})
 
 	t.Run("will get data from vault with kv2", func(t *testing.T) {
-		data, err := vault.GetSecrets("kv/data/test", "2")
+		data, err := backend.GetSecrets("kv/data/test", "2")
 		if err != nil {
 			t.Fatalf("expected 0 errors but got: %s", err)
 		}
@@ -68,7 +69,7 @@ func TestVaultGetSecrets(t *testing.T) {
 	})
 
 	t.Run("will throw an error if cant find secrets", func(t *testing.T) {
-		_, err := vault.GetSecrets("kv/data/no_path", "2")
+		_, err := backend.GetSecrets("kv/data/no_path", "2")
 		if err == nil {
 			t.Fatalf("expected an error but did not get an error")
 		}
@@ -81,7 +82,7 @@ func TestVaultGetSecrets(t *testing.T) {
 	})
 
 	t.Run("will throw an error if cant find secrets", func(t *testing.T) {
-		_, err := vault.GetSecrets("kv/data/bad_test", "2")
+		_, err := backend.GetSecrets("kv/data/bad_test", "2")
 		if err == nil {
 			t.Fatalf("expected an error but did not get an error")
 		}
@@ -94,7 +95,7 @@ func TestVaultGetSecrets(t *testing.T) {
 	})
 
 	t.Run("will throw an error if unsupported kv version", func(t *testing.T) {
-		_, err := vault.GetSecrets("kv/data/test", "3")
+		_, err := backend.GetSecrets("kv/data/test", "3")
 		if err == nil {
 			t.Fatalf("expected an error but did not get an error")
 		}

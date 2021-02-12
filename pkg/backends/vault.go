@@ -4,14 +4,26 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	"github.com/hashicorp/vault/api"
 )
 
 // Vault TODO
 type Vault struct {
-	AuthType
+	types.AuthType
 	VaultClient *api.Client
 	KvVersion   string
+}
+
+// New initializes a new Vault Backend
+func NewVaultBackend(auth types.AuthType, client *api.Client, kv string) *Vault {
+	vault := &Vault{
+		KvVersion:   kv,
+		AuthType:    auth,
+		VaultClient: client,
+	}
+
+	return vault
 }
 
 // Login TODO

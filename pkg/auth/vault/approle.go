@@ -1,18 +1,28 @@
-package auth
+package vault
 
 import (
 	"github.com/IBM/argocd-vault-plugin/pkg/utils"
 	"github.com/hashicorp/vault/api"
 )
 
-// AppRole is a struct for working with Vault that uses AppRole
-type AppRole struct {
+// AppRoleAuth is a struct for working with Vault that uses AppRole
+type AppRoleAuth struct {
 	RoleID   string
 	SecretID string
 }
 
+// NewAppRoleAuth TODO
+func NewAppRoleAuth(roleID, secretID string) *AppRoleAuth {
+	appRoleAuth := &AppRoleAuth{
+		RoleID:   roleID,
+		SecretID: secretID,
+	}
+
+	return appRoleAuth
+}
+
 // Authenticate authenticates with Vault using App Role and returns a token
-func (a *AppRole) Authenticate(vaultClient *api.Client) error {
+func (a *AppRoleAuth) Authenticate(vaultClient *api.Client) error {
 	payload := map[string]interface{}{
 		"role_id":   a.RoleID,
 		"secret_id": a.SecretID,

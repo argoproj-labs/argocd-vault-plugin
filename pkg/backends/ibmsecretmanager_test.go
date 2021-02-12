@@ -13,7 +13,7 @@ func TestSecretManagerGetSecrets(t *testing.T) {
 	ln, client := helpers.CreateTestVault(t)
 	defer ln.Close()
 
-	sm := backends.SecretManager{
+	sm := backends.IBMSecretManager{
 		IBMCloudAPIKey: "token",
 		VaultClient:    client,
 	}
@@ -37,7 +37,7 @@ func TestSecretManagerGetSecretsFail(t *testing.T) {
 	ln, client := helpers.CreateTestVault(t)
 	defer ln.Close()
 
-	sm := backends.SecretManager{
+	sm := backends.IBMSecretManager{
 		IBMCloudAPIKey: "token",
 		VaultClient:    client,
 	}

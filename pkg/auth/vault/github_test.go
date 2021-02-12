@@ -1,4 +1,4 @@
-package auth_test
+package vault_test
 
 // Need to find a way to mock GitHub Auth within Vault
 // func TestGithubLogin(t *testing.T) {
