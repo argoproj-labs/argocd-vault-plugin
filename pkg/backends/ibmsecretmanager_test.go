@@ -10,7 +10,7 @@ import (
 )
 
 func TestSecretManagerGetSecrets(t *testing.T) {
-	ln, client := helpers.CreateTestVault(t)
+	ln, client, _ := helpers.CreateTestVault(t)
 	defer ln.Close()
 
 	sm := backends.IBMSecretManager{
@@ -34,7 +34,7 @@ func TestSecretManagerGetSecrets(t *testing.T) {
 }
 
 func TestSecretManagerGetSecretsFail(t *testing.T) {
-	ln, client := helpers.CreateTestVault(t)
+	ln, client, _ := helpers.CreateTestVault(t)
 	defer ln.Close()
 
 	sm := backends.IBMSecretManager{

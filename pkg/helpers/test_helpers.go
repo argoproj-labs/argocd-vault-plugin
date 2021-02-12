@@ -12,7 +12,7 @@ import (
 )
 
 // CreateTestVault initializes a test vault with kv v2
-func CreateTestVault(t *testing.T) (net.Listener, *api.Client) {
+func CreateTestVault(t *testing.T) (net.Listener, *api.Client, string) {
 	t.Helper()
 
 	// Create an in-memory, unsealed core (the "backend", if you will).
@@ -94,7 +94,7 @@ func CreateTestVault(t *testing.T) (net.Listener, *api.Client) {
 		t.Fatal(err)
 	}
 
-	return ln, client
+	return ln, client, rootToken
 }
 
 // CreateTestAppRoleVault initializes a new test vault with AppRole and Kv v2
