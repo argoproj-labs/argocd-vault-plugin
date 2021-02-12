@@ -4,10 +4,10 @@
 **Fixes:** <! -- link to issue -->
 
 ### Checklist
-Please make sure that your PR fulfills the following requirements: 
+Please make sure that your PR fulfills the following requirements:
 - [ ] Reviewed the guidelines for contributing to this repository
 - [ ] The commit message follows the [Conventional Commits Guidelines](https://www.conventionalcommits.org/en/v1.0.0/#summary).
-- [ ] Tests for the changes have been
+- [ ] Tests for the changes have been updated
 - [ ] Docs have been added / updated
 
 ### Type of Change
