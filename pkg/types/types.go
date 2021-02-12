@@ -10,7 +10,7 @@ type Backend interface {
 	GetSecrets(string, string) (map[string]interface{}, error)
 }
 
-// AuthType TODO
+// AuthType is and interface for the supported authentication methods
 type AuthType interface {
 	Authenticate(*api.Client) error
 }

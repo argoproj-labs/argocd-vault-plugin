@@ -51,7 +51,9 @@ func CheckExistingToken(vaultClient *api.Client) error {
 	return nil
 }
 
-// SetToken TODO
+// SetToken attmepts to set the vault token on the vault api client
+// and then attempts to write that token to a file to be used later
+// If this method fails we do not want to stop the process
 func SetToken(vaultClient *api.Client, token string) error {
 	// We want to set the token first
 	vaultClient.SetToken(token)

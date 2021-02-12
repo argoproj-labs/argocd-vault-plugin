@@ -11,7 +11,7 @@ type AppRoleAuth struct {
 	SecretID string
 }
 
-// NewAppRoleAuth TODO
+// NewAppRoleAuth initalizes a new AppRolAuth with role id and secret id
 func NewAppRoleAuth(roleID, secretID string) *AppRoleAuth {
 	appRoleAuth := &AppRoleAuth{
 		RoleID:   roleID,

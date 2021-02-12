@@ -18,7 +18,7 @@ type IAMAuth struct {
 	APIKey string
 }
 
-// NewIAMAuth TODO
+// NewIAMAuth initializes a new IAMAuth with api key
 func NewIAMAuth(apikey string) *IAMAuth {
 	iamAuth := &IAMAuth{
 		APIKey: apikey,

@@ -14,7 +14,7 @@ type IBMSecretManager struct {
 	VaultClient    *api.Client
 }
 
-// New TODO
+// NewIBMSecretManagerBackend initializes a new IBM Secret Manager backend
 func NewIBMSecretManagerBackend(authType types.AuthType, client *api.Client) *IBMSecretManager {
 	ibmSecretManager := &IBMSecretManager{
 		AuthType:    authType,

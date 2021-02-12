@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/vault/vault"
 )
 
-// CreateTestVault TODO
+// CreateTestVault initializes a test vault with kv v2
 func CreateTestVault(t *testing.T) (net.Listener, *api.Client) {
 	t.Helper()
 
@@ -97,7 +97,7 @@ func CreateTestVault(t *testing.T) (net.Listener, *api.Client) {
 	return ln, client
 }
 
-// CreateTestAppRoleVault TODO
+// CreateTestAppRoleVault initializes a new test vault with AppRole and Kv v2
 func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 	t.Helper()
 

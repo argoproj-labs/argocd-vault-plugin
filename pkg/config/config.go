@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config TODO
+// Config is used to decide the backend and auth type
 type Config struct {
 	Address    string
 	PathPrefix string
