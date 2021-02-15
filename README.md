@@ -43,7 +43,7 @@ data:
 ## Usage
 
 ### Supported Backends
-As of today argocd-vault-plugin supports HashiCorp Vault and IBM Secret Manger as backends.
+As of today argocd-vault-plugin supports HashiCorp Vault and IBM Cloud Secret Manager as backends.
 
 #### HashiCorp Vault
 We support AppRole and Github Auth Method for getting secrets from Vault.
@@ -67,13 +67,13 @@ AUTH_TYPE: github
 GITHUB_TOKEN: Your Github Personal Access Token
 ```
 
-#### IBM Secret Manager
-For IBM Secret Manager we only support using IAM authentication at this time.
+#### IBM Cloud Secret Manager
+For IBM Cloud Secret Manager we only support using IAM authentication at this time.
 
 ##### IAM Authentication
 For IAM Authentication, these are the required parameters:
 ```
-VAULT_ADDR: Your IBM Secret Manager Endpoint
+VAULT_ADDR: Your IBM Cloud Secret Manager Endpoint
 TYPE: secretmanager
 AUTH_TYPE: iam
 IBM_API_KEY: Your IBM Cloud API Key
@@ -126,9 +126,9 @@ environment variables take precedence over configuration pulled from a Kubernete
 | Name            | Description                | Notes                |
 | --------------- | -------------------------- | -------------------- |
 | VAULT_ADDR     | Address of your Vault      | N/A                  |
-| PATH_PREFIX    | Prefix of the vault path to look for the secrets | A `/` delimitted path to a secret in Vault. This value is concatenated with the `kind` of the given resource; e.g, replacing a Secret with `PATH_PREFIX` `my-team/my-app` will use the path `my-team/my-app/secret`       |
+| PATH_PREFIX    | Prefix of the vault path to look for the secrets | A `/` delimitted path to a secret in Vault. This value is concatenated with the `kind` of the given resource; e.g, replacing a Secret with `PATH_PREFIX` `my-team/my-app` will use the path `my-team/my-app/secret`. PATH_PREFIX will be ignored if the `avp_path` annotation is present in a YAML resource. |
 | TYPE           | The type of Vault backend  | Supported values: `vault` and `secretmanager` |
-| KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2)|
+| KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `kv_version` annotation is present in a YAML resource.|
 | AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |
 | GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
 | ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
