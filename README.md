@@ -49,60 +49,40 @@ As of today argocd-vault-plugin supports HashiCorp Vault and IBM Secret Manger a
 We support AppRole and Github Auth Method for getting secrets from Vault.
 
 ##### AppRole Authentication
-For AppRole Authentication, these are the required environment variables:
+For AppRole Authentication, these are the required parameters:
 ```
-AVP_VAULT_ADDR: Your HashiCorp Vault Address
-AVP_TYPE: vault
-AVP_AUTH_TYPE: approle
-AVP_ROLE_ID: Your AppRole Role ID
-AVP_SECRET_ID: Your AppRole Secret ID
+VAULT_ADDR: Your HashiCorp Vault Address
+TYPE: vault
+AUTH_TYPE: approle
+ROLE_ID: Your AppRole Role ID
+SECRET_ID: Your AppRole Secret ID
 ```
 
 ##### Github Authentication
-For Github Authentication, these are the required environment variables:
+For Github Authentication, these are the required parameters:
 ```
-AVP_VAULT_ADDR: Your HashiCorp Vault Address
-AVP_TYPE: vault
-AVP_AUTH_TYPE: github
-AVP_GITHUB_TOKEN: Your Github Personal Access Token
+VAULT_ADDR: Your HashiCorp Vault Address
+TYPE: vault
+AUTH_TYPE: github
+GITHUB_TOKEN: Your Github Personal Access Token
 ```
 
 #### IBM Secret Manager
 For IBM Secret Manager we only support using IAM authentication at this time.
 
 ##### IAM Authentication
-For IAM Authentication, these are the required environment variables:
+For IAM Authentication, these are the required parameters:
 ```
-AVP_VAULT_ADDR: Your IBM Secret Manager Endpoint
-AVP_TYPE: secretmanager
-AVP_AUTH_TYPE: iam
-AVP_IBM_API_KEY: Your IBM Cloud API Key
+VAULT_ADDR: Your IBM Secret Manager Endpoint
+TYPE: secretmanager
+AUTH_TYPE: iam
+IBM_API_KEY: Your IBM Cloud API Key
 ```
 
-### Configuration
-The full list of support environment variables are:
+## Configuration
+There are 3 different ways that parameters can be passed along to argocd-vault-plugin.
 
-| Name            | Description                | Notes                |
-| --------------- | -------------------------- | -------------------- |
-| VAULT_ADDR     | Address of your Vault      | N/A                  |
-| PATH_PREFIX    | Prefix of the vault path to look for the secrets | A `/` delimitted path to a secret in Vault. This value is concatenated with the `kind` of the given resource; e.g, replacing a Secret with `PATH_PREFIX` `my-team/my-app` will use the path `my-team/my-app/secret`       |
-| TYPE           | The type of Vault backend  | Supported values: `vault` and `secretmanager` |
-| KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2)|
-| AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |
-| GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
-| ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
-| SECRET_ID      | Vault AppRole Secret_ID    | Required with `AUTH_TYPE` of `approle` |
-| IBM_API_KEY    | IBM Cloud IAM API Key      | Required with `TYPE` of `secretmanager` and `AUTH_TYPE` of `iam` |
-
-#### Supported Annotation
-We support two different annotations that can be used inside a kubernetes resource. These annotations will override any corrisponding configuration set via Environment Variable or Configuration File.
-
-| Annotation | Description |  
-| ---------- | ----------- |  
-| avp_path | Path to the Vault Secret |
-| kv_version | Version of the KV Secret Engine |
-
-#### Secrets in the cluster hosting Argo CD
+#### Kubernetes Secret
 You can define a Secret in the `argocd` namespace of your Argo CD cluster with the Vault configuration. The keys of the secret's `data`
 should be the exact names given above, case-sensitive:
 ```yaml
@@ -123,7 +103,7 @@ You can use it like this: `argocd-vault-plugin generate /some/path -s vault-conf
 
 Note that this requires the `argocd-repo-server` to have a service account token mounted in the standard location.
 
-#### File on disk
+#### Configuration File
 The configuration can be given in a file reachable from the plugin, in any Viper supported format (YAML, JSON, etc.):
 ```yaml
 VAULT_ADDR: Zm9v
@@ -133,7 +113,7 @@ TYPE: Zm9v
 ```
 You can use it like this: `argocd-vault-plugin generate /some/path -c /path/to/config/file.yaml`. This can be useful for usecases not involving Argo CD.
 
-#### Environment variables
+#### Environment Variables
 The configuration can be set via environment variables, where each key is prefixed by `AVP_`:
 ```
 AVP_TYPE=vault # corresponds to TYPE key
@@ -141,6 +121,29 @@ AVP_TYPE=vault # corresponds to TYPE key
 Make sure that these environment variables are available to the plugin when running it, whether that is in Argo CD or as a CLI tool. Note that any _set_
 environment variables take precedence over configuration pulled from a Kubernetes Secret or a file.
 
+### Full List of Supported Parameters
+
+| Name            | Description                | Notes                |
+| --------------- | -------------------------- | -------------------- |
+| VAULT_ADDR     | Address of your Vault      | N/A                  |
+| PATH_PREFIX    | Prefix of the vault path to look for the secrets | A `/` delimitted path to a secret in Vault. This value is concatenated with the `kind` of the given resource; e.g, replacing a Secret with `PATH_PREFIX` `my-team/my-app` will use the path `my-team/my-app/secret`       |
+| TYPE           | The type of Vault backend  | Supported values: `vault` and `secretmanager` |
+| KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2)|
+| AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |
+| GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
+| ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
+| SECRET_ID      | Vault AppRole Secret_ID    | Required with `AUTH_TYPE` of `approle` |
+| IBM_API_KEY    | IBM Cloud IAM API Key      | Required with `TYPE` of `secretmanager` and `AUTH_TYPE` of `iam` |
+
+### Full List of Supported Annotation
+We support two different annotations that can be used inside a kubernetes resource. These annotations will override any corrisponding configuration set via Environment Variable or Configuration File.
+
+| Annotation | Description |  
+| ---------- | ----------- |  
+| avp_path | Path to the Vault Secret |
+| kv_version | Version of the KV Secret Engine |
+
+## Setup
 ### As an ArgoCD Plugin
 This plugin is meant to be used with Argo CD. In order to use the plugin you can add it to your Argo CD instance as a volume mount or build your own Argo CD image.
 The Argo CD docs provide information on how to get started https://argoproj.github.io/argo-cd/operator-manual/custom_tools/.
@@ -223,7 +226,7 @@ spec:
 Or you can pass the config-management-plugin flag to the Argo CD CLI app create command:  
 `argocd app create <appName> --config-management-plugin argocd-vault-plugin`
 
-### As a CLI
+### As a CLI tool
 The plugin can be used as just a cli tool if you are using a CI/CD system other than argo. You just run the tool like:
 
 `argocd-vault-plugin generate ./path-to-templates`
