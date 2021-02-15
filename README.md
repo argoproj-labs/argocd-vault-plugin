@@ -42,8 +42,45 @@ data:
 
 ## Usage
 
+### Supported Backends
+As of today argocd-vault-plugin supports HashiCorp Vault and IBM Secret Manger as backends.
+
+#### HashiCorp Vault
+We support AppRole and Github Auth Method for getting secrets from Vault.
+
+##### AppRole Authentication
+For AppRole Authentication, these are the required environment variables:
+```
+AVP_VAULT_ADDR: Your HashiCorp Vault Address
+AVP_TYPE: vault
+AVP_AUTH_TYPE: approle
+AVP_ROLE_ID: Your AppRole Role ID
+AVP_SECRET_ID: Your AppRole Secret ID
+```
+
+##### Github Authentication
+For Github Authentication, these are the required environment variables:
+```
+AVP_VAULT_ADDR: Your HashiCorp Vault Address
+AVP_TYPE: vault
+AVP_AUTH_TYPE: github
+AVP_GITHUB_TOKEN: Your Github Personal Access Token
+```
+
+#### IBM Secret Manager
+For IBM Secret Manager we only support using IAM authentication at this time.
+
+##### IAM Authentication
+For IAM Authentication, these are the required environment variables:
+```
+AVP_VAULT_ADDR: Your IBM Secret Manager Endpoint
+AVP_TYPE: secretmanager
+AVP_AUTH_TYPE: iam
+AVP_IBM_API_KEY: Your IBM Cloud API Key
+```
+
 ### Configuration
-The plugin requires some configuration to connect to Vault. The parameters are:
+The full list of support environment variables are:
 
 | Name            | Description                | Notes                |
 | --------------- | -------------------------- | -------------------- |
@@ -89,10 +126,10 @@ Note that this requires the `argocd-repo-server` to have a service account token
 #### File on disk
 The configuration can be given in a file reachable from the plugin, in any Viper supported format (YAML, JSON, etc.):
 ```yaml
-  VAULT_ADDR: Zm9v
-  AUTH_TYPE: Zm9v
-  GITHUB_TOKEN: Zm9v
-  TYPE: Zm9v
+VAULT_ADDR: Zm9v
+AUTH_TYPE: Zm9v
+GITHUB_TOKEN: Zm9v
+TYPE: Zm9v
 ```
 You can use it like this: `argocd-vault-plugin generate /some/path -c /path/to/config/file.yaml`. This can be useful for usecases not involving Argo CD.
 
