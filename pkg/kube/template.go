@@ -102,8 +102,9 @@ func configReplacement(key, value string, vaultData map[string]interface{}) (int
 	return stringify(res), err
 }
 
-// Replace will replace the <placeholders> in the template's data with values from Vault.
+// secretReplace will replace the <placeholders> in the template's data with values from Vault.
 // It will return an aggregrate of any errors encountered during the replacements
+// It will ensure that `<placeholder>`'s in `.data` are base64 encoded
 func (t *Template) secretReplace() error {
 
 	// Replace metadata normally
