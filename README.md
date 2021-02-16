@@ -136,7 +136,7 @@ environment variables take precedence over configuration pulled from a Kubernete
 | IBM_API_KEY    | IBM Cloud IAM API Key      | Required with `TYPE` of `secretmanager` and `AUTH_TYPE` of `iam` |
 
 ### Full List of Supported Annotation
-We support two different annotations that can be used inside a kubernetes resource. These annotations will override any corrisponding configuration set via Environment Variable or Configuration File.
+We support two different annotations that can be used inside a kubernetes resource. These annotations will override any corresponding configuration set via Environment Variable or Configuration File.
 
 | Annotation | Description |  
 | ---------- | ----------- |  
