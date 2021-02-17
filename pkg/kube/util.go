@@ -12,6 +12,55 @@ import (
 	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
+var placeholder, _ = regexp.Compile(`(?mU)<(.*)>`)
+
+// replaceableInner recurses through the given map and returns true if _any_ value is a `<placeholder>` string
+func replaceableInner(node *map[string]interface{}) bool {
+	obj := *node
+
+	for _, value := range obj {
+		valueType := reflect.ValueOf(value).Kind()
+		if valueType == reflect.Map {
+			inner, ok := value.(map[string]interface{})
+			if !ok {
+				panic(fmt.Sprintf("Deserialized YAML node is non map[string]interface{}"))
+			}
+			if replaceableInner(&inner) {
+				return true
+			}
+		} else if valueType == reflect.Slice {
+			for _, elm := range value.([]interface{}) {
+				switch elm.(type) {
+				case map[string]interface{}:
+					{
+						inner := elm.(map[string]interface{})
+						if replaceableInner(&inner) {
+							return true
+						}
+					}
+				case string:
+					{
+						if placeholder.Match([]byte(elm.(string))) {
+							return true
+						}
+					}
+				default:
+					{
+						panic(fmt.Sprintf("Deserialized YAML list node is non map[string]interface{} nor string"))
+					}
+				}
+			}
+		} else if valueType == reflect.String {
+			if placeholder.Match([]byte(value.(string))) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// replaceInner recurses through the given map and replaces the placeholders by calling `replacerFunc`
+// with the key, value, and map of keys to replacement values
 func replaceInner(
 	r *Resource,
 	node *map[string]interface{},
@@ -64,10 +113,9 @@ func replaceInner(
 }
 
 func genericReplacement(key, value string, vaultData map[string]interface{}) (_ interface{}, err []error) {
-	re, _ := regexp.Compile(`(?mU)<(.*)>`)
 	var nonStringReplacement interface{}
 
-	res := re.ReplaceAllFunc([]byte(value), func(match []byte) []byte {
+	res := placeholder.ReplaceAllFunc([]byte(value), func(match []byte) []byte {
 		placeholder := strings.Trim(string(match), "<>")
 		secretValue, ok := vaultData[string(placeholder)]
 		if ok {
