@@ -1,17 +1,18 @@
-package vault
+package utils
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/hashicorp/vault/api"
 )
 
 // CheckExistingToken takes a VaultType interface and logs in, while writting the config file
 // And setting the token in the client
-func CheckExistingToken(vaultClient VaultType, vaultConfig *Config) error {
+func CheckExistingToken(vaultClient *api.Client) error {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
@@ -41,8 +42,8 @@ func CheckExistingToken(vaultClient VaultType, vaultConfig *Config) error {
 		return err
 	}
 
-	vaultConfig.VaultAPIClient.SetToken(result["vault_token"].(string))
-	_, err = vaultConfig.VaultAPIClient.Auth().Token().LookupSelf()
+	vaultClient.SetToken(result["vault_token"].(string))
+	_, err = vaultClient.Auth().Token().LookupSelf()
 	if err != nil {
 		return err
 	}
@@ -50,10 +51,12 @@ func CheckExistingToken(vaultClient VaultType, vaultConfig *Config) error {
 	return nil
 }
 
-// SetToken TODO
-func SetToken(client *Client, token string) error {
+// SetToken attmepts to set the vault token on the vault api client
+// and then attempts to write that token to a file to be used later
+// If this method fails we do not want to stop the process
+func SetToken(vaultClient *api.Client, token string) error {
 	// We want to set the token first
-	client.VaultAPIClient.SetToken(token)
+	vaultClient.SetToken(token)
 
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -81,32 +84,4 @@ func SetToken(client *Client, token string) error {
 	}
 
 	return nil
-}
-
-// ReadVaultSecret calls the vault client and returns a data based on the KV Version
-func ReadVaultSecret(client Client, path, kvVersion string) (map[string]interface{}, error) {
-	secret, err := client.Read(path)
-	if err != nil {
-		return nil, err
-	}
-
-	if secret == nil {
-		return map[string]interface{}{}, nil
-	}
-
-	if kvVersion == "2" {
-		if _, ok := secret.Data["data"]; ok {
-			return secret.Data["data"].(map[string]interface{}), nil
-		}
-		if len(secret.Data) == 0 {
-			return nil, fmt.Errorf("The Vault path: %s is empty - did you forget to include /data/ in the Vault path for kv-v2?", path)
-		}
-		return nil, errors.New("Could not get data from Vault, check that kv-v2 is the correct engine")
-	}
-
-	if kvVersion == "1" {
-		return secret.Data, nil
-	}
-
-	return nil, errors.New("Unsupported kvVersion specified")
 }

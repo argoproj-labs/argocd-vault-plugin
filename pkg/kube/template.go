@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/vault"
+	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8yaml "sigs.k8s.io/yaml"
 )
@@ -13,6 +13,7 @@ import (
 type Resource struct {
 	Kind              string
 	TemplateData      map[string]interface{} // The template as read from YAML
+	replaceable       bool                   // Whether there are placeholders to replace or not; if false, VaultData will be nil
 	replacementErrors []error                // Any errors encountered in performing replacements
 	VaultData         map[string]interface{} // The data to replace with, from Vault
 }
@@ -23,7 +24,7 @@ type Template struct {
 }
 
 // NewTemplate returns a *Template given the template's data, and a VaultType
-func NewTemplate(template map[string]interface{}, vault vault.VaultType, prefix string) (*Template, error) {
+func NewTemplate(template map[string]interface{}, backend types.Backend, prefix string) (*Template, error) {
 	obj := &unstructured.Unstructured{}
 	err := kubeResourceDecoder(&template).Decode(&obj)
 	if err != nil {
@@ -42,24 +43,37 @@ func NewTemplate(template map[string]interface{}, vault vault.VaultType, prefix 
 		kvVersion = kv
 	}
 
-	data, err := vault.GetSecrets(path, kvVersion)
-	if err != nil {
-		return nil, err
+	// Only worry about getting Vault secrets for templates with <placeholder>'s
+	replaceable := replaceableInner(&template)
+	var data map[string]interface{}
+	if replaceable {
+		data, err = backend.GetSecrets(path, kvVersion)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &Template{
 		Resource{
 			Kind:         obj.GetKind(),
 			TemplateData: template,
+			replaceable:  replaceable,
 			VaultData:    data,
 		},
 	}, nil
 }
 
-// Replace will replace the <placeholders> in the template's data with values from Vault.
-// It will return an aggregrate of any errors encountered during the replacements
+// Replace will replace the <placeholders> in the Template's data with values from Vault.
+// It will return an aggregrate of any errors encountered during the replacements.
+// For both non-Secret resources and Secrets with <placeholder>'s in `secretData`, the value in Vault is emitted as-is
+// For Secret's with <placeholder>'s in `.data`, the value in Vault is emitted as base64
+// For any hard-coded strings that aren't <placeholder>'s, the string is emitted as-is
 func (t *Template) Replace() error {
 	var replacerFunc func(string, string, map[string]interface{}) (interface{}, []error)
+
+	if !t.replaceable {
+		return nil
+	}
 
 	switch t.Kind {
 	case "Secret":
@@ -88,8 +102,9 @@ func configReplacement(key, value string, vaultData map[string]interface{}) (int
 	return stringify(res), err
 }
 
-// Replace will replace the <placeholders> in the template's data with values from Vault.
+// secretReplace will replace the <placeholders> in the template's data with values from Vault.
 // It will return an aggregrate of any errors encountered during the replacements
+// It will ensure that `<placeholder>`'s in `.data` are base64 encoded
 func (t *Template) secretReplace() error {
 
 	// Replace metadata normally
@@ -103,15 +118,30 @@ func (t *Template) secretReplace() error {
 		}
 	}
 
-	// Replace the actual secrets with []byte's
+	// Replace secretData normally
+	secretData, ok := t.TemplateData["secretData"].(map[string]interface{})
+	if ok {
+		replaceInner(&t.Resource, &secretData, genericReplacement)
+		if len(t.replacementErrors) != 0 {
+
+			// TODO format multiple errors nicely
+			return fmt.Errorf("Replace: could not replace all placeholders in SecretTemplate secretData: %s", t.replacementErrors)
+		}
+	}
+
+	// Replace <placeholder>'d Secret.data with []byte's
 	data, ok := t.TemplateData["data"].(map[string]interface{})
 	if ok {
 		replaceInner(&t.Resource, &data, func(key, value string, vaultData map[string]interface{}) (_ interface{}, err []error) {
 			res, err := genericReplacement(key, value, vaultData)
+
 			// We have to return []byte for k8s secrets,
-			// so we convert whatever is in Vault
-			byteData := []byte(stringify(res))
-			return byteData, err
+			// so we convert everything that came from Vault
+			// Strings hardcoded in the Secret.data are assumed to be base64 encoded already
+			if placeholder.Match([]byte(value)) {
+				return []byte(stringify(res)), err
+			}
+			return res, err
 		})
 
 		if len(t.replacementErrors) != 0 {

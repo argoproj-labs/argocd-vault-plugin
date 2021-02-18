@@ -11,8 +11,8 @@ import (
 	"github.com/hashicorp/vault/vault"
 )
 
-// CreateTestVault TODO
-func CreateTestVault(t *testing.T) (net.Listener, *api.Client) {
+// CreateTestVault initializes a test vault with kv v2
+func CreateTestVault(t *testing.T) (net.Listener, *api.Client, string) {
 	t.Helper()
 
 	// Create an in-memory, unsealed core (the "backend", if you will).
@@ -94,10 +94,10 @@ func CreateTestVault(t *testing.T) (net.Listener, *api.Client) {
 		t.Fatal(err)
 	}
 
-	return ln, client
+	return ln, client, rootToken
 }
 
-// CreateTestAppRoleVault TODO
+// CreateTestAppRoleVault initializes a new test vault with AppRole and Kv v2
 func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 	t.Helper()
 
@@ -149,6 +149,13 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 		"data": map[string]interface{}{
 			"hello": "world",
 		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("kv/data/bad_test", map[string]interface{}{
+		"hello": "world",
 	})
 	if err != nil {
 		t.Fatal(err)

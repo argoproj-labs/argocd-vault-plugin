@@ -1,24 +1,28 @@
-package vault
+package config
 
 import (
 	"errors"
 	"net/http"
 	"time"
 
+	"github.com/IBM/argocd-vault-plugin/pkg/auth/ibmsecretmanager"
+	"github.com/IBM/argocd-vault-plugin/pkg/auth/vault"
+	"github.com/IBM/argocd-vault-plugin/pkg/backends"
+	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	"github.com/hashicorp/vault/api"
 	"github.com/spf13/viper"
 )
 
-// Config TODO
+// Config is used to decide the backend and auth type
 type Config struct {
 	Address    string
 	PathPrefix string
-	Type       VaultType
-	*Client
+	types.Backend
+	VaultClient *api.Client
 }
 
-// NewConfig returns a new Config struct
-func NewConfig(viper *viper.Viper) (*Config, error) {
+// New returns a new Config struct
+func New(viper *viper.Viper) (*Config, error) {
 	viper.SetEnvPrefix("AVP")
 	viper.AutomaticEnv()
 
@@ -36,60 +40,47 @@ func NewConfig(viper *viper.Viper) (*Config, error) {
 		return nil, err
 	}
 
+	config.VaultClient = apiClient
+
 	kvVersion := "2"
 	if viper.IsSet("KV_VERSION") {
 		kvVersion = viper.GetString("KV_VERSION")
 	}
 
-	client := &Client{
-		VaultAPIClient: apiClient,
-	}
+	authType := viper.GetString("AUTH_TYPE")
 
-	config.Client = client
-
-	auth := viper.GetString("AUTH_TYPE")
-
+	var auth types.AuthType
 	switch viper.GetString("TYPE") {
 	case "vault":
-		switch auth {
+		switch authType {
 		case "approle":
 			if viper.IsSet("ROLE_ID") && viper.IsSet("SECRET_ID") {
-				config.Type = &AppRole{
-					RoleID:    viper.GetString("ROLE_ID"),
-					SecretID:  viper.GetString("SECRET_ID"),
-					KvVersion: kvVersion,
-					Client:    client,
-				}
+				auth = vault.NewAppRoleAuth(viper.GetString("ROLE_ID"), viper.GetString("SECRET_ID"))
 			} else {
 				return nil, errors.New("ROLE_ID and SECRET_ID for approle authentication cannot be empty")
 			}
 		case "github":
 			if viper.IsSet("GITHUB_TOKEN") {
-				config.Type = &Github{
-					AccessToken: viper.GetString("GITHUB_TOKEN"),
-					KvVersion:   kvVersion,
-					Client:      client,
-				}
+				auth = vault.NewGithubAuth(viper.GetString("GITHUB_TOKEN"))
 			} else {
 				return nil, errors.New("GITHUB_TOKEN for github authentication cannot be empty")
 			}
 		default:
 			return nil, errors.New("Must provide a supported Authentication Type")
 		}
+		config.Backend = backends.NewVaultBackend(auth, apiClient, kvVersion)
 	case "secretmanager":
-		switch auth {
+		switch authType {
 		case "iam":
 			if viper.IsSet("IBM_API_KEY") {
-				config.Type = &SecretManager{
-					IBMCloudAPIKey: viper.GetString("IBM_API_KEY"),
-					Client:         client,
-				}
+				auth = ibmsecretmanager.NewIAMAuth(viper.GetString("IBM_API_KEY"))
 			} else {
 				return nil, errors.New("IBM_API_KEY for iam authentication cannot be empty")
 			}
 		default:
 			return nil, errors.New("Must provide a supported Authentication Type")
 		}
+		config.Backend = backends.NewIBMSecretManagerBackend(auth, apiClient)
 	default:
 		return nil, errors.New("Must provide a supported Vault Type")
 	}
