@@ -226,6 +226,17 @@ AUTH_TYPE: github
 GITHUB_TOKEN: Your Github Personal Access Token
 ```
 
+##### Kubernetes Authentication
+For Kubernetes Authentication, these are the required parameters:
+```
+VAULT_ADDR: Your HashiCorp Vault Address
+TYPE: vault
+AUTH_TYPE: k8s
+K8S_MOUNT_POINT: Mount Point of your kubernetes Auth
+K8S_ROLE: Your Kuberetes Auth Role
+K8S_TOKEN_PATH: Path to JWT (optional)
+```
+
 ### IBM Cloud Secret Manager
 For IBM Cloud Secret Manager we only support using IAM authentication at this time.
 
@@ -290,6 +301,9 @@ environment variables take precedence over configuration pulled from a Kubernete
 | GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
 | ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
 | SECRET_ID      | Vault AppRole Secret_ID    | Required with `AUTH_TYPE` of `approle` |
+| K8S_MOUNT_POINT | Kuberentes Auth Mount Point | Required with `AUTH_TYPE` of `k8s` |
+| K8S_ROLE       | Kuberentes Auth Role      | Required with `AUTH_TYPE` of `k8s` |
+| K8S_TOKEN_PATH | Path to JWT for Kubernetes Auth  | Optional for `AUTH_TYPE` of `k8s` defaults to `/var/run/secrets/kubernetes.io/serviceaccount/token` |
 | IBM_API_KEY    | IBM Cloud IAM API Key      | Required with `TYPE` of `secretmanager` and `AUTH_TYPE` of `iam` |
 
 ### Full List of Supported Annotation
