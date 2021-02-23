@@ -10,14 +10,23 @@ import (
 	"github.com/hashicorp/vault/api"
 )
 
+const (
+	defaultMountPath   = "auth/kubernetes"
+	serviceAccountFile = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+)
+
 // K8sAuth TODO
 type K8sAuth struct {
+	// Optional, will use default path of auth/kubernetes if left blank
 	MountPath string
+
+	// Optional, will use default service account if left blank
 	TokenPath string
-	Role      string
+
+	Role string
 }
 
-// NewK8sAuth TODO
+// NewK8sAuth initializes and returns a K8sAuth Struct
 func NewK8sAuth(role, mountPath, tokenPath string) *K8sAuth {
 	k8sAuth := &K8sAuth{
 		Role:      role,
@@ -40,7 +49,12 @@ func (k *K8sAuth) Authenticate(vaultClient *api.Client) error {
 		"jwt":  token,
 	}
 
-	data, err := vaultClient.Logical().Write(fmt.Sprintf("%s/login", k.MountPath), payload)
+	kubeAuthPath := defaultMountPath
+	if k.MountPath != "" {
+		kubeAuthPath = k.MountPath
+	}
+
+	data, err := vaultClient.Logical().Write(fmt.Sprintf("%s/login", kubeAuthPath), payload)
 	if err != nil {
 		return err
 	}
@@ -55,7 +69,7 @@ func (k *K8sAuth) Authenticate(vaultClient *api.Client) error {
 }
 
 func (k *K8sAuth) getJWT() (string, error) {
-	tokenFilePath := "/var/run/secrets/kubernetes.io/serviceaccount/token"
+	tokenFilePath := serviceAccountFile
 	if k.TokenPath != "" {
 		tokenFilePath = k.TokenPath
 	}
