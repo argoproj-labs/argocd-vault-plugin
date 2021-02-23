@@ -1,0 +1,13 @@
+# Setting KV version
+# The default KV is set to 2 we are overriding to use KV 1 in this example
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-annotation
+  annotations:
+    avp_path: "secret/database"
+    kv_version: "1"
+type: Opaque
+data:
+  username: <username>
+  password: <password>
