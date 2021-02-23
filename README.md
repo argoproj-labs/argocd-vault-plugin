@@ -241,7 +241,7 @@ IBM_API_KEY: Your IBM Cloud API Key
 ## Configuration
 There are 3 different ways that parameters can be passed along to argocd-vault-plugin.
 
-1. ##### Kubernetes Secret
+##### Kubernetes Secret
 You can define a Secret in the `argocd` namespace of your Argo CD cluster with the Vault configuration. The keys of the secret's `data`
 should be the exact names given above, case-sensitive:
 ```yaml
@@ -260,7 +260,7 @@ type: Opaque
 You can use it like this: `argocd-vault-plugin generate /some/path -s vault-configuration`.
 <b>Note</b>: this requires the `argocd-repo-server` to have a service account token mounted in the standard location.
 
-2. ##### Configuration File
+##### Configuration File
 The configuration can be given in a file reachable from the plugin, in any Viper supported format (YAML, JSON, etc.):
 ```yaml
 VAULT_ADDR: Zm9v
@@ -270,7 +270,7 @@ TYPE: Zm9v
 ```
 You can use it like this: `argocd-vault-plugin generate /some/path -c /path/to/config/file.yaml`. This can be useful for usecases not involving Argo CD.
 
-3. ##### Environment Variables
+##### Environment Variables
 The configuration can be set via environment variables, where each key is prefixed by `AVP_`:
 ```
 AVP_TYPE=vault # corresponds to TYPE key
