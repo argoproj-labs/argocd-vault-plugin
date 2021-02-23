@@ -1,0 +1,12 @@
+# Using avp_path Annotation
+# We are setting avp_path to tell the plugin exactly where to find data
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-annotation
+  annotations:
+    avp_path: "secret/data/database"
+type: Opaque
+data:
+  username: <username>
+  password: <password>

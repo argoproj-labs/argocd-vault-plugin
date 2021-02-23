@@ -1,0 +1,12 @@
+# Using PATH_PREFIX environment variable
+# Set PATH_PREFIX enviroment variable to secret/data/database
+# The Vault path where the username and password key is expecte will be
+# secret/data/database/secret
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-path-prefix
+type: Opaque
+data:
+  username: <username>
+  password: <password>
