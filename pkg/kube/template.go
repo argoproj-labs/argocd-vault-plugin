@@ -65,7 +65,7 @@ func NewTemplate(template map[string]interface{}, backend types.Backend, prefix 
 
 // Replace will replace the <placeholders> in the Template's data with values from Vault.
 // It will return an aggregrate of any errors encountered during the replacements.
-// For both non-Secret resources and Secrets with <placeholder>'s in `secretData`, the value in Vault is emitted as-is
+// For both non-Secret resources and Secrets with <placeholder>'s in `stringData`, the value in Vault is emitted as-is
 // For Secret's with <placeholder>'s in `.data`, the value in Vault is emitted as base64
 // For any hard-coded strings that aren't <placeholder>'s, the string is emitted as-is
 func (t *Template) Replace() error {
@@ -118,14 +118,14 @@ func (t *Template) secretReplace() error {
 		}
 	}
 
-	// Replace secretData normally
-	secretData, ok := t.TemplateData["secretData"].(map[string]interface{})
+	// Replace stringData normally
+	stringData, ok := t.TemplateData["stringData"].(map[string]interface{})
 	if ok {
-		replaceInner(&t.Resource, &secretData, genericReplacement)
+		replaceInner(&t.Resource, &stringData, genericReplacement)
 		if len(t.replacementErrors) != 0 {
 
 			// TODO format multiple errors nicely
-			return fmt.Errorf("Replace: could not replace all placeholders in SecretTemplate secretData: %s", t.replacementErrors)
+			return fmt.Errorf("Replace: could not replace all placeholders in SecretTemplate stringData: %s", t.replacementErrors)
 		}
 	}
 
