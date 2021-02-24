@@ -308,7 +308,7 @@ func TestToYAML_Secret_MixedData(t *testing.T) {
 		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
 	}
 }
-func TestToYAML_Secret_PlaceholderedSecretData(t *testing.T) {
+func TestToYAML_Secret_PlaceholderedStringData(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Secret",
@@ -319,7 +319,7 @@ func TestToYAML_Secret_PlaceholderedSecretData(t *testing.T) {
 					"namespace": "default",
 					"name":      "<name>",
 				},
-				"secretData": map[string]interface{}{
+				"stringData": map[string]interface{}{
 					"MY_SECRET_STRING": "<string>",
 					"MY_SECRET_NUM":    "<num>",
 				},
