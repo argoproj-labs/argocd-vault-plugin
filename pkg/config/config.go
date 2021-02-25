@@ -23,6 +23,11 @@ type Config struct {
 
 // New returns a new Config struct
 func New(viper *viper.Viper) (*Config, error) {
+	// Set Defaults
+	viper.SetDefault("VAULT_ADDR", "http://127.0.0.1:8200")
+	viper.SetDefault("KV_VERSION", "2")
+
+	// Instantiate Env
 	viper.SetEnvPrefix("AVP")
 	viper.AutomaticEnv()
 
@@ -42,11 +47,6 @@ func New(viper *viper.Viper) (*Config, error) {
 
 	config.VaultClient = apiClient
 
-	kvVersion := "2"
-	if viper.IsSet("KV_VERSION") {
-		kvVersion = viper.GetString("KV_VERSION")
-	}
-
 	authType := viper.GetString("AUTH_TYPE")
 
 	var auth types.AuthType
@@ -65,10 +65,24 @@ func New(viper *viper.Viper) (*Config, error) {
 			} else {
 				return nil, errors.New("GITHUB_TOKEN for github authentication cannot be empty")
 			}
+		case "k8s":
+			if viper.IsSet("K8S_MOUNT_POINT") && viper.IsSet("K8S_ROLE") {
+				tokenPath := ""
+				if viper.IsSet("K8S_TOKEN_PATH") {
+					tokenPath = viper.GetString("K8S_TOKEN_PATH")
+				}
+				auth = vault.NewK8sAuth(
+					viper.GetString("K8S_MOUNT_POINT"),
+					viper.GetString("K8S_ROLE"),
+					tokenPath,
+				)
+			} else {
+				return nil, errors.New("K8S_MOUNT_POINT or K8S_ROLE cannot be empty when using Kubernetes Auth")
+			}
 		default:
 			return nil, errors.New("Must provide a supported Authentication Type")
 		}
-		config.Backend = backends.NewVaultBackend(auth, apiClient, kvVersion)
+		config.Backend = backends.NewVaultBackend(auth, apiClient, viper.GetString("KV_VERSION"))
 	case "secretmanager":
 		switch authType {
 		case "iam":

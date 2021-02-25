@@ -33,6 +33,25 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
+				"AVP_TYPE":            "vault",
+				"AVP_AUTH_TYPE":       "k8s",
+				"AVP_K8S_MOUNT_POINT": "mount_point",
+				"AVP_K8S_ROLE":        "role",
+				"AVP_K8S_TOKEN_PATH":  "toke_path",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":            "vault",
+				"AVP_AUTH_TYPE":       "k8s",
+				"AVP_K8S_MOUNT_POINT": "mount_point",
+				"AVP_K8S_ROLE":        "role",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
 				"AVP_TYPE":        "secretmanager",
 				"AVP_AUTH_TYPE":   "iam",
 				"AVP_IBM_API_KEY": "token",
@@ -101,6 +120,14 @@ func TestNewConfigMissingParameter(t *testing.T) {
 				"AVP_AUTH_TYPE": "approle",
 				"AVP_ROLEID":    "role_id",
 				"AVP_SECRET_ID": "secret_id",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":            "vault",
+				"AVP_AUTH_TYPE":       "k8s",
+				"AVP_K8S_MOUNT_POINT": "mount_point",
 			},
 			"*backends.Vault",
 		},
