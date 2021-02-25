@@ -72,12 +72,12 @@ func (i *IBMSecretManager) GetSecrets(path, _ string) (map[string]interface{}, e
 			return nil, err
 		}
 
-		var data map[string]interface{}
-		data = secret.Data
-
-		if len(data) == 0 {
+		if secret == nil || len(secret.Data) == 0 {
 			continue
 		}
+
+		var data map[string]interface{}
+		data = secret.Data
 
 		// Get name and data of secret and append to secrets map
 		secretName := data["name"].(string)

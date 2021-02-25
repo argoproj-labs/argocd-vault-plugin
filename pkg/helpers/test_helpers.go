@@ -66,6 +66,9 @@ func CreateTestVault(t *testing.T) (net.Listener, *api.Client, string) {
 			map[string]interface{}{
 				"id": "2",
 			},
+			map[string]interface{}{
+				"id": "3",
+			},
 		},
 	})
 	if err != nil {
