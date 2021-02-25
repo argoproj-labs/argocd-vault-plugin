@@ -136,7 +136,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install the AVP plugin (as root so we can copy to /usr/local/bin)
-RUN curl -L -o argocd-vault-plugin https://github.com/IBM/argocd-vault-plugin/releases/download/v0.4.0/argocd-vault-plugin_0.4.0_linux_amd64
+RUN curl -L -o argocd-vault-plugin https://github.com/IBM/argocd-vault-plugin/releases/download/v0.4.1/argocd-vault-plugin_0.4.1_linux_amd64
 RUN chmod +x argocd-vault-plugin
 RUN mv argocd-vault-plugin /usr/local/bin
 
@@ -228,6 +228,76 @@ AUTH_TYPE: github
 GITHUB_TOKEN: Your Github Personal Access Token
 ```
 
+##### Kubernetes Authentication
+In order to use Kubernetes Authentication a couple of things are required.
+
+  1. Configuring ArgoCD
+
+  You can either use your own Service Account or the default ArgoCD service account. To use the default ArgoCD service account all you need to do is set `automountServiceAccountToken` to true in the `argocd-repo-server`.
+
+  ```
+  kind: Deployment
+  apiVersion: apps/v1
+  metadata:
+    name: argocd-repo-server
+  spec:
+    template:
+      spec:
+        automountServiceAccountToken: true
+  ```
+
+  This will put the Service Account token in the default path of `/var/run/secrets/kubernetes.io/serviceaccount/token`.
+
+  If you want to use your own Service Account, you would first create the Service Account.
+  `kubectl create serviceaccount your-service-account`
+
+  And then you will update the `argocd-repo-server` to use that service account.
+
+  ```
+  kind: Deployment
+  apiVersion: apps/v1
+  metadata:
+    name: argocd-repo-server
+  spec:
+    template:
+      spec:
+        serviceAccount: your-service-account
+        automountServiceAccountToken: true
+  ```
+
+  2. Configuring Kubernetes  
+
+  Use the /config endpoint to configure Vault to talk to Kubernetes. Use `kubectl cluster-info` to validate the Kubernetes host address and TCP port. For the list of available configuration options, please see the [API documentation](https://www.vaultproject.io/api/auth/kubernetes).
+
+  ```
+  $ vault write auth/kubernetes/config \
+      token_reviewer_jwt="<your service account JWT>" \
+      kubernetes_host=https://192.168.99.100:<your TCP port or blank for 443> \
+      kubernetes_ca_cert=@ca.crt
+  ```
+
+  And then create a named role:
+  ```
+  vault write auth/kubernetes/role/argocd \
+      bound_service_account_names=your-service-account \
+      bound_service_account_namespaces=argocd \
+      policies=argocd \
+      ttl=1h
+  ```
+  This role authorizes the "vault-auth" service account in the default namespace and it gives it the default policy.
+
+  You can find the full documentation on configuring Kubernetes Authentication [Here](vaultproject.io/docs/auth/kubernetes#configuration).
+
+Once ArgoCD and Kubernetes are configured, you can then set the required environment variables for the plugin:
+```
+VAULT_ADDR: Your HashiCorp Vault Address
+TYPE: vault
+AUTH_TYPE: k8s
+K8S_MOUNT_POINT: Mount Point of your kubernetes Auth
+K8S_ROLE: Your Kuberetes Auth Role
+K8S_TOKEN_PATH: Path to JWT (optional)
+```
+
 ### IBM Cloud Secret Manager
 For IBM Cloud Secret Manager we only support using IAM authentication at this time.
 
@@ -292,6 +362,9 @@ environment variables take precedence over configuration pulled from a Kubernete
 | GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
 | ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
 | SECRET_ID      | Vault AppRole Secret_ID    | Required with `AUTH_TYPE` of `approle` |
+| K8S_MOUNT_POINT | Kuberentes Auth Mount Point | Required with `AUTH_TYPE` of `k8s` |
+| K8S_ROLE       | Kuberentes Auth Role      | Required with `AUTH_TYPE` of `k8s` |
+| K8S_TOKEN_PATH | Path to JWT for Kubernetes Auth  | Optional for `AUTH_TYPE` of `k8s` defaults to `/var/run/secrets/kubernetes.io/serviceaccount/token` |
 | IBM_API_KEY    | IBM Cloud IAM API Key      | Required with `TYPE` of `secretmanager` and `AUTH_TYPE` of `iam` |
 
 ### Full List of Supported Annotation
