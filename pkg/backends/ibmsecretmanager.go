@@ -72,6 +72,10 @@ func (i *IBMSecretManager) GetSecrets(path, _ string) (map[string]interface{}, e
 			return nil, err
 		}
 
+		if secret == nil || len(secret.Data) == 0 {
+			continue
+		}
+
 		var data map[string]interface{}
 		data = secret.Data
 
