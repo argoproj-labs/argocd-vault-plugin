@@ -40,9 +40,18 @@ func New(viper *viper.Viper) (*Config, error) {
 		Timeout: 10 * time.Second,
 	}
 
-	apiClient, err := api.NewClient(&api.Config{Address: viper.GetString("VAULT_ADDR"), HttpClient: httpClient})
+	apiConfig := &api.Config{
+		Address:    viper.GetString("VAULT_ADDR"),
+		HttpClient: httpClient,
+	}
+
+	apiClient, err := api.NewClient(apiConfig)
 	if err != nil {
 		return nil, err
+	}
+
+	if viper.IsSet("VAULT_NAMESPACE") {
+		apiClient.SetNamespace(viper.GetString("VAULT_NAMESPACE"))
 	}
 
 	config.VaultClient = apiClient

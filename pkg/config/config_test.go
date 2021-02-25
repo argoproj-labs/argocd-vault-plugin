@@ -79,6 +79,28 @@ func TestNewConfig(t *testing.T) {
 	}
 }
 
+func TestSettingNamespace(t *testing.T) {
+	os.Setenv("AVP_TYPE", "vault")
+	os.Setenv("AVP_AUTH_TYPE", "github")
+	os.Setenv("AVP_GITHUB_TOKEN", "token")
+	os.Setenv("AVP_VAULT_NAMESPACE", "ns1")
+	viper := viper.New()
+	cf, err := config.New(viper)
+	if err != nil {
+		t.Fatalf("expected 0 errors but got: %s", err)
+	}
+
+	headers := cf.VaultClient.Headers()
+	if headers.Get("X-Vault-Namespace") != "ns1" {
+		t.Errorf("expected X-Vault-Namespace to be %s, got %s", "ns1", headers.Get("X-Vault-Namespace"))
+	}
+
+	os.Unsetenv("AVP_TYPE")
+	os.Unsetenv("AVP_AUTH_TYPE")
+	os.Unsetenv("AVP_GITHUB_TOKEN")
+	os.Unsetenv("AVP_VAULT_NAMESPACE")
+}
+
 func TestNewConfigNoType(t *testing.T) {
 	viper := viper.New()
 	_, err := config.New(viper)
