@@ -86,7 +86,7 @@ In order to use the plugin in ArgoCD you can add it to your Argo CD instance as 
 
 The Argo CD docs provide information on how to get started https://argoproj.github.io/argo-cd/operator-manual/custom_tools/.
 
-*Note*: We have provided a Kustomize app that will install ArgoCD and configure the plugin [here](https://github.com/IBM/argocd-vault-plugin/blob/main/manifests/). 
+*Note*: We have provided a Kustomize app that will install ArgoCD and configure the plugin [here](https://github.com/IBM/argocd-vault-plugin/blob/main/manifests/).
 
 ##### InitContainer
 The first technique is to use an init container and a volumeMount to copy a different version of a tool into the repo-server container.
@@ -355,6 +355,7 @@ environment variables take precedence over configuration pulled from a Kubernete
 | Name            | Description                | Notes                |
 | --------------- | -------------------------- | -------------------- |
 | VAULT_ADDR     | Address of your Vault      | N/A                  |
+| VAULT_NAMESPACE | Your Vault Namespace      | Optional                 |
 | PATH_PREFIX    | Prefix of the vault path to look for the secrets | A `/` delimitted path to a secret in Vault. This value is concatenated with the `kind` of the given resource; e.g, replacing a Secret with `PATH_PREFIX` `my-team/my-app` will use the path `my-team/my-app/secret`. PATH_PREFIX will be ignored if the `avp_path` annotation is present in a YAML resource. |
 | TYPE           | The type of Vault backend  | Supported values: `vault` and `secretmanager` |
 | KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `kv_version` annotation is present in a YAML resource.|
