@@ -160,7 +160,7 @@ If you want to use Helm along with argocd-vault-plugin add:
 configManagementPlugins: |
   - name: argocd-vault-plugin-helm
     generate:
-      command: [sh, -c]
+      command: ["sh", "-c"]
       args: ["helm template . > all.yaml && argocd-vault-plugin generate all.yaml"]
 ```
 
@@ -169,7 +169,7 @@ Or if you are using Kustomize:
 configManagementPlugins: |
   - name: argocd-vault-plugin-helm
     generate:
-      command: [sh, -c]
+      command: ["sh", "-c"]
       args: ["kustomize build . > all.yaml && argocd-vault-plugin generate all.yaml"]
 ```
 
