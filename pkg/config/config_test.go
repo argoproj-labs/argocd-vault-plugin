@@ -1,11 +1,16 @@
 package config_test
 
 import (
+	"crypto/tls"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/config"
+	"github.com/IBM/argocd-vault-plugin/pkg/utils"
 	"github.com/spf13/viper"
 )
 
@@ -64,7 +69,7 @@ func TestNewConfig(t *testing.T) {
 			os.Setenv(k, v.(string))
 		}
 		viper := viper.New()
-		config, err := config.New(viper)
+		config, err := config.New(viper, utils.DefaultHttpClient())
 		if err != nil {
 			t.Error(err)
 			t.FailNow()
@@ -79,13 +84,20 @@ func TestNewConfig(t *testing.T) {
 	}
 }
 
-func TestSettingNamespace(t *testing.T) {
-	os.Setenv("AVP_TYPE", "vault")
-	os.Setenv("AVP_AUTH_TYPE", "github")
-	os.Setenv("AVP_GITHUB_TOKEN", "token")
-	os.Setenv("AVP_VAULT_NAMESPACE", "ns1")
+func TestVaultNamespace(t *testing.T) {
+	env := map[string]interface{}{
+		"AVP_TYPE":            "vault",
+		"AVP_AUTH_TYPE":       "github",
+		"AVP_GITHUB_TOKEN":    "token",
+		"AVP_VAULT_NAMESPACE": "ns1",
+	}
+
+	for k, v := range env {
+		os.Setenv(k, v.(string))
+	}
+
 	viper := viper.New()
-	cf, err := config.New(viper)
+	cf, err := config.New(viper, utils.DefaultHttpClient())
 	if err != nil {
 		t.Fatalf("expected 0 errors but got: %s", err)
 	}
@@ -95,15 +107,84 @@ func TestSettingNamespace(t *testing.T) {
 		t.Errorf("expected X-Vault-Namespace to be %s, got %s", "ns1", headers.Get("X-Vault-Namespace"))
 	}
 
-	os.Unsetenv("AVP_TYPE")
-	os.Unsetenv("AVP_AUTH_TYPE")
-	os.Unsetenv("AVP_GITHUB_TOKEN")
-	os.Unsetenv("AVP_VAULT_NAMESPACE")
+	for k := range env {
+		os.Unsetenv(k)
+	}
+}
+
+func TestVaultTLS(t *testing.T) {
+	fakeCert := `-----BEGIN CERTIFICATE-----
+MIICsjCCAZoCCQCpRK9HNTzoXzANBgkqhkiG9w0BAQsFADAbMQswCQYDVQQGEwJV
+UzEMMAoGA1UECgwDSUJNMB4XDTIxMDMwMTE1NDU1M1oXDTIxMDMzMTE1NDU1M1ow
+GzELMAkGA1UEBhMCVVMxDDAKBgNVBAoMA0lCTTCCASIwDQYJKoZIhvcNAQEBBQAD
+ggEPADCCAQoCggEBANawTlNFjatQCP/ydFgUnEaF01/67z514i5v/LDEPgEvupkd
+Z/GPueZXvIu65RS3DcZKTBeg5ACIwp6X9zJenCy3NWXHq5ro0hfNNG0F4GgjUMAH
+V4wz3Oi+LsrnybPLcD3U8PXhRytsAQNqUG3Cx2gd0i+knaIy/WHgUlBJiNJLoOlW
+/wfNGNDuZcOWs68kdf2mrBEPMOWGRpC2lBw4BeUEvPqZAs3eNVRWETL3TkkZVDaP
+CkIwY44xOSdZnx0c6JOTxWu11caX33sCGWZVwdIlPlWSdHk3ktXjWHIcizCT6GpX
+wKEkhXI6hPJpWTa7//RFJwvZm28F732Zbcb1kEMCAwEAATANBgkqhkiG9w0BAQsF
+AAOCAQEAvi9GSPRkkMhC0B2L9HWYSuaEk7VIGvrRmRNL/IZXB8KRBV1kF913Mdy5
+bEwEWF6AKL2lvbSRW9QIGoBn777ZHj+vCxdWbic7uLNIuvMFX6CvUM7uCj4+9tjy
++oaiirgSgu6K8aq8b/nPwN2b924YWadhxsTlu/vRDBnqtmNc82zsM32wF1GA38Yx
+intZBFinXKrfHBqwJlWRxTRQtnx1UjotE0Hxo4rxaSSWxPOFMk44id0iZ9+QVhAu
+4LJiL6ZSRnhaBhiTdtbTMPfFjzAlpMlu6RsA9X8OBbm6IklE0kSw4lVQ0fgzSjR7
+1ul5Nue2ISTGUBUvkLR59+DeHqCNBQ==
+-----END CERTIFICATE-----`
+
+	err := ioutil.WriteFile("/tmp/test-cert.crt", []byte(fakeCert), 0644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	env := map[string]interface{}{
+		"AVP_TYPE":              "vault",
+		"AVP_AUTH_TYPE":         "github",
+		"AVP_GITHUB_TOKEN":      "token",
+		"AVP_VAULT_CACERT":      "/tmp/test-cert.crt",
+		"AVP_VAULT_CAPATH":      "/tmp/test-cert.crt",
+		"AVP_VAULT_SKIP_VERIFY": "true",
+	}
+
+	for k, v := range env {
+		os.Setenv(k, v.(string))
+	}
+
+	var tlsClientConfig = &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
+
+	var transport http.RoundTripper = &http.Transport{
+		TLSHandshakeTimeout: 10 * time.Second,
+		TLSClientConfig:     tlsClientConfig,
+	}
+
+	var httpClient = &http.Client{
+		Timeout:   10 * time.Second,
+		Transport: transport,
+	}
+
+	viper := viper.New()
+	_, err = config.New(viper, httpClient)
+	if err != nil {
+		t.Fatalf("expected 0 errors but got: %s", err)
+	}
+
+	if len(tlsClientConfig.RootCAs.Subjects()) != 1 {
+		t.Errorf("expected cert count to be 1, got %v", len(tlsClientConfig.RootCAs.Subjects()))
+	}
+
+	if tlsClientConfig.InsecureSkipVerify != true {
+		t.Errorf("expected insecure skip verify to be true, got %v", tlsClientConfig.InsecureSkipVerify)
+	}
+
+	for k := range env {
+		os.Unsetenv(k)
+	}
 }
 
 func TestNewConfigNoType(t *testing.T) {
 	viper := viper.New()
-	_, err := config.New(viper)
+	_, err := config.New(viper, utils.DefaultHttpClient())
 	expectedError := "Must provide a supported Vault Type"
 
 	if err.Error() != expectedError {
@@ -114,7 +195,7 @@ func TestNewConfigNoType(t *testing.T) {
 func TestNewConfigNoAuthType(t *testing.T) {
 	os.Setenv("AVP_TYPE", "vault")
 	viper := viper.New()
-	_, err := config.New(viper)
+	_, err := config.New(viper, utils.DefaultHttpClient())
 	expectedError := "Must provide a supported Authentication Type"
 
 	if err.Error() != expectedError {
@@ -167,7 +248,7 @@ func TestNewConfigMissingParameter(t *testing.T) {
 			os.Setenv(k, v.(string))
 		}
 		viper := viper.New()
-		_, err := config.New(viper)
+		_, err := config.New(viper, utils.DefaultHttpClient())
 		if err == nil {
 			t.Fatalf("%s should not instantiate", tc.expectedType)
 		}

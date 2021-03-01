@@ -1,11 +1,14 @@
 package utils
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/hashicorp/vault/api"
 )
@@ -84,4 +87,22 @@ func SetToken(vaultClient *api.Client, token string) error {
 	}
 
 	return nil
+}
+
+func DefaultHttpClient() *http.Client {
+	var tlsClientConfig = &tls.Config{
+		MinVersion: tls.VersionTLS12,
+	}
+
+	var transport http.RoundTripper = &http.Transport{
+		TLSHandshakeTimeout: 10 * time.Second,
+		TLSClientConfig:     tlsClientConfig,
+	}
+
+	var httpClient = &http.Client{
+		Timeout:   10 * time.Second,
+		Transport: transport,
+	}
+
+	return httpClient
 }

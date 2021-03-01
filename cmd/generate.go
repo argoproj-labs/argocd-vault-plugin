@@ -46,7 +46,7 @@ func NewGenerateCommand() *cobra.Command {
 				return err
 			}
 
-			config, err := config.New(viper)
+			config, err := config.New(viper, utils.DefaultHttpClient())
 			if err != nil {
 				return err
 			}

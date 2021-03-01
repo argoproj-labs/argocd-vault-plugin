@@ -361,11 +361,14 @@ environment variables take precedence over configuration pulled from a Kubernete
 
 ### Full List of Supported Parameters
 
-| Name            | Description                | Notes                |
-| --------------- | -------------------------- | -------------------- |
+| Name            | Description | Notes |
+| --------------- | ----------- | ----- |
 | VAULT_ADDR     | Address of your Vault      | N/A                  |
 | VAULT_NAMESPACE | Your Vault Namespace      | Optional                 |
-| PATH_PREFIX    | Prefix of the vault path to look for the secrets | A `/` delimitted path to a secret in Vault. This value is concatenated with the `kind` of the given resource; e.g, replacing a Secret with `PATH_PREFIX` `my-team/my-app` will use the path `my-team/my-app/secret`. PATH_PREFIX will be ignored if the `avp_path` annotation is present in a YAML resource. |
+| VAULT_CACERT | CACert is the path to a PEM-encoded CA cert file to use to verify the Vault server SSL certificate      | In order to use, you must create a secret with the certificate you want to load, and then mount that secret on the argocd-repo-server deployment. Then you can set this path to the mount point of the secret.                |
+| VAULT_CAPATH | CAPath is the path to a directory of PEM-encoded CA cert files to verify the Vault server SSL certificate.      | In order to use, you must create a secret with the certificate(s) you want to load, and then mount that secret on the argocd-repo-server deployment. Then you can set this path to the mount point of the secret.                 |
+| VAULT_SKIP_VERIFY | Enables or disables SSL verification      | Optional                 |
+| PATH_PREFIX    | Prefix of the vault path to look for the secrets | A `/` delimited path to a secret in Vault. This value is concatenated with the `kind` of the given resource; e.g, replacing a Secret with `PATH_PREFIX` `my-team/my-app` will use the path `my-team/my-app/secret`. PATH_PREFIX will be ignored if the `avp_path` annotation is present in a YAML resource. |
 | TYPE           | The type of Vault backend  | Supported values: `vault` and `secretmanager` |
 | KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `kv_version` annotation is present in a YAML resource.|
 | AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |

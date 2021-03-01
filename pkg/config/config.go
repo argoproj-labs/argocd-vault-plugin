@@ -3,7 +3,6 @@ package config
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/auth/ibmsecretmanager"
 	"github.com/IBM/argocd-vault-plugin/pkg/auth/vault"
@@ -22,7 +21,8 @@ type Config struct {
 }
 
 // New returns a new Config struct
-func New(viper *viper.Viper) (*Config, error) {
+func New(viper *viper.Viper, httpClient *http.Client) (*Config, error) {
+
 	// Set Defaults
 	viper.SetDefault("VAULT_ADDR", "http://127.0.0.1:8200")
 	viper.SetDefault("KV_VERSION", "2")
@@ -36,13 +36,27 @@ func New(viper *viper.Viper) (*Config, error) {
 		PathPrefix: viper.GetString("PATH_PREFIX"),
 	}
 
-	var httpClient = &http.Client{
-		Timeout: 10 * time.Second,
-	}
-
 	apiConfig := &api.Config{
 		Address:    viper.GetString("VAULT_ADDR"),
 		HttpClient: httpClient,
+	}
+
+	tlsConfig := &api.TLSConfig{}
+
+	if viper.IsSet("VAULT_CAPATH") {
+		tlsConfig.CAPath = viper.GetString("VAULT_CAPATH")
+	}
+
+	if viper.IsSet("VAULT_CACERT") {
+		tlsConfig.CACert = viper.GetString("VAULT_CACERT")
+	}
+
+	if viper.IsSet("VAULT_SKIP_VERIFY") {
+		tlsConfig.Insecure = viper.GetBool("VAULT_SKIP_VERIFY")
+	}
+
+	if err := apiConfig.ConfigureTLS(tlsConfig); err != nil {
+		return nil, err
 	}
 
 	apiClient, err := api.NewClient(apiConfig)
