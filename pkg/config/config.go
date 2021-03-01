@@ -1,10 +1,8 @@
 package config
 
 import (
-	"crypto/tls"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/auth/ibmsecretmanager"
 	"github.com/IBM/argocd-vault-plugin/pkg/auth/vault"
@@ -23,7 +21,7 @@ type Config struct {
 }
 
 // New returns a new Config struct
-func New(viper *viper.Viper) (*Config, error) {
+func New(viper *viper.Viper, httpClient *http.Client) (*Config, error) {
 
 	// Set Defaults
 	viper.SetDefault("VAULT_ADDR", "http://127.0.0.1:8200")
@@ -36,18 +34,6 @@ func New(viper *viper.Viper) (*Config, error) {
 	config := &Config{
 		Address:    viper.GetString("VAULT_ADDR"),
 		PathPrefix: viper.GetString("PATH_PREFIX"),
-	}
-
-	var transport http.RoundTripper = &http.Transport{
-		TLSHandshakeTimeout: 10 * time.Second,
-		TLSClientConfig: &tls.Config{
-			MinVersion: tls.VersionTLS12,
-		},
-	}
-
-	var httpClient = &http.Client{
-		Timeout:   10 * time.Second,
-		Transport: transport,
 	}
 
 	apiConfig := &api.Config{
