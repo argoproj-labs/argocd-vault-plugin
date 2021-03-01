@@ -10,5 +10,9 @@ data:
         args: ["generate", "./"]
     - name: argocd-vault-plugin-helm
       generate:
-        command: [sh, -c]
+        command: ["sh", "-c"]
         args: ["helm template . > all.yaml && argocd-vault-plugin generate all.yaml"]
+    - name: argocd-vault-plugin-kustomize
+      generate:
+        command: ["sh", "-c"]
+        args: ["kustomize build . > all.yaml && argocd-vault-plugin generate all.yaml"]
