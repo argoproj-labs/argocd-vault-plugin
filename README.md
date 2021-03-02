@@ -302,7 +302,7 @@ Once ArgoCD and Kubernetes are configured, you can then set the required environ
 VAULT_ADDR: Your HashiCorp Vault Address
 TYPE: vault
 AUTH_TYPE: k8s
-K8S_MOUNT_PATH: Mount PATH of your kubernetes Auth (optional)
+K8S_MOUNT_PATH: Mount Path of your kubernetes Auth (optional)
 K8S_ROLE: Your Kuberetes Auth Role
 K8S_TOKEN_PATH: Path to JWT (optional)
 ```
