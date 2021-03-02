@@ -89,18 +89,14 @@ func New(viper *viper.Viper, httpClient *http.Client) (*Config, error) {
 				return nil, errors.New("GITHUB_TOKEN for github authentication cannot be empty")
 			}
 		case "k8s":
-			if viper.IsSet("K8S_MOUNT_POINT") && viper.IsSet("K8S_ROLE") {
-				tokenPath := ""
-				if viper.IsSet("K8S_TOKEN_PATH") {
-					tokenPath = viper.GetString("K8S_TOKEN_PATH")
-				}
+			if viper.IsSet("K8S_ROLE") {
 				auth = vault.NewK8sAuth(
 					viper.GetString("K8S_ROLE"),
-					viper.GetString("K8S_MOUNT_POINT"),
-					tokenPath,
+					viper.GetString("K8S_MOUNT_PATH"),
+					viper.GetString("K8S_TOKEN_PATH"),
 				)
 			} else {
-				return nil, errors.New("K8S_MOUNT_POINT or K8S_ROLE cannot be empty when using Kubernetes Auth")
+				return nil, errors.New("K8S_ROLE cannot be empty when using Kubernetes Auth")
 			}
 		default:
 			return nil, errors.New("Must provide a supported Authentication Type")
