@@ -48,6 +48,14 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "k8s",
+				"AVP_K8S_ROLE":  "role",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
 				"AVP_TYPE":            "vault",
 				"AVP_AUTH_TYPE":       "k8s",
 				"AVP_K8S_MOUNT_POINT": "mount_point",
@@ -228,9 +236,8 @@ func TestNewConfigMissingParameter(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":            "vault",
-				"AVP_AUTH_TYPE":       "k8s",
-				"AVP_K8S_MOUNT_POINT": "mount_point",
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "k8s",
 			},
 			"*backends.Vault",
 		},
