@@ -95,8 +95,8 @@ func New(viper *viper.Viper, httpClient *http.Client) (*Config, error) {
 					tokenPath = viper.GetString("K8S_TOKEN_PATH")
 				}
 				auth = vault.NewK8sAuth(
-					viper.GetString("K8S_MOUNT_POINT"),
 					viper.GetString("K8S_ROLE"),
+					viper.GetString("K8S_MOUNT_POINT"),
 					tokenPath,
 				)
 			} else {
