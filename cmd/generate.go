@@ -62,6 +62,10 @@ func NewGenerateCommand() *cobra.Command {
 			}
 
 			for _, manifest := range manifests {
+				// skip empty manifests 
+				if len(manifest) == 0 {
+					continue
+				}
 
 				template, err := kube.NewTemplate(manifest, backend, config.PathPrefix)
 				if err != nil {
