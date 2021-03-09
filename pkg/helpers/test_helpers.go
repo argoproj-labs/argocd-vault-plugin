@@ -133,9 +133,54 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 		t.Fatal(err)
 	}
 
-	_, err := client.Logical().Write("auth/approle/role/role1", map[string]interface{}{
+	// Create Policy for secret/foo
+	err := client.Sys().PutPolicy("approle-secret", "path \"secret/*\" { capabilities = [\"read\",\"list\"] }")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create Policy for kv
+	err = client.Sys().PutPolicy("approle-kv", "path \"kv/*\" { capabilities = [\"read\",\"list\"] }")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("auth/approle/role/role1", map[string]interface{}{
 		"bind_secret_id": "true",
 		"period":         "300",
+		"policies":       "approle-secret, approle-kv",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/testing", map[string]interface{}{
+		"name":             "test-name",
+		"namespace":        "test-namespace",
+		"version":          "1.0",
+		"replicas":         "2",
+		"tag":              "1.0",
+		"secret-var-value": "test-password",
+		"secret-num":       1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("kv/data/testing", map[string]interface{}{
+		"name":        "test-kv-name",
+		"namespace":   "test-kv-namespace",
+		"version":     "1.2",
+		"replicas":    "3",
+		"tag":         "1.1",
+		"target-port": 80,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/foo", map[string]interface{}{
+		"secret": "bar",
 	})
 	if err != nil {
 		t.Fatal(err)

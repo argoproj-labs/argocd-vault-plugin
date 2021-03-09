@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    avp_path: secret/testing
+    kv_version: "1"
+  labels:
+    app: test-name
+    version: "1.0"
+  name: test-name
+  namespace: test-namespace
+spec:
+  minReadySeconds: 5
+  replicas: "2"
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: test-name
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: test-name
+      name: test-name
+    spec:
+      containers:
+      - image: foo.com/test-name:1.0
+        imagePullPolicy: Always
+        name: test-name
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    avp_path: kv/data/testing
+  labels:
+    app: test-kv-name
+  name: test-kv-name
+  namespace: test-kv-namespace
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: test-kv-name
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    avp_path: kv/data/testing
+  labels:
+    app: test-kv-name
+    version: "1.2"
+  name: test-kv-name
+  namespace: test-kv-namespace
+spec:
+  minReadySeconds: 5
+  replicas: "3"
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: test-kv-name
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: test-kv-name
+      name: test-kv-name
+    spec:
+      containers:
+      - image: foo.com/test-kv-name:1.1
+        imagePullPolicy: Always
+        name: test-kv-name
+---
+apiVersion: v1
+data:
+  SECRET_NUM: MQ==
+  SECRET_VAR: dGVzdC1wYXNzd29yZA==
+kind: Secret
+metadata:
+  annotations:
+    avp_path: secret/testing
+    kv_version: "1"
+  name: test-name
+  namespace: test-namespace
+type: Opaque
+---

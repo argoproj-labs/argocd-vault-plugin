@@ -155,6 +155,10 @@ func stringify(input interface{}) string {
 		{
 			return strconv.FormatBool(input.(bool))
 		}
+	case json.Number:
+		{
+			return string(input.(json.Number))
+		}
 	default:
 		{
 			return input.(string)

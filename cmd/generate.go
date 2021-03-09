@@ -82,7 +82,7 @@ func NewGenerateCommand() *cobra.Command {
 					return err
 				}
 
-				fmt.Printf("%s---\n", output)
+				fmt.Fprintf(cmd.OutOrStdout(), "%s---\n", output)
 			}
 
 			return nil
