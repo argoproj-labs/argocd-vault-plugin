@@ -1,6 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    avp_path: secret/testing
+    kv_version: "1"
   name: <name>
   namespace: <namespace>
   labels:

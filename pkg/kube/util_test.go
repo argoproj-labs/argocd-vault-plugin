@@ -1,6 +1,7 @@
 package kube
 
 import (
+	"encoding/json"
 	"errors"
 	"reflect"
 	"testing"
@@ -191,4 +192,35 @@ func TestGenericReplacement_missingValue(t *testing.T) {
 	}
 
 	assertFailedReplacement(&dummyResource, &expected, t)
+}
+
+func TestStringify(t *testing.T) {
+	testCases := []struct {
+		input    interface{}
+		expected string
+	}{
+		{
+			"thing",
+			"thing",
+		},
+		{
+			123,
+			"123",
+		},
+		{
+			true,
+			"true",
+		},
+		{
+			json.Number("123"),
+			"123",
+		},
+	}
+
+	for _, tc := range testCases {
+		out := stringify(tc.input)
+		if out != tc.expected {
+			t.Errorf("expected: %s, got: %s.", tc.expected, out)
+		}
+	}
 }
