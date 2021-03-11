@@ -8,8 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/kube"
-	"github.com/spf13/viper"
 	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -72,31 +70,4 @@ func stringInSlice(a string, list []string) bool {
 		}
 	}
 	return false
-}
-
-func setConfig(secretName, configPath string, viper *viper.Viper) error {
-	// If a secret name is passed, pull config from Kubernetes
-	if secretName != "" {
-		localClient, err := kube.NewClient()
-		if err != nil {
-			return err
-		}
-		yaml, err := localClient.ReadSecret(secretName)
-		if err != nil {
-			return err
-		}
-		viper.SetConfigType("yaml")
-		viper.ReadConfig(bytes.NewBuffer(yaml))
-	}
-
-	// If a config file path is passed, read in that file and overwrite all other
-	if configPath != "" {
-		viper.SetConfigFile(configPath)
-		err := viper.ReadInConfig()
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
