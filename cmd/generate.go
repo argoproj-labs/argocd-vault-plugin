@@ -7,7 +7,6 @@ import (
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
 	"github.com/IBM/argocd-vault-plugin/pkg/utils"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // NewGenerateCommand initializes the generate command
@@ -35,18 +34,14 @@ func NewGenerateCommand() *cobra.Command {
 
 			manifests, errs := readFilesAsManifests(files)
 			if len(errs) != 0 {
-
 				// TODO: handle multiple errors nicely
 				return fmt.Errorf("could not read YAML files: %s", errs)
 			}
 
-			viper := viper.New()
-			err = setConfig(secretName, configPath, viper)
-			if err != nil {
-				return err
-			}
-
-			config, err := config.New(viper, utils.DefaultHttpClient())
+			config, err := config.New(&config.Options{
+				SecretName: secretName,
+				ConfigPath: configPath,
+			})
 			if err != nil {
 				return err
 			}
@@ -62,7 +57,8 @@ func NewGenerateCommand() *cobra.Command {
 			}
 
 			for _, manifest := range manifests {
-				// skip empty manifests 
+
+				// skip empty manifests
 				if len(manifest) == 0 {
 					continue
 				}
