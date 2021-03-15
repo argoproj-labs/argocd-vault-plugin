@@ -2,5 +2,5 @@ package version
 
 var (
 	// Version is the argocd-vault-plugin version.
-	Version = "v0.6.0"
+	Version = "v1.0.0"
 )

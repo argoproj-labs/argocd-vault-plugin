@@ -111,7 +111,7 @@ initContainers:
   command: [sh, -c]
   args:
     - wget -O argocd-vault-plugin
-      https://github.com/IBM/argocd-vault-plugin/releases/download/v0.6.0/argocd-vault-plugin_0.6.0_linux_amd64
+      https://github.com/IBM/argocd-vault-plugin/releases/download/v1.0.0/argocd-vault-plugin_1.0.0_linux_amd64
 
       chmod +x argocd-vault-plugin && mv argocd-vault-plugin /custom-tools/
   volumeMounts:
@@ -138,7 +138,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install the AVP plugin (as root so we can copy to /usr/local/bin)
-RUN curl -L -o argocd-vault-plugin https://github.com/IBM/argocd-vault-plugin/releases/download/v0.6.0/argocd-vault-plugin_0.6.0_linux_amd64
+RUN curl -L -o argocd-vault-plugin https://github.com/IBM/argocd-vault-plugin/releases/download/v1.0.0/argocd-vault-plugin_1.0.0_linux_amd64
 RUN chmod +x argocd-vault-plugin
 RUN mv argocd-vault-plugin /usr/local/bin
 
@@ -224,19 +224,19 @@ We support AppRole and Github Auth Method for getting secrets from Vault.
 For AppRole Authentication, these are the required parameters:
 ```
 VAULT_ADDR: Your HashiCorp Vault Address
-TYPE: vault
-AUTH_TYPE: approle
-ROLE_ID: Your AppRole Role ID
-SECRET_ID: Your AppRole Secret ID
+AVP_TYPE: vault
+AVP_AUTH_TYPE: approle
+AVP_ROLE_ID: Your AppRole Role ID
+AVP_SECRET_ID: Your AppRole Secret ID
 ```
 
 ##### Github Authentication
 For Github Authentication, these are the required parameters:
 ```
 VAULT_ADDR: Your HashiCorp Vault Address
-TYPE: vault
-AUTH_TYPE: github
-GITHUB_TOKEN: Your Github Personal Access Token
+AVP_TYPE: vault
+AVP_AUTH_TYPE: github
+AVP_GITHUB_TOKEN: Your Github Personal Access Token
 ```
 
 ##### Kubernetes Authentication
@@ -302,11 +302,11 @@ In order to use Kubernetes Authentication a couple of things are required.
 Once ArgoCD and Kubernetes are configured, you can then set the required environment variables for the plugin:
 ```
 VAULT_ADDR: Your HashiCorp Vault Address
-TYPE: vault
-AUTH_TYPE: k8s
-K8S_MOUNT_PATH: Mount Path of your kubernetes Auth (optional)
-K8S_ROLE: Your Kuberetes Auth Role
-K8S_TOKEN_PATH: Path to JWT (optional)
+AVP_TYPE: vault
+AVP_AUTH_TYPE: k8s
+AVP_K8S_MOUNT_PATH: Mount Path of your kubernetes Auth (optional)
+AVP_K8S_ROLE: Your Kuberetes Auth Role
+AVP_K8S_TOKEN_PATH: Path to JWT (optional)
 ```
 
 ### IBM Cloud Secret Manager
@@ -316,9 +316,9 @@ For IBM Cloud Secret Manager we only support using IAM authentication at this ti
 For IAM Authentication, these are the required parameters:
 ```
 VAULT_ADDR: Your IBM Cloud Secret Manager Endpoint
-TYPE: secretmanager
-AUTH_TYPE: iam
-IBM_API_KEY: Your IBM Cloud API Key
+AVP_TYPE: secretmanager
+AVP_AUTH_TYPE: iam
+AVP_IBM_API_KEY: Your IBM Cloud API Key
 ```
 
 ## Configuration
@@ -331,9 +331,9 @@ should be the exact names given above, case-sensitive:
 apiVersion: v1
 data:
   VAULT_ADDR: Zm9v
-  AUTH_TYPE: Zm9v
-  GITHUB_TOKEN: Zm9v
-  TYPE: Zm9v
+  AVP_AUTH_TYPE: Zm9v
+  AVP_GITHUB_TOKEN: Zm9v
+  AVP_TYPE: Zm9v
 kind: Secret
 metadata:
   name: vault-configuration
@@ -347,9 +347,9 @@ You can use it like this: `argocd-vault-plugin generate /some/path -s vault-conf
 The configuration can be given in a file reachable from the plugin, in any Viper supported format (YAML, JSON, etc.):
 ```yaml
 VAULT_ADDR: Zm9v
-AUTH_TYPE: Zm9v
-GITHUB_TOKEN: Zm9v
-TYPE: Zm9v
+AVP_AUTH_TYPE: Zm9v
+AVP_GITHUB_TOKEN: Zm9v
+AVP_TYPE: Zm9v
 ```
 You can use it like this: `argocd-vault-plugin generate /some/path -c /path/to/config/file.yaml`. This can be useful for usecases not involving Argo CD.
 
@@ -362,25 +362,20 @@ Make sure that these environment variables are available to the plugin when runn
 environment variables take precedence over configuration pulled from a Kubernetes Secret or a file.
 
 ### Full List of Supported Parameters
+We support all Vault Environment Variables listed [here](https://www.vaultproject.io/docs/commands#environment-variables) as well as:
 
 | Name            | Description | Notes |
 | --------------- | ----------- | ----- |
-| VAULT_ADDR     | Address of your Vault      | N/A                  |
-| VAULT_NAMESPACE | Your Vault Namespace      | Optional                 |
-| VAULT_CACERT | CACert is the path to a PEM-encoded CA cert file to use to verify the Vault server SSL certificate      | In order to use, you must create a secret with the certificate you want to load, and then mount that secret on the argocd-repo-server deployment. Then you can set this path to the mount point of the secret.                |
-| VAULT_CAPATH | CAPath is the path to a directory of PEM-encoded CA cert files to verify the Vault server SSL certificate.      | In order to use, you must create a secret with the certificate(s) you want to load, and then mount that secret on the argocd-repo-server deployment. Then you can set this path to the mount point of the secret.                 |
-| VAULT_SKIP_VERIFY | Enables or disables SSL verification      | Optional                 |
-| PATH_PREFIX    | Prefix of the vault path to look for the secrets (Will be deprecated in v1.0.0)| A `/` delimited path to a secret in Vault. This value is concatenated with the `kind` of the given resource; e.g, replacing a Secret with `PATH_PREFIX` `my-team/my-app` will use the path `my-team/my-app/secret`. PATH_PREFIX will be ignored if the `avp_path` annotation is present in a YAML resource. |
-| TYPE           | The type of Vault backend  | Supported values: `vault` and `secretmanager` |
-| KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `kv_version` annotation is present in a YAML resource.|
-| AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |
-| GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
-| ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
-| SECRET_ID      | Vault AppRole Secret_ID    | Required with `AUTH_TYPE` of `approle` |
-| K8S_MOUNT_PATH | Kuberentes Auth Mount PATH | Optional for `AUTH_TYPE` of `k8s` defaults to `auth/kubernetes` |
-| K8S_ROLE       | Kuberentes Auth Role      | Required with `AUTH_TYPE` of `k8s` |
-| K8S_TOKEN_PATH | Path to JWT for Kubernetes Auth  | Optional for `AUTH_TYPE` of `k8s` defaults to `/var/run/secrets/kubernetes.io/serviceaccount/token` |
-| IBM_API_KEY    | IBM Cloud IAM API Key      | Required with `TYPE` of `secretmanager` and `AUTH_TYPE` of `iam` |
+| AVP_TYPE           | The type of Vault backend  | Supported values: `vault` and `ibmsecretmanager` |
+| AVP_KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `kv_version` annotation is present in a YAML resource.|
+| AVP_AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |
+| AVP_GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
+| AVP_ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
+| AVP_SECRET_ID      | Vault AppRole Secret_ID    | Required with `AUTH_TYPE` of `approle` |
+| AVP_K8S_MOUNT_PATH | Kuberentes Auth Mount PATH | Optional for `AUTH_TYPE` of `k8s` defaults to `auth/kubernetes` |
+| AVP_K8S_ROLE       | Kuberentes Auth Role      | Required with `AUTH_TYPE` of `k8s` |
+| AVP_K8S_TOKEN_PATH | Path to JWT for Kubernetes Auth  | Optional for `AUTH_TYPE` of `k8s` defaults to `/var/run/secrets/kubernetes.io/serviceaccount/token` |
+| AVP_IBM_API_KEY    | IBM Cloud IAM API Key      | Required with `TYPE` of `secretmanager` and `AUTH_TYPE` of `iam` |
 
 ### Full List of Supported Annotation
 We support two different annotations that can be used inside a kubernetes resource. These annotations will override any corresponding configuration set via Environment Variable or Configuration File.
