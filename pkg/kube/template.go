@@ -102,52 +102,28 @@ func configReplacement(key, value string, vaultData map[string]interface{}) (int
 	return stringify(res), err
 }
 
-// secretReplace will replace the <placeholders> in the template's data with values from Vault.
-// It will return an aggregrate of any errors encountered during the replacements
-// It will ensure that `<placeholder>`'s in `.data` are base64 encoded
+// secretReplace will call replaceInner based on where there are placeholders to replace
+// It will return an error if an error occured during the replacement process
 func (t *Template) secretReplace() error {
+	var dataToReplace []map[string]interface{}
 
 	// Replace metadata normally
-	metadata, ok := t.TemplateData["metadata"].(map[string]interface{})
-	if ok {
-		replaceInner(&t.Resource, &metadata, genericReplacement)
+	if metadata, ok := t.TemplateData["metadata"].(map[string]interface{}); ok {
+		dataToReplace = append(dataToReplace, metadata)
+	}
+	if stringData, ok := t.TemplateData["stringData"].(map[string]interface{}); ok {
+		dataToReplace = append(dataToReplace, stringData)
+	}
+	if data, ok := t.TemplateData["data"].(map[string]interface{}); ok {
+		dataToReplace = append(dataToReplace, data)
+	}
+
+	for _, v := range dataToReplace {
+		replaceInner(&t.Resource, &v, genericReplacement)
 		if len(t.replacementErrors) != 0 {
 
 			// TODO format multiple errors nicely
 			return fmt.Errorf("Replace: could not replace all placeholders in SecretTemplate metadata: %s", t.replacementErrors)
-		}
-	}
-
-	// Replace stringData normally
-	stringData, ok := t.TemplateData["stringData"].(map[string]interface{})
-	if ok {
-		replaceInner(&t.Resource, &stringData, genericReplacement)
-		if len(t.replacementErrors) != 0 {
-
-			// TODO format multiple errors nicely
-			return fmt.Errorf("Replace: could not replace all placeholders in SecretTemplate stringData: %s", t.replacementErrors)
-		}
-	}
-
-	// Replace <placeholder>'d Secret.data with []byte's
-	data, ok := t.TemplateData["data"].(map[string]interface{})
-	if ok {
-		replaceInner(&t.Resource, &data, func(key, value string, vaultData map[string]interface{}) (_ interface{}, err []error) {
-			res, err := genericReplacement(key, value, vaultData)
-
-			// We have to return []byte for k8s secrets,
-			// so we convert everything that came from Vault
-			// Strings hardcoded in the Secret.data are assumed to be base64 encoded already
-			if placeholder.Match([]byte(value)) {
-				return []byte(stringify(res)), err
-			}
-			return res, err
-		})
-
-		if len(t.replacementErrors) != 0 {
-
-			// TODO format multiple errors nicely
-			return fmt.Errorf("Replace: could not replace all placeholders in SecretTemplate data: %s", t.replacementErrors)
 		}
 	}
 
