@@ -39,7 +39,7 @@ The argocd-vault-plugin works by taking a directory of yaml files that have been
 
 An annotation or path prefix can be used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp_path: "path/to/secret"`. The path prefix is defined as an Environment Variable `PATH_PREFIX` and when set will concatenate the prefix with the resource type to create a path that is something like `PATH_PREFIX/configmap`. (See [Configuration](#configuration))
 
-For example, if you have a secret with the key `password` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/secret/password-vault-key` and inject it into the secret yaml.
+For example, if you have a secret with the key `password-vault-key` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/secret/password-vault-key` and inject it into the secret yaml.
 
 ```
 kind: Secret
@@ -65,6 +65,8 @@ type: Opaque
 data:
   password: cGFzc3dvcmQK # The Value from the key password-vault-key in vault
 ```
+
+<b>*Note*</b>: The plugin does not perform any transformation of the secrets in transit. So if you have plain text secrets in Vault, you will need to use the `stringData` field and if you have a base64 encoded secret in Vault, you will need to use the `data` field according to the [Kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret/).
 
 ## Installation
 There are multiple ways to download and install argocd-vault-plugin depedning on your use case.
@@ -109,7 +111,7 @@ initContainers:
   command: [sh, -c]
   args:
     - wget -O argocd-vault-plugin
-      https://github.com/IBM/argocd-vault-plugin/releases/download/v0.5.1/argocd-vault-plugin_0.5.1_linux_amd64
+      https://github.com/IBM/argocd-vault-plugin/releases/download/v0.6.0/argocd-vault-plugin_0.6.0_linux_amd64
 
       chmod +x argocd-vault-plugin && mv argocd-vault-plugin /custom-tools/
   volumeMounts:
@@ -136,7 +138,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install the AVP plugin (as root so we can copy to /usr/local/bin)
-RUN curl -L -o argocd-vault-plugin https://github.com/IBM/argocd-vault-plugin/releases/download/v0.5.1/argocd-vault-plugin_0.5.1_linux_amd64
+RUN curl -L -o argocd-vault-plugin https://github.com/IBM/argocd-vault-plugin/releases/download/v0.6.0/argocd-vault-plugin_0.6.0_linux_amd64
 RUN chmod +x argocd-vault-plugin
 RUN mv argocd-vault-plugin /usr/local/bin
 
@@ -368,7 +370,7 @@ environment variables take precedence over configuration pulled from a Kubernete
 | VAULT_CACERT | CACert is the path to a PEM-encoded CA cert file to use to verify the Vault server SSL certificate      | In order to use, you must create a secret with the certificate you want to load, and then mount that secret on the argocd-repo-server deployment. Then you can set this path to the mount point of the secret.                |
 | VAULT_CAPATH | CAPath is the path to a directory of PEM-encoded CA cert files to verify the Vault server SSL certificate.      | In order to use, you must create a secret with the certificate(s) you want to load, and then mount that secret on the argocd-repo-server deployment. Then you can set this path to the mount point of the secret.                 |
 | VAULT_SKIP_VERIFY | Enables or disables SSL verification      | Optional                 |
-| PATH_PREFIX    | Prefix of the vault path to look for the secrets | A `/` delimited path to a secret in Vault. This value is concatenated with the `kind` of the given resource; e.g, replacing a Secret with `PATH_PREFIX` `my-team/my-app` will use the path `my-team/my-app/secret`. PATH_PREFIX will be ignored if the `avp_path` annotation is present in a YAML resource. |
+| PATH_PREFIX    | Prefix of the vault path to look for the secrets (Will be deprecated in v1.0.0)| A `/` delimited path to a secret in Vault. This value is concatenated with the `kind` of the given resource; e.g, replacing a Secret with `PATH_PREFIX` `my-team/my-app` will use the path `my-team/my-app/secret`. PATH_PREFIX will be ignored if the `avp_path` annotation is present in a YAML resource. |
 | TYPE           | The type of Vault backend  | Supported values: `vault` and `secretmanager` |
 | KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `kv_version` annotation is present in a YAML resource.|
 | AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |
