@@ -52,7 +52,8 @@ func TestNewTemplate(t *testing.T) {
 			"apiVersion": "v1",
 			"metadata": map[string]interface{}{
 				"annotations": map[string]interface{}{
-					"avp_path": "path",
+					"kv_version": "1",
+					"avp_path":   "path/to/secret",
 				},
 				"namespace": "default",
 				"name":      "my-app",
@@ -239,8 +240,8 @@ func TestToYAML_Secret_PlaceholderedData(t *testing.T) {
 			replaceable: true,
 			VaultData: map[string]interface{}{
 				"name":   "my-app",
-				"string": "foo",
-				"num":    5,
+				"string": "Zm9v",
+				"num":    "NQ==",
 			},
 		},
 	}
@@ -331,8 +332,8 @@ func TestToYAML_Secret_MixedData(t *testing.T) {
 			replaceable: true,
 			VaultData: map[string]interface{}{
 				"name":   "my-app",
-				"string": "foo",
-				"num":    5,
+				"string": "Zm9v",
+				"num":    "NQ==",
 			},
 		},
 	}
@@ -357,6 +358,7 @@ func TestToYAML_Secret_MixedData(t *testing.T) {
 		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
 	}
 }
+
 func TestToYAML_Secret_PlaceholderedStringData(t *testing.T) {
 	d := Template{
 		Resource{

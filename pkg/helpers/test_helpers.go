@@ -160,8 +160,8 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 		"version":          "1.0",
 		"replicas":         "2",
 		"tag":              "1.0",
-		"secret-var-value": "test-password",
-		"secret-num":       1,
+		"secret-var-value": "dGVzdC1wYXNzd29yZA==",
+		"secret-num":       "MQ==",
 	})
 	if err != nil {
 		t.Fatal(err)

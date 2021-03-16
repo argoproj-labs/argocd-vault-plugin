@@ -1,3 +1,15 @@
+<a name="v0.6.0"></a>
+## [v0.6.0](https://github.com/IBM/argocd-vault-plugin/compare/v0.5.1...v0.6.0) (2021-03-15)
+
+### Fix
+
+* Increase timeout on DefaultHttpClient to 60s ([#99](https://github.com/IBM/argocd-vault-plugin/issues/99))
+
+### BREAKING CHANGE
+
+
+Secrets will now have to be base64 encoded in Vault to use the data field of a Kubernetes secret
+
 <a name="v0.5.1"></a>
 ## [v0.5.1](https://github.com/IBM/argocd-vault-plugin/compare/v0.5.0...v0.5.1) (2021-03-10)
 
