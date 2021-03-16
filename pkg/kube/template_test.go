@@ -19,12 +19,41 @@ func (v *MockVault) GetSecrets(path, kvVersion string) (map[string]interface{}, 
 }
 
 func TestNewTemplate(t *testing.T) {
+	t.Run("will throw error if no avp_path", func(t *testing.T) {
+		mv := MockVault{}
+		_, err := NewTemplate(map[string]interface{}{
+			"kind":       "Service",
+			"apiVersion": "v1",
+			"metadata": map[string]interface{}{
+				"namespace": "default",
+				"name":      "my-app",
+			},
+			"spec": map[string]interface{}{
+				"selector": map[string]interface{}{
+					"app": "my-app",
+				},
+				"ports": []interface{}{
+					map[string]interface{}{
+						"port": "3000",
+					},
+				},
+			},
+		}, &mv, "string")
+
+		expected := "no Vault path found, the avp_path annotation is required"
+		if err.Error() != expected {
+			t.Fatalf("Expected error %s, but got %s", expected, err.Error())
+		}
+	})
 	t.Run("will not GetSecrets for non-placeholder'd YAML", func(t *testing.T) {
 		mv := MockVault{}
 		template, _ := NewTemplate(map[string]interface{}{
 			"kind":       "Service",
 			"apiVersion": "v1",
 			"metadata": map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"avp_path": "path",
+				},
 				"namespace": "default",
 				"name":      "my-app",
 			},
@@ -52,6 +81,10 @@ func TestNewTemplate(t *testing.T) {
 			"kind":       "Service",
 			"apiVersion": "v1",
 			"metadata": map[string]interface{}{
+				"annotations": map[string]interface{}{
+					"avp_path":   "path",
+					"kv_version": "1",
+				},
 				"namespace": "default",
 				"name":      "my-app",
 			},
@@ -83,6 +116,9 @@ func TestToYAML_Deployment(t *testing.T) {
 				"apiVersion": "apps/v1",
 				"kind":       "Deployment",
 				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						"avp_path": "path",
+					},
 					"namespace": "default",
 					"name":      "<name>",
 				},
@@ -134,6 +170,9 @@ func TestToYAML_Service(t *testing.T) {
 				"kind":       "Service",
 				"apiVersion": "v1",
 				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						"avp_path": "path",
+					},
 					"namespace": "default",
 					"name":      "<name>",
 				},
@@ -185,6 +224,10 @@ func TestToYAML_Secret_PlaceholderedData(t *testing.T) {
 				"apiVersion": "v1",
 				"kind":       "Secret",
 				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						"avp_path":   "path",
+						"kv_version": "1",
+					},
 					"namespace": "default",
 					"name":      "<name>",
 				},
@@ -230,6 +273,9 @@ func TestToYAML_Secret_HardcodedData(t *testing.T) {
 				"apiVersion": "v1",
 				"kind":       "Secret",
 				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						"avp_path": "path",
+					},
 					"namespace": "default",
 					"name":      "my-app",
 				},
@@ -270,6 +316,9 @@ func TestToYAML_Secret_MixedData(t *testing.T) {
 				"apiVersion": "v1",
 				"kind":       "Secret",
 				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						"avp_path": "path",
+					},
 					"namespace": "default",
 					"name":      "<name>",
 				},
@@ -316,6 +365,9 @@ func TestToYAML_Secret_PlaceholderedStringData(t *testing.T) {
 				"apiVersion": "v1",
 				"kind":       "Secret",
 				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						"avp_path": "path",
+					},
 					"namespace": "default",
 					"name":      "<name>",
 				},
@@ -362,6 +414,9 @@ func TestToYAML_ConfigMap(t *testing.T) {
 				"apiVersion": "v1",
 				"kind":       "ConfigMap",
 				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						"avp_path": "path",
+					},
 					"namespace": "default",
 					"name":      "<name>",
 				},
@@ -408,6 +463,9 @@ func TestToYAML_Ingress(t *testing.T) {
 				"apiVersion": "networking.k8s.io/v1",
 				"kind":       "Ingress",
 				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						"avp_path": "path",
+					},
 					"namespace": "default",
 					"name":      "<name>",
 				},
@@ -460,6 +518,9 @@ func TestToYAML_CronJob(t *testing.T) {
 				"apiVersion": "batch/v1beta1",
 				"kind":       "CronJob",
 				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						"avp_path": "path",
+					},
 					"name": "<name>",
 				},
 				"spec": map[string]interface{}{
@@ -517,6 +578,9 @@ func TestToYAML_Job(t *testing.T) {
 				"apiVersion": "batch/v1",
 				"kind":       "Job",
 				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						"avp_path": "path",
+					},
 					"name": "<name>",
 				},
 				"spec": map[string]interface{}{
@@ -567,6 +631,9 @@ func TestToYAML_DeploymentBad(t *testing.T) {
 			Kind: "Deployment",
 			TemplateData: map[string]interface{}{
 				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						"avp_path": "path",
+					},
 					"namespace": "default",
 					"name":      "<name>",
 				},

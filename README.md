@@ -37,7 +37,7 @@ This plugin is aimed at helping to solve the issue of secret management with Git
 ### How it works
 The argocd-vault-plugin works by taking a directory of yaml files that have been templated out using the pattern of `<placeholder>` where you would want a value from Vault to go. The inside of the `<>` would be the actual key in Vault.
 
-An annotation or path prefix can be used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp_path: "path/to/secret"`. The path prefix is defined as an Environment Variable `PATH_PREFIX` and when set will concatenate the prefix with the resource type to create a path that is something like `PATH_PREFIX/configmap`. (See [Configuration](#configuration))
+An annotation must be used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp_path: "path/to/secret"`.
 
 For example, if you have a secret with the key `password` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/secret/password-vault-key` and inject it into the secret yaml.
 
@@ -364,7 +364,6 @@ We support all Vault Environment Variables listed [here](https://www.vaultprojec
 
 | Name            | Description | Notes |
 | --------------- | ----------- | ----- |
-| AVP_PATH_PREFIX    | Prefix of the vault path to look for the secrets | A `/` delimited path to a secret in Vault. This value is concatenated with the `kind` of the given resource; e.g, replacing a Secret with `PATH_PREFIX` `my-team/my-app` will use the path `my-team/my-app/secret`. PATH_PREFIX will be ignored if the `avp_path` annotation is present in a YAML resource. (Deprecated)|
 | AVP_TYPE           | The type of Vault backend  | Supported values: `vault` and `ibmsecretmanager` |
 | AVP_KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `kv_version` annotation is present in a YAML resource.|
 | AVP_AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |
