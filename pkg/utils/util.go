@@ -100,7 +100,7 @@ func DefaultHttpClient() *http.Client {
 	}
 
 	var httpClient = &http.Client{
-		Timeout:   10 * time.Second,
+		Timeout:   60 * time.Second,
 		Transport: transport,
 	}
 
