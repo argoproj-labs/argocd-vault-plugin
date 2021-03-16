@@ -68,6 +68,10 @@ func New(viper *viper.Viper, httpClient *http.Client) (*Config, error) {
 		apiClient.SetNamespace(viper.GetString("VAULT_NAMESPACE"))
 	}
 
+	if viper.IsSet("PATH_PREFIX") {
+		print("PATH_PREFIX will be deprecated in v1.0.0, please migrate to using the avp_path annotation.")
+	}
+
 	config.VaultClient = apiClient
 
 	authType := viper.GetString("AUTH_TYPE")
