@@ -1,3 +1,10 @@
+<a name="v0.7.0"></a>
+## [v0.7.0](https://github.com/IBM/argocd-vault-plugin/compare/v0.6.0...v0.7.0) (2021-03-24)
+
+### Feat
+
+* Add avp_ignore annotation to ignore YAMLs ([#104](https://github.com/IBM/argocd-vault-plugin/issues/104))
+
 <a name="v0.6.0"></a>
 ## [v0.6.0](https://github.com/IBM/argocd-vault-plugin/compare/v0.5.1...v0.6.0) (2021-03-15)
 
