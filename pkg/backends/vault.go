@@ -46,11 +46,12 @@ func (v *Vault) GetSecrets(path, kvVersion string) (map[string]interface{}, erro
 		return nil, fmt.Errorf("Could not find secrets at path %s", path)
 	}
 
+	var kv = v.KvVersion
 	if kvVersion != "" {
-		v.KvVersion = kvVersion
+		kv = kvVersion
 	}
 
-	if v.KvVersion == "2" {
+	if kv == "2" {
 		if _, ok := secret.Data["data"]; ok {
 			return secret.Data["data"].(map[string]interface{}), nil
 		}
@@ -60,7 +61,7 @@ func (v *Vault) GetSecrets(path, kvVersion string) (map[string]interface{}, erro
 		return nil, errors.New("Could not get data from Vault, check that kv-v2 is the correct engine")
 	}
 
-	if v.KvVersion == "1" {
+	if kv == "1" {
 		return secret.Data, nil
 	}
 

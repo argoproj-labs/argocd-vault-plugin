@@ -32,6 +32,12 @@ spec:
         imagePullPolicy: Always
         name: test-name
 ---
+---
+# Source: conditionally/excluded/secret.yaml
+#
+#
+#
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -106,5 +112,16 @@ metadata:
     kv_version: "1"
   name: test-name
   namespace: test-namespace
+type: Opaque
+---
+apiVersion: v1
+data:
+  SECRET_VAR: dGVzdC1wYXNzd29yZA==
+kind: Secret
+metadata:
+  annotations:
+    kv_version: "1"
+  name: example-secret
+  namespace: default
 type: Opaque
 ---

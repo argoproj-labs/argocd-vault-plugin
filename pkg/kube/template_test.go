@@ -4,6 +4,8 @@ import (
 	"io/ioutil"
 	"strings"
 	"testing"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 type MockVault struct {
@@ -19,120 +21,49 @@ func (v *MockVault) GetSecrets(path, kvVersion string) (map[string]interface{}, 
 }
 
 func TestNewTemplate(t *testing.T) {
-	t.Run("will throw error if no avp_path", func(t *testing.T) {
-		mv := MockVault{}
-		_, err := NewTemplate(map[string]interface{}{
-			"kind":       "Service",
-			"apiVersion": "v1",
-			"metadata": map[string]interface{}{
-				"namespace": "default",
-				"name":      "my-app",
-			},
-			"spec": map[string]interface{}{
-				"selector": map[string]interface{}{
-					"app": "my-app",
-				},
-				"ports": []interface{}{
-					map[string]interface{}{
-						"port": "3000",
-					},
-				},
-			},
-		}, &mv, "string")
-
-		expected := "no Vault path found, the avp_path annotation is required"
-		if err.Error() != expected {
-			t.Fatalf("Expected error %s, but got %s", expected, err.Error())
-		}
-	})
-	t.Run("will not GetSecrets for non-placeholder'd YAML", func(t *testing.T) {
-		mv := MockVault{}
-		template, _ := NewTemplate(map[string]interface{}{
-			"kind":       "Service",
-			"apiVersion": "v1",
-			"metadata": map[string]interface{}{
-				"annotations": map[string]interface{}{
-					"kv_version": "1",
-					"avp_path":   "path/to/secret",
-				},
-				"namespace": "default",
-				"name":      "my-app",
-			},
-			"spec": map[string]interface{}{
-				"selector": map[string]interface{}{
-					"app": "my-app",
-				},
-				"ports": []interface{}{
-					map[string]interface{}{
-						"port": "3000",
-					},
-				},
-			},
-		}, &mv, "string")
-		if template.Resource.replaceable {
-			t.Fatalf("template does not contain <placeholders> and shouldn't be replaced")
-		}
-		if mv.GetSecretsCalled {
-			t.Fatalf("template does not contain <placeholders> so GetSecrets shouldn't be called")
-		}
-	})
 	t.Run("will GetSecrets for placeholder'd YAML", func(t *testing.T) {
 		mv := MockVault{}
-		template, _ := NewTemplate(map[string]interface{}{
-			"kind":       "Service",
-			"apiVersion": "v1",
-			"metadata": map[string]interface{}{
-				"annotations": map[string]interface{}{
-					"avp_path":   "path",
-					"kv_version": "1",
-				},
-				"namespace": "default",
-				"name":      "my-app",
-			},
-			"spec": map[string]interface{}{
-				"selector": map[string]interface{}{
-					"app": "my-app",
-				},
-				"ports": []interface{}{
-					map[string]interface{}{
-						"port": "<port>",
-					},
-				},
-			},
-		}, &mv, "string")
-		if !template.Resource.replaceable {
-			t.Fatalf("template does contain <placeholders> and should be replaced")
+		dat := `
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        avp_path: path
+        kv_version: "1"
+      name: my-app
+      namespace: default
+    spec:
+      ports:
+      - port: <port>
+      selector:
+        app: my-app`
+
+		template, _ := NewTemplate(dat, &mv)
+		if template.Resource.Kind != "Service" {
+			t.Fatalf("template should have Kind of %s, instead it has %s", "Service", template.Resource.Kind)
 		}
+
 		if !mv.GetSecretsCalled {
 			t.Fatalf("template does contain <placeholders> so GetSecrets should be called")
 		}
 	})
 	t.Run("will GetSecrets only for YAMLs w/o avp_ignore: True", func(t *testing.T) {
 		mv := MockVault{}
-		template, _ := NewTemplate(map[string]interface{}{
-			"kind":       "Service",
-			"apiVersion": "v1",
-			"metadata": map[string]interface{}{
-				"namespace": "default",
-				"name":      "my-app",
-				"annotations": map[string]interface{}{
-					"avp_ignore": "True",
-				},
-			},
-			"spec": map[string]interface{}{
-				"selector": map[string]interface{}{
-					"app": "my-app",
-				},
-				"ports": []interface{}{
-					map[string]interface{}{
-						"port": "<port>",
-					},
-				},
-			},
-		}, &mv, "string")
-		if template.Resource.replaceable {
-			t.Fatalf("template contains avp_ignore:True and should NOT be replaced")
-		}
+		dat := `
+		apiVersion: v1
+		kind: Service
+		metadata:
+			annotations:
+				avp_ignore: "true"
+			name: my-app
+			namespace: default
+		spec:
+			ports:
+			- port: <port>
+			selector:
+				app: my-app`
+
+		NewTemplate(dat, &mv)
 		if mv.GetSecretsCalled {
 			t.Fatalf("template contains avp_ignore:True so GetSecrets should NOT be called")
 		}
@@ -143,29 +74,30 @@ func TestToYAML_Deployment(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Deployment",
-			TemplateData: map[string]interface{}{
-				"apiVersion": "apps/v1",
-				"kind":       "Deployment",
-				"metadata": map[string]interface{}{
-					"annotations": map[string]interface{}{
-						"avp_path": "path",
+			TemplateData: unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "apps/v1",
+					"kind":       "Deployment",
+					"metadata": map[string]interface{}{
+						"annotations": map[string]interface{}{
+							"avp_path": "path",
+						},
+						"namespace": "default",
+						"name":      "<name>",
 					},
-					"namespace": "default",
-					"name":      "<name>",
-				},
-				"spec": map[string]interface{}{
-					"replicas": "<replicas>",
-					"template": map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"labels": map[string]interface{}{
-								"app": "<name>",
+					"spec": map[string]interface{}{
+						"replicas": "<replicas>",
+						"template": map[string]interface{}{
+							"metadata": map[string]interface{}{
+								"labels": map[string]interface{}{
+									"app": "<name>",
+								},
 							},
 						},
 					},
 				},
 			},
-			replaceable: true,
-			VaultData: map[string]interface{}{
+			Data: map[string]interface{}{
 				"replicas": 3,
 				"name":     "my-app",
 			},
@@ -197,29 +129,30 @@ func TestToYAML_Service(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Service",
-			TemplateData: map[string]interface{}{
-				"kind":       "Service",
-				"apiVersion": "v1",
-				"metadata": map[string]interface{}{
-					"annotations": map[string]interface{}{
-						"avp_path": "path",
+			TemplateData: unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"kind":       "Service",
+					"apiVersion": "v1",
+					"metadata": map[string]interface{}{
+						"annotations": map[string]interface{}{
+							"avp_path": "path",
+						},
+						"namespace": "default",
+						"name":      "<name>",
 					},
-					"namespace": "default",
-					"name":      "<name>",
-				},
-				"spec": map[string]interface{}{
-					"selector": map[string]interface{}{
-						"app": "<name>",
-					},
-					"ports": []interface{}{
-						map[string]interface{}{
-							"port": "<port>",
+					"spec": map[string]interface{}{
+						"selector": map[string]interface{}{
+							"app": "<name>",
+						},
+						"ports": []interface{}{
+							map[string]interface{}{
+								"port": "<port>",
+							},
 						},
 					},
 				},
 			},
-			replaceable: true,
-			VaultData: map[string]interface{}{
+			Data: map[string]interface{}{
 				"name": "my-app",
 				"port": 8080,
 			},
@@ -251,24 +184,25 @@ func TestToYAML_Secret_PlaceholderedData(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Secret",
-			TemplateData: map[string]interface{}{
-				"apiVersion": "v1",
-				"kind":       "Secret",
-				"metadata": map[string]interface{}{
-					"annotations": map[string]interface{}{
-						"avp_path":   "path",
-						"kv_version": "1",
+			TemplateData: unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "v1",
+					"kind":       "Secret",
+					"metadata": map[string]interface{}{
+						"annotations": map[string]interface{}{
+							"avp_path":   "path",
+							"kv_version": "1",
+						},
+						"namespace": "default",
+						"name":      "<name>",
 					},
-					"namespace": "default",
-					"name":      "<name>",
-				},
-				"data": map[string]interface{}{
-					"MY_SECRET_STRING": "<string>",
-					"MY_SECRET_NUM":    "<num>",
+					"data": map[string]interface{}{
+						"MY_SECRET_STRING": "<string>",
+						"MY_SECRET_NUM":    "<num>",
+					},
 				},
 			},
-			replaceable: true,
-			VaultData: map[string]interface{}{
+			Data: map[string]interface{}{
 				"name":   "my-app",
 				"string": "Zm9v",
 				"num":    "NQ==",
@@ -301,22 +235,23 @@ func TestToYAML_Secret_HardcodedData(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Secret",
-			TemplateData: map[string]interface{}{
-				"apiVersion": "v1",
-				"kind":       "Secret",
-				"metadata": map[string]interface{}{
-					"annotations": map[string]interface{}{
-						"avp_path": "path",
+			TemplateData: unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "v1",
+					"kind":       "Secret",
+					"metadata": map[string]interface{}{
+						"annotations": map[string]interface{}{
+							"avp_path": "path",
+						},
+						"namespace": "default",
+						"name":      "my-app",
 					},
-					"namespace": "default",
-					"name":      "my-app",
-				},
-				"data": map[string]interface{}{
-					"MY_LEAKED_SECRET": "cGFzc3dvcmQ=",
+					"data": map[string]interface{}{
+						"MY_LEAKED_SECRET": "cGFzc3dvcmQ=",
+					},
 				},
 			},
-			replaceable: true,
-			VaultData:   map[string]interface{}{},
+			Data: map[string]interface{}{},
 		},
 	}
 
@@ -344,24 +279,25 @@ func TestToYAML_Secret_MixedData(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Secret",
-			TemplateData: map[string]interface{}{
-				"apiVersion": "v1",
-				"kind":       "Secret",
-				"metadata": map[string]interface{}{
-					"annotations": map[string]interface{}{
-						"avp_path": "path",
+			TemplateData: unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "v1",
+					"kind":       "Secret",
+					"metadata": map[string]interface{}{
+						"annotations": map[string]interface{}{
+							"avp_path": "path",
+						},
+						"namespace": "default",
+						"name":      "<name>",
 					},
-					"namespace": "default",
-					"name":      "<name>",
-				},
-				"data": map[string]interface{}{
-					"MY_SECRET_STRING": "<string>",
-					"MY_SECRET_NUM":    "<num>",
-					"MY_LEAKED_SECRET": "cGFzc3dvcmQ=",
+					"data": map[string]interface{}{
+						"MY_SECRET_STRING": "<string>",
+						"MY_SECRET_NUM":    "<num>",
+						"MY_LEAKED_SECRET": "cGFzc3dvcmQ=",
+					},
 				},
 			},
-			replaceable: true,
-			VaultData: map[string]interface{}{
+			Data: map[string]interface{}{
 				"name":   "my-app",
 				"string": "Zm9v",
 				"num":    "NQ==",
@@ -394,23 +330,24 @@ func TestToYAML_Secret_PlaceholderedStringData(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Secret",
-			TemplateData: map[string]interface{}{
-				"apiVersion": "v1",
-				"kind":       "Secret",
-				"metadata": map[string]interface{}{
-					"annotations": map[string]interface{}{
-						"avp_path": "path",
+			TemplateData: unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "v1",
+					"kind":       "Secret",
+					"metadata": map[string]interface{}{
+						"annotations": map[string]interface{}{
+							"avp_path": "path",
+						},
+						"namespace": "default",
+						"name":      "<name>",
 					},
-					"namespace": "default",
-					"name":      "<name>",
-				},
-				"stringData": map[string]interface{}{
-					"MY_SECRET_STRING": "<string>",
-					"MY_SECRET_NUM":    "<num>",
+					"stringData": map[string]interface{}{
+						"MY_SECRET_STRING": "<string>",
+						"MY_SECRET_NUM":    "<num>",
+					},
 				},
 			},
-			replaceable: true,
-			VaultData: map[string]interface{}{
+			Data: map[string]interface{}{
 				"name":   "my-app",
 				"string": "foo",
 				"num":    5,
@@ -443,23 +380,24 @@ func TestToYAML_ConfigMap(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "ConfigMap",
-			TemplateData: map[string]interface{}{
-				"apiVersion": "v1",
-				"kind":       "ConfigMap",
-				"metadata": map[string]interface{}{
-					"annotations": map[string]interface{}{
-						"avp_path": "path",
+			TemplateData: unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "v1",
+					"kind":       "ConfigMap",
+					"metadata": map[string]interface{}{
+						"annotations": map[string]interface{}{
+							"avp_path": "path",
+						},
+						"namespace": "default",
+						"name":      "<name>",
 					},
-					"namespace": "default",
-					"name":      "<name>",
-				},
-				"data": map[string]interface{}{
-					"MY_NONSECRET_STRING": "<string>",
-					"MY_NONSECRET_NUM":    "<num>",
+					"data": map[string]interface{}{
+						"MY_NONSECRET_STRING": "<string>",
+						"MY_NONSECRET_NUM":    "<num>",
+					},
 				},
 			},
-			replaceable: true,
-			VaultData: map[string]interface{}{
+			Data: map[string]interface{}{
 				"name":   "my-app",
 				"string": "foo",
 				"num":    5,
@@ -492,29 +430,30 @@ func TestToYAML_Ingress(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Ingress",
-			TemplateData: map[string]interface{}{
-				"apiVersion": "networking.k8s.io/v1",
-				"kind":       "Ingress",
-				"metadata": map[string]interface{}{
-					"annotations": map[string]interface{}{
-						"avp_path": "path",
+			TemplateData: unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "networking.k8s.io/v1",
+					"kind":       "Ingress",
+					"metadata": map[string]interface{}{
+						"annotations": map[string]interface{}{
+							"avp_path": "path",
+						},
+						"namespace": "default",
+						"name":      "<name>",
 					},
-					"namespace": "default",
-					"name":      "<name>",
-				},
-				"spec": map[string]interface{}{
-					"tls": []interface{}{
-						map[string]interface{}{
-							"hosts": []interface{}{
-								"mysubdomain.<host>",
+					"spec": map[string]interface{}{
+						"tls": []interface{}{
+							map[string]interface{}{
+								"hosts": []interface{}{
+									"mysubdomain.<host>",
+								},
+								"secretName": "<secret>",
 							},
-							"secretName": "<secret>",
 						},
 					},
 				},
 			},
-			replaceable: true,
-			VaultData: map[string]interface{}{
+			Data: map[string]interface{}{
 				"name":   "my-app",
 				"host":   "foo.com",
 				"secret": "foo-secret",
@@ -547,25 +486,27 @@ func TestToYAML_CronJob(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "CronJob",
-			TemplateData: map[string]interface{}{
-				"apiVersion": "batch/v1beta1",
-				"kind":       "CronJob",
-				"metadata": map[string]interface{}{
-					"annotations": map[string]interface{}{
-						"avp_path": "path",
+			TemplateData: unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "batch/v1beta1",
+					"kind":       "CronJob",
+					"metadata": map[string]interface{}{
+						"annotations": map[string]interface{}{
+							"avp_path": "path",
+						},
+						"name": "<name>",
 					},
-					"name": "<name>",
-				},
-				"spec": map[string]interface{}{
-					"schedule": "0 0 0 0 0",
-					"jobTemplate": map[string]interface{}{
-						"spec": map[string]interface{}{
-							"template": map[string]interface{}{
-								"spec": map[string]interface{}{
-									"containers": []interface{}{
-										map[string]interface{}{
-											"image": "<name>:<tag>",
-											"name":  "<name>",
+					"spec": map[string]interface{}{
+						"schedule": "0 0 0 0 0",
+						"jobTemplate": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"template": map[string]interface{}{
+									"spec": map[string]interface{}{
+										"containers": []interface{}{
+											map[string]interface{}{
+												"image": "<name>:<tag>",
+												"name":  "<name>",
+											},
 										},
 									},
 								},
@@ -574,8 +515,7 @@ func TestToYAML_CronJob(t *testing.T) {
 					},
 				},
 			},
-			replaceable: true,
-			VaultData: map[string]interface{}{
+			Data: map[string]interface{}{
 				"name": "my-app",
 				"tag":  "latest",
 			},
@@ -607,30 +547,31 @@ func TestToYAML_Job(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Job",
-			TemplateData: map[string]interface{}{
-				"apiVersion": "batch/v1",
-				"kind":       "Job",
-				"metadata": map[string]interface{}{
-					"annotations": map[string]interface{}{
-						"avp_path": "path",
+			TemplateData: unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "batch/v1",
+					"kind":       "Job",
+					"metadata": map[string]interface{}{
+						"annotations": map[string]interface{}{
+							"avp_path": "path",
+						},
+						"name": "<name>",
 					},
-					"name": "<name>",
-				},
-				"spec": map[string]interface{}{
-					"template": map[string]interface{}{
-						"spec": map[string]interface{}{
-							"containers": []interface{}{
-								map[string]interface{}{
-									"image": "<name>:<tag>",
-									"name":  "<name>",
+					"spec": map[string]interface{}{
+						"template": map[string]interface{}{
+							"spec": map[string]interface{}{
+								"containers": []interface{}{
+									map[string]interface{}{
+										"image": "<name>:<tag>",
+										"name":  "<name>",
+									},
 								},
 							},
 						},
 					},
 				},
 			},
-			replaceable: true,
-			VaultData: map[string]interface{}{
+			Data: map[string]interface{}{
 				"name": "my-app",
 				"tag":  "latest",
 			},
@@ -659,47 +600,22 @@ func TestToYAML_Job(t *testing.T) {
 }
 
 func TestToYAML_DeploymentBad(t *testing.T) {
-	d := Template{
-		Resource{
-			Kind: "Deployment",
-			TemplateData: map[string]interface{}{
-				"metadata": map[string]interface{}{
-					"annotations": map[string]interface{}{
-						"avp_path": "path",
-					},
-					"namespace": "default",
-					"name":      "<name>",
-				},
-				"spec": map[string]interface{}{
-					"replicas":        "<replicas>",
-					"minReadySeconds": "<minReadySeconds>",
-					"template": map[string]interface{}{
-						"metadata": map[string]interface{}{
-							"labels": map[string]interface{}{
-								"app": "<name>",
-							},
-						},
-					},
-				},
-			},
-			replaceable: true,
-			VaultData: map[string]interface{}{
-				"replicas":        3,
-				"minReadySeconds": "one hundred",
-				"name":            "!!@#@.---.",
-			},
-		},
-	}
+	mv := MockVault{}
+	dat := `
+  apiVersion: v1
+  metadata:
+    annotations:
+      avp_path: path
+      kv_version: "1"
+    name: my-app
+    namespace: default
+  spec:
+    ports:
+    - port: <port>
+    selector:
+      app: my-app`
 
-	err := d.Replace()
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
-	actual, err := d.ToYAML()
-	if err == nil {
-		t.Fatalf("Expected ToYAML error but got %s", actual)
-	}
+	_, err := NewTemplate(dat, &mv)
 
 	if !strings.Contains(err.Error(), "Object 'Kind' is missing") {
 		t.Fatalf("Expected error 'Object 'Kind' is missing', got: %s", err.Error())

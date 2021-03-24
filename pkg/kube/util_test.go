@@ -5,6 +5,8 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func assertSuccessfulReplacement(actual, expected *Resource, t *testing.T) {
@@ -16,8 +18,8 @@ func assertSuccessfulReplacement(actual, expected *Resource, t *testing.T) {
 		t.Fatalf("expected replaced template to look like %s\n but got: %s", expected.TemplateData, actual.TemplateData)
 	}
 
-	if !reflect.DeepEqual(actual.VaultData, expected.VaultData) {
-		t.Fatalf("expected Vault map to look like %s\n but got: %s", expected.VaultData, actual.VaultData)
+	if !reflect.DeepEqual(actual.Data, expected.Data) {
+		t.Fatalf("expected Vault map to look like %s\n but got: %s", expected.Data, actual.Data)
 	}
 }
 
@@ -30,28 +32,32 @@ func assertFailedReplacement(actual, expected *Resource, t *testing.T) {
 		t.Fatalf("expected replaced template to look like %s\n but got: %s", expected.TemplateData, actual.TemplateData)
 	}
 
-	if !reflect.DeepEqual(actual.VaultData, expected.VaultData) {
-		t.Fatalf("expected Vault map to look like %s\n but got: %s", expected.VaultData, actual.VaultData)
+	if !reflect.DeepEqual(actual.Data, expected.Data) {
+		t.Fatalf("expected Vault map to look like %s\n but got: %s", expected.Data, actual.Data)
 	}
 }
 
 func TestGenericReplacement_simpleString(t *testing.T) {
 	dummyResource := Resource{
-		TemplateData: map[string]interface{}{
-			"namespace": "<namespace>",
+		TemplateData: unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"namespace": "<namespace>",
+			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 		},
 	}
 
-	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+	replaceInner(&dummyResource, &dummyResource.TemplateData.Object, genericReplacement)
 
 	expected := Resource{
-		TemplateData: map[string]interface{}{
-			"namespace": "default",
+		TemplateData: unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"namespace": "default",
+			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 		},
 		replacementErrors: []error{},
@@ -62,25 +68,29 @@ func TestGenericReplacement_simpleString(t *testing.T) {
 
 func TestGenericReplacement_multiString(t *testing.T) {
 	dummyResource := Resource{
-		TemplateData: map[string]interface{}{
-			"namespace": "<namespace>",
-			"image":     "foo.io/<name>:<tag>",
+		TemplateData: unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"namespace": "<namespace>",
+				"image":     "foo.io/<name>:<tag>",
+			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 			"name":      "app",
 			"tag":       "latest",
 		},
 	}
 
-	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+	replaceInner(&dummyResource, &dummyResource.TemplateData.Object, genericReplacement)
 
 	expected := Resource{
-		TemplateData: map[string]interface{}{
-			"namespace": "default",
-			"image":     "foo.io/app:latest",
+		TemplateData: unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"namespace": "default",
+				"image":     "foo.io/app:latest",
+			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 			"name":      "app",
 			"tag":       "latest",
@@ -93,32 +103,36 @@ func TestGenericReplacement_multiString(t *testing.T) {
 
 func TestGenericReplacement_nestedString(t *testing.T) {
 	dummyResource := Resource{
-		TemplateData: map[string]interface{}{
-			"namespace": "<namespace>",
-			"spec": map[string]interface{}{
-				"selector": map[string]interface{}{
-					"app": "<name>",
+		TemplateData: unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"namespace": "<namespace>",
+				"spec": map[string]interface{}{
+					"selector": map[string]interface{}{
+						"app": "<name>",
+					},
 				},
 			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 			"name":      "foo",
 		},
 	}
 
-	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+	replaceInner(&dummyResource, &dummyResource.TemplateData.Object, genericReplacement)
 
 	expected := Resource{
-		TemplateData: map[string]interface{}{
-			"namespace": "default",
-			"spec": map[string]interface{}{
-				"selector": map[string]interface{}{
-					"app": "foo",
+		TemplateData: unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"namespace": "default",
+				"spec": map[string]interface{}{
+					"selector": map[string]interface{}{
+						"app": "foo",
+					},
 				},
 			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 			"name":      "foo",
 		},
@@ -130,28 +144,32 @@ func TestGenericReplacement_nestedString(t *testing.T) {
 
 func TestGenericReplacement_int(t *testing.T) {
 	dummyResource := Resource{
-		TemplateData: map[string]interface{}{
-			"namespace": "<namespace>",
-			"spec": map[string]interface{}{
-				"replicas": "<replicas>",
+		TemplateData: unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"namespace": "<namespace>",
+				"spec": map[string]interface{}{
+					"replicas": "<replicas>",
+				},
 			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 			"replicas":  1,
 		},
 	}
 
-	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+	replaceInner(&dummyResource, &dummyResource.TemplateData.Object, genericReplacement)
 
 	expected := Resource{
-		TemplateData: map[string]interface{}{
-			"namespace": "default",
-			"spec": map[string]interface{}{
-				"replicas": 1,
+		TemplateData: unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"namespace": "default",
+				"spec": map[string]interface{}{
+					"replicas": 1,
+				},
 			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 			"replicas":  1,
 		},
@@ -163,27 +181,31 @@ func TestGenericReplacement_int(t *testing.T) {
 
 func TestGenericReplacement_missingValue(t *testing.T) {
 	dummyResource := Resource{
-		TemplateData: map[string]interface{}{
-			"namespace": "<namespace>",
-			"spec": map[string]interface{}{
-				"replicas": "<replicas>",
+		TemplateData: unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"namespace": "<namespace>",
+				"spec": map[string]interface{}{
+					"replicas": "<replicas>",
+				},
 			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 		},
 	}
 
-	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+	replaceInner(&dummyResource, &dummyResource.TemplateData.Object, genericReplacement)
 
 	expected := Resource{
-		TemplateData: map[string]interface{}{
-			"namespace": "default",
-			"spec": map[string]interface{}{
-				"replicas": "<replicas>",
+		TemplateData: unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"namespace": "default",
+				"spec": map[string]interface{}{
+					"replicas": "<replicas>",
+				},
 			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 		},
 		replacementErrors: []error{

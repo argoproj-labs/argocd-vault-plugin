@@ -13,58 +13,15 @@ import (
 )
 
 var placeholder, _ = regexp.Compile(`(?mU)<(.*)>`)
-
-// replaceableInner recurses through the given map and returns true if _any_ value is a `<placeholder>` string
-func replaceableInner(node *map[string]interface{}) bool {
-	obj := *node
-
-	for _, value := range obj {
-		valueType := reflect.ValueOf(value).Kind()
-		if valueType == reflect.Map {
-			inner, ok := value.(map[string]interface{})
-			if !ok {
-				panic(fmt.Sprintf("Deserialized YAML node is non map[string]interface{}"))
-			}
-			if replaceableInner(&inner) {
-				return true
-			}
-		} else if valueType == reflect.Slice {
-			for _, elm := range value.([]interface{}) {
-				switch elm.(type) {
-				case map[string]interface{}:
-					{
-						inner := elm.(map[string]interface{})
-						if replaceableInner(&inner) {
-							return true
-						}
-					}
-				case string:
-					{
-						if placeholder.Match([]byte(elm.(string))) {
-							return true
-						}
-					}
-				default:
-					{
-						panic(fmt.Sprintf("Deserialized YAML list node is non map[string]interface{} nor string"))
-					}
-				}
-			}
-		} else if valueType == reflect.String {
-			if placeholder.Match([]byte(value.(string))) {
-				return true
-			}
-		}
-	}
-	return false
-}
+var thing, _ = regexp.Compile(`(?mU)path:(.+?)\#(.+?)`)
+var re, _ = regexp.Compile(`\|(.*)`)
 
 // replaceInner recurses through the given map and replaces the placeholders by calling `replacerFunc`
 // with the key, value, and map of keys to replacement values
 func replaceInner(
 	r *Resource,
 	node *map[string]interface{},
-	replacerFunc func(string, string, map[string]interface{}) (interface{}, []error)) {
+	replacerFunc func(string, string, Resource) (interface{}, []error)) {
 	obj := *node
 	for key, value := range obj {
 		valueType := reflect.ValueOf(value).Kind()
@@ -87,7 +44,7 @@ func replaceInner(
 				case string:
 					{
 						// Base case, replace templated strings
-						replacement, err := replacerFunc(key, elm.(string), r.VaultData)
+						replacement, err := replacerFunc(key, elm.(string), *r)
 						if len(err) != 0 {
 							r.replacementErrors = append(r.replacementErrors, err...)
 						}
@@ -100,9 +57,8 @@ func replaceInner(
 				}
 			}
 		} else if valueType == reflect.String {
-
 			// Base case, replace templated strings
-			replacement, err := replacerFunc(key, value.(string), r.VaultData)
+			replacement, err := replacerFunc(key, value.(string), *r)
 			if len(err) != 0 {
 				r.replacementErrors = append(r.replacementErrors, err...)
 			}
@@ -112,16 +68,44 @@ func replaceInner(
 	}
 }
 
-func genericReplacement(key, value string, vaultData map[string]interface{}) (_ interface{}, err []error) {
+func genericReplacement(key, value string, resource Resource) (_ interface{}, err []error) {
 	var nonStringReplacement interface{}
 
 	res := placeholder.ReplaceAllFunc([]byte(value), func(match []byte) []byte {
 		placeholder := strings.Trim(string(match), "<>")
-		secretValue, ok := vaultData[string(placeholder)]
-		if ok {
+
+		var base64modifier bool
+		if re.MatchString(placeholder) {
+			found := re.FindStringSubmatch(placeholder)
+			base64modifier = strings.TrimSpace(string(found[1])) == "base64encode"
+		}
+
+		placeholder = strings.Split(placeholder, "|")[0]
+
+		var secretValue interface{}
+		// check to see if should call out to get individual secret
+		if thing.Match([]byte(placeholder)) {
+			found := thing.FindSubmatch([]byte(placeholder))
+			var kv string
+			if resource.Config["kvVersion"] != nil {
+				kv = resource.Config["kvVersion"].(string)
+			}
+			secrets, _ := resource.Backend.GetSecrets(string(found[1]), kv)
+			key := strings.TrimSpace(string(found[2]))
+			secretValue = secrets[key]
+		} else {
+			secretValue = resource.Data[string(placeholder)]
+		}
+
+		// check for value in data
+		if secretValue != nil {
 			switch secretValue.(type) {
 			case string:
 				{
+					if base64modifier {
+						nonStringReplacement = []byte(string(match))
+						return match
+					}
 					return []byte(secretValue.(string))
 				}
 			default:
@@ -133,6 +117,7 @@ func genericReplacement(key, value string, vaultData map[string]interface{}) (_ 
 		} else {
 			err = append(err, fmt.Errorf("replaceString: missing Vault value for placeholder %s in string %s: %s", placeholder, key, value))
 		}
+
 		return match
 	})
 
@@ -143,6 +128,16 @@ func genericReplacement(key, value string, vaultData map[string]interface{}) (_ 
 		return nonStringReplacement, err
 	}
 	return string(res), err
+}
+
+func configReplacement(key, value string, resource Resource) (interface{}, []error) {
+	res, err := genericReplacement(key, value, resource)
+	if err != nil {
+		return nil, err
+	}
+
+	// configMap data values must be strings
+	return stringify(res), err
 }
 
 func stringify(input interface{}) string {
