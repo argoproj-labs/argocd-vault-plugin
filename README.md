@@ -68,7 +68,7 @@ data:
 
 <b>*Note*</b>: The plugin does not perform any transformation of the secrets in transit. So if you have plain text secrets in Vault, you will need to use the `stringData` field and if you have a base64 encoded secret in Vault, you will need to use the `data` field according to the [Kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret/).
 
-<b>*Note*</b>: The plugin will attempt to read any strings that match the following PCRE regex: `<.*>` (any characters between matching angle brackets), in all YAML files at the path given as the `<path>` argument. If there are YAML files that use `<string>`'s for other purposes and should _not_ be replaced, you can tell AVP to skip that file by adding the annotation `avp_ignore: "true"`. 
+<b>*Note*</b>: The plugin will attempt to read any strings that match the following PCRE regex: `<.*>` (any characters between matching angle brackets), in all YAML files at the path given as the `<path>` argument. If there are YAML files that use `<string>`'s for other purposes and should _not_ be replaced, you can tell AVP to skip that file by adding the annotation `avp_ignore: "true"`.
 
 ## Installation
 There are multiple ways to download and install argocd-vault-plugin depedning on your use case.
@@ -113,7 +113,7 @@ initContainers:
   command: [sh, -c]
   args:
     - wget -O argocd-vault-plugin
-      https://github.com/IBM/argocd-vault-plugin/releases/download/v0.6.0/argocd-vault-plugin_0.6.0_linux_amd64
+      https://github.com/IBM/argocd-vault-plugin/releases/download/v0.7.0/argocd-vault-plugin_0.7.0_linux_amd64
 
       chmod +x argocd-vault-plugin && mv argocd-vault-plugin /custom-tools/
   volumeMounts:
@@ -140,7 +140,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install the AVP plugin (as root so we can copy to /usr/local/bin)
-RUN curl -L -o argocd-vault-plugin https://github.com/IBM/argocd-vault-plugin/releases/download/v0.6.0/argocd-vault-plugin_0.6.0_linux_amd64
+RUN curl -L -o argocd-vault-plugin https://github.com/IBM/argocd-vault-plugin/releases/download/v0.7.0/argocd-vault-plugin_0.7.0_linux_amd64
 RUN chmod +x argocd-vault-plugin
 RUN mv argocd-vault-plugin /usr/local/bin
 
