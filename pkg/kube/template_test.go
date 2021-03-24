@@ -77,6 +77,36 @@ func TestNewTemplate(t *testing.T) {
 			t.Fatalf("template does contain <placeholders> so GetSecrets should be called")
 		}
 	})
+	t.Run("will GetSecrets only for YAMLs w/o avp_ignore: True", func(t *testing.T) {
+		mv := MockVault{}
+		template, _ := NewTemplate(map[string]interface{}{
+			"kind":       "Service",
+			"apiVersion": "v1",
+			"metadata": map[string]interface{}{
+				"namespace": "default",
+				"name":      "my-app",
+				"annotations": map[string]interface{}{
+					"avp_ignore": "True",
+				},
+			},
+			"spec": map[string]interface{}{
+				"selector": map[string]interface{}{
+					"app": "my-app",
+				},
+				"ports": []interface{}{
+					map[string]interface{}{
+						"port": "<port>",
+					},
+				},
+			},
+		}, &mv, "string")
+		if template.Resource.replaceable {
+			t.Fatalf("template contains avp_ignore:True and should NOT be replaced")
+		}
+		if mv.GetSecretsCalled {
+			t.Fatalf("template contains avp_ignore:True so GetSecrets should NOT be called")
+		}
+	})
 }
 
 func TestToYAML_Deployment(t *testing.T) {
@@ -226,6 +256,7 @@ func TestToYAML_Secret_PlaceholderedData(t *testing.T) {
 		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
 	}
 }
+
 func TestToYAML_Secret_HardcodedData(t *testing.T) {
 	d := Template{
 		Resource{

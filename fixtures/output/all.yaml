@@ -86,6 +86,17 @@ spec:
 ---
 apiVersion: v1
 data:
+  MY_SECRET_NUM: <num>
+  MY_SECRET_STRING: <string>
+kind: Secret
+metadata:
+  annotations:
+    avp_ignore: "True"
+  name: my-app
+  namespace: default
+---
+apiVersion: v1
+data:
   SECRET_NUM: MQ==
   SECRET_VAR: dGVzdC1wYXNzd29yZA==
 kind: Secret

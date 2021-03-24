@@ -2,6 +2,7 @@ package kube
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/types"
@@ -43,13 +44,20 @@ func NewTemplate(template map[string]interface{}, backend types.Backend, prefix 
 		kvVersion = kv
 	}
 
-	// Only worry about getting Vault secrets for templates with <placeholder>'s
-	replaceable := replaceableInner(&template)
+	var avpIgnore bool
+	if ignore, ok := annotations["avp_ignore"]; ok {
+		avpIgnore, err = strconv.ParseBool(ignore)
+	}
+
 	var data map[string]interface{}
-	if replaceable {
-		data, err = backend.GetSecrets(path, kvVersion)
-		if err != nil {
-			return nil, err
+	var replaceable bool
+	if !avpIgnore {
+		replaceable = replaceableInner(&template)
+		if replaceable {
+			data, err = backend.GetSecrets(path, kvVersion)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

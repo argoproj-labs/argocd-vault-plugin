@@ -63,7 +63,7 @@ func TestMain(t *testing.T) {
 		}
 	})
 
-	t.Run("will replace tempates from local vault", func(t *testing.T) {
+	t.Run("will replace templates from local vault", func(t *testing.T) {
 		args := []string{"../fixtures/input/nonempty"}
 		cmd := NewGenerateCommand()
 
@@ -77,6 +77,30 @@ func TestMain(t *testing.T) {
 		}
 
 		buf, err := ioutil.ReadFile("../fixtures/output/all.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expected := string(buf)
+		if string(out) != expected {
+			t.Fatalf("expected %s but got %s", expected, string(out))
+		}
+	})
+
+	t.Run("will ignore templates with avp_ignore set to True", func(t *testing.T) {
+		args := []string{"../fixtures/input/nonempty/ignored-secret.yaml"}
+		cmd := NewGenerateCommand()
+
+		b := bytes.NewBufferString("")
+		cmd.SetArgs(args)
+		cmd.SetOut(b)
+		cmd.Execute()
+		out, err := ioutil.ReadAll(b) // Read buffer to bytes
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		buf, err := ioutil.ReadFile("../fixtures/output/ignored-secret.yaml")
 		if err != nil {
 			t.Fatal(err)
 		}
