@@ -25,11 +25,8 @@ type Template struct {
 
 // NewTemplate returns a *Template given the template's data, and a VaultType
 func NewTemplate(template unstructured.Unstructured, backend types.Backend) (*Template, error) {
-	var path string
 	annotations := template.GetAnnotations()
-	if avpPath, ok := annotations["avp_path"]; ok {
-		path = avpPath
-	}
+	path := annotations["avp_path"]
 
 	var err error
 	var data map[string]interface{}
