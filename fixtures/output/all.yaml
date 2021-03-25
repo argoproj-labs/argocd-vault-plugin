@@ -32,12 +32,6 @@ spec:
         imagePullPolicy: Always
         name: test-name
 ---
----
-# Source: conditionally/excluded/secret.yaml
-#
-#
-#
----
 apiVersion: v1
 kind: Service
 metadata:

@@ -1,24 +1,21 @@
 package kube
 
 import (
-	"bytes"
 	"fmt"
-	"strconv"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 	yaml "sigs.k8s.io/yaml"
 )
 
 // A Resource is the basis for all Templates
 type Resource struct {
 	Kind              string
-	TemplateData      unstructured.Unstructured // The template as read from YAML
+	TemplateData      map[string]interface{} // The template as read from YAML
 	Backend           types.Backend
 	replacementErrors []error                // Any errors encountered in performing replacements
 	Data              map[string]interface{} // The data to replace with, from Vault
-	Config            map[string]interface{}
+	Annotations       map[string]string
 }
 
 // Template is the template for Kubernetes
@@ -27,50 +24,29 @@ type Template struct {
 }
 
 // NewTemplate returns a *Template given the template's data, and a VaultType
-func NewTemplate(template string, backend types.Backend) (*Template, error) {
-	obj := &unstructured.Unstructured{}
-
-	decoder := k8yaml.NewYAMLToJSONDecoder(bytes.NewReader([]byte(template)))
-	err := decoder.Decode(&obj)
-	if err != nil {
-		return nil, fmt.Errorf("ToYAML: could not convert replaced template into %s: %s", obj.GetKind(), err)
-	}
-
+func NewTemplate(template unstructured.Unstructured, backend types.Backend) (*Template, error) {
 	var path string
-	annotations := obj.GetAnnotations()
+	annotations := template.GetAnnotations()
 	if avpPath, ok := annotations["avp_path"]; ok {
 		path = avpPath
 	}
 
-	var kvVersion string
-	if kv, ok := annotations["kv_version"]; ok {
-		kvVersion = kv
-	}
-
-	var avpIgnore bool
-	if ignore, ok := annotations["avp_ignore"]; ok {
-		avpIgnore, _ = strconv.ParseBool(ignore)
-	}
-
+	var err error
 	var data map[string]interface{}
 	if path != "" {
-		if !avpIgnore {
-			data, err = backend.GetSecrets(path, kvVersion)
-			if err != nil {
-				return nil, err
-			}
+		data, err = backend.GetSecrets(path, annotations)
+		if err != nil {
+			return nil, err
 		}
 	}
 
 	return &Template{
 		Resource{
-			Kind:         obj.GetKind(),
-			TemplateData: *obj,
+			Kind:         template.GetKind(),
+			TemplateData: template.Object,
 			Backend:      backend,
 			Data:         data,
-			Config: map[string]interface{}{
-				"kvVersion": kvVersion,
-			},
+			Annotations:  annotations,
 		},
 	}, nil
 }
@@ -90,7 +66,7 @@ func (t *Template) Replace() error {
 		replacerFunc = genericReplacement
 	}
 
-	replaceInner(&t.Resource, &t.TemplateData.Object, replacerFunc)
+	replaceInner(&t.Resource, &t.TemplateData, replacerFunc)
 	if len(t.replacementErrors) != 0 {
 		// TODO format multiple errors nicely
 		return fmt.Errorf("Replace: could not replace all placeholders in Template: %s", t.replacementErrors)
@@ -102,7 +78,7 @@ func (t *Template) Replace() error {
 func (t *Template) ToYAML() (string, error) {
 	res, err := yaml.Marshal(&t.TemplateData)
 	if err != nil {
-		return "", fmt.Errorf("ToYAML: could not export %s into YAML: %s", t.TemplateData.GetKind(), err)
+		return "", fmt.Errorf("ToYAML: could not export %s into YAML: %s", t.Kind, err)
 	}
 	return string(res), nil
 }

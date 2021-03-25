@@ -13,8 +13,8 @@ import (
 )
 
 var placeholder, _ = regexp.Compile(`(?mU)<(.*)>`)
-var thing, _ = regexp.Compile(`(?mU)path:(.+?)\#(.+?)`)
-var re, _ = regexp.Compile(`\|(.*)`)
+var indivPlacholder, _ = regexp.Compile(`(?mU)path:(.+?)\#(.+?)`)
+var modifier, _ = regexp.Compile(`\|(.*)`)
 
 // replaceInner recurses through the given map and replaces the placeholders by calling `replacerFunc`
 // with the key, value, and map of keys to replacement values
@@ -75,24 +75,23 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 		placeholder := strings.Trim(string(match), "<>")
 
 		var base64modifier bool
-		if re.MatchString(placeholder) {
-			found := re.FindStringSubmatch(placeholder)
-			base64modifier = strings.TrimSpace(string(found[1])) == "base64encode"
+		if modifier.MatchString(placeholder) {
+			modifierMatches := modifier.FindStringSubmatch(placeholder)
+			base64modifier = strings.TrimSpace(string(modifierMatches[1])) == "base64encode"
+			placeholder = strings.Split(placeholder, "|")[0]
 		}
-
-		placeholder = strings.Split(placeholder, "|")[0]
 
 		var secretValue interface{}
 		// check to see if should call out to get individual secret
-		if thing.Match([]byte(placeholder)) {
-			found := thing.FindSubmatch([]byte(placeholder))
-			var kv string
-			if resource.Config["kvVersion"] != nil {
-				kv = resource.Config["kvVersion"].(string)
+		if indivPlacholder.Match([]byte(placeholder)) {
+			indivSecretMatches := indivPlacholder.FindSubmatch([]byte(placeholder))
+			secrets, secretErr := resource.Backend.GetSecrets(string(indivSecretMatches[1]), resource.Annotations)
+			if secretErr != nil {
+				err = append(err, secretErr)
+				return match
 			}
-			secrets, _ := resource.Backend.GetSecrets(string(found[1]), kv)
-			key := strings.TrimSpace(string(found[2]))
-			secretValue = secrets[key]
+			secretKey := strings.TrimSpace(string(indivSecretMatches[2]))
+			secretValue = secrets[secretKey]
 		} else {
 			secretValue = resource.Data[string(placeholder)]
 		}

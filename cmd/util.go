@@ -1,11 +1,15 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
 func listYamlFiles(root string) ([]string, error) {
@@ -24,7 +28,7 @@ func listYamlFiles(root string) ([]string, error) {
 	return files, nil
 }
 
-func readFilesAsManifests(paths []string) (result []string, errs []error) {
+func readFilesAsManifests(paths []string) (result []unstructured.Unstructured, errs []error) {
 
 	for _, path := range paths {
 		manifest, err := manifestFromYAML(path)
@@ -37,24 +41,28 @@ func readFilesAsManifests(paths []string) (result []string, errs []error) {
 	return result, errs
 }
 
-func manifestFromYAML(path string) ([]string, error) {
+func manifestFromYAML(path string) ([]unstructured.Unstructured, error) {
 	rawdata, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not read YAML: %s from disk: %s", path, err)
 	}
 
-	manifests := strings.Split(string(rawdata), "\n---")
+	decoder := k8yaml.NewYAMLToJSONDecoder(bytes.NewReader(rawdata))
 
-	res := []string{}
-	for _, doc := range manifests {
-		content := strings.TrimSpace(doc)
-		// Ignore empty docs
-		if content != "" {
-			res = append(res, content+"\n")
+	var manifests []unstructured.Unstructured
+	for {
+		nxtManifest := unstructured.Unstructured{}
+		err := decoder.Decode(&nxtManifest)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("could not read YAML: %s into a manifest: %s", path, err)
 		}
+		manifests = append(manifests, nxtManifest)
 	}
 
-	return res, nil
+	return manifests, nil
 }
 
 func stringInSlice(a string, list []string) bool {

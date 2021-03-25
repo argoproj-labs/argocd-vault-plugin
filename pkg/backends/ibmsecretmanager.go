@@ -34,7 +34,7 @@ func (i *IBMSecretManager) Login() error {
 }
 
 // GetSecrets gets secrets from IBM Secret Manager and returns the formatted data
-func (i *IBMSecretManager) GetSecrets(path, _ string) (map[string]interface{}, error) {
+func (i *IBMSecretManager) GetSecrets(path string, _ map[string]string) (map[string]interface{}, error) {
 	secret, err := i.VaultClient.Logical().Read(path)
 	if err != nil {
 		return nil, err

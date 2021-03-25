@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"regexp"
+	"strconv"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/config"
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
@@ -59,8 +59,7 @@ func NewGenerateCommand() *cobra.Command {
 
 			for _, manifest := range manifests {
 
-				if ok, _ := regexp.MatchString(`(?mU)<(.*)>`, manifest); !ok {
-					fmt.Fprintf(cmd.OutOrStdout(), "%s---\n", manifest)
+				if len(manifest.Object) == 0 {
 					continue
 				}
 
@@ -69,9 +68,13 @@ func NewGenerateCommand() *cobra.Command {
 					return err
 				}
 
-				err = template.Replace()
-				if err != nil {
-					return err
+				annotations := manifest.GetAnnotations()
+				avpIgnore, _ := strconv.ParseBool(annotations["avp_ignore"])
+				if !avpIgnore {
+					err = template.Replace()
+					if err != nil {
+						return err
+					}
 				}
 
 				output, err := template.ToYAML()
