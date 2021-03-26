@@ -37,7 +37,7 @@ This plugin is aimed at helping to solve the issue of secret management with Git
 ### How it works
 The argocd-vault-plugin works by taking a directory of yaml files that have been templated out using the pattern of `<placeholder>` where you would want a value from Vault to go. The inside of the `<>` would be the actual key in Vault.
 
-An annotation must be used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp_path: "path/to/secret"`.
+An annotation can be used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp_path: "path/to/secret"`.
 
 For example, if you have a secret with the key `password-vault-key` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/secret/password-vault-key` and inject it into the secret yaml.
 
@@ -66,9 +66,35 @@ data:
   password: cGFzc3dvcmQK # The Value from the key password-vault-key in vault
 ```
 
-<b>*Note*</b>: The plugin does not perform any transformation of the secrets in transit. So if you have plain text secrets in Vault, you will need to use the `stringData` field and if you have a base64 encoded secret in Vault, you will need to use the `data` field according to the [Kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret/).
+The plugin also supports putting the path directly within the placeholder. The format must be `<path:path/to/secret#key>`, where `path/to/secret` is the vault path and the Vault key goes after the `#` symbol. Doing this does not require an `avp_path` annotation and will override any `avp_path` annotation that is set. For example:
+
+```
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+type: Opaque
+data:
+  password: <path:path/to/secret#password-vault-key>
+```
 
 <b>*Note*</b>: The plugin will attempt to read any strings that match the following PCRE regex: `<.*>` (any characters between matching angle brackets), in all YAML files at the path given as the `<path>` argument. If there are YAML files that use `<string>`'s for other purposes and should _not_ be replaced, you can tell AVP to skip that file by adding the annotation `avp_ignore: "true"`.
+
+##### Modifiers
+By Default the plugin does not perform any transformation of the secrets in transit. So if you have plain text secrets in Vault, you will need to use the `stringData` field and if you have a base64 encoded secret in Vault, you will need to use the `data` field according to the [Kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret/).
+
+However, as of now, we support one modifier. And that is `base64encode`. So if you have a plain text value in Vault and would like to Base64 encode it on the fly to inject into a Kubernetes secret you can do:
+
+```
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+type: Opaque
+data:
+  password: <path:path/to/secret#password-vault-key | base64encode>
+```
+And the plugin will pull the value from Vault, Base64 encode the value and then inject it into the placeholder.
 
 ## Installation
 There are multiple ways to download and install argocd-vault-plugin depedning on your use case.
