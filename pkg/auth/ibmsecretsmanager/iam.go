@@ -1,4 +1,4 @@
-package ibmsecretmanager
+package ibmsecretsmanager
 
 import (
 	"encoding/json"

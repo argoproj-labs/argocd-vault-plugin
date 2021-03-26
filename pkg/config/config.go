@@ -8,11 +8,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/auth/ibmsecretmanager"
+	"github.com/IBM/argocd-vault-plugin/pkg/auth/ibmsecretsmanager"
 	"github.com/IBM/argocd-vault-plugin/pkg/auth/vault"
 	"github.com/IBM/argocd-vault-plugin/pkg/backends"
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
 	"github.com/IBM/argocd-vault-plugin/pkg/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/hashicorp/vault/api"
 	"github.com/spf13/viper"
 )
@@ -25,8 +28,7 @@ type Options struct {
 
 // Config is used to decide the backend and auth type
 type Config struct {
-	Backend     types.Backend
-	VaultClient *api.Client
+	Backend types.Backend
 }
 
 // New returns a new Config struct
@@ -34,6 +36,7 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 
 	// Set Defaults
 	v.SetDefault(types.EnvAvpKvVersion, "2")
+	v.SetDefault("AVP_AWS_REGION", "us-east-2")
 
 	// Read in config file or kubernetes secret and set as env vars
 	err := readConfigOrSecret(co.SecretName, co.ConfigPath, v)
@@ -44,11 +47,6 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 	// Instantiate Env
 	v.AutomaticEnv()
 
-	apiClient, err := api.NewClient(api.DefaultConfig())
-	if err != nil {
-		return nil, err
-	}
-
 	authType := v.GetString(types.EnvAvpAuthType)
 
 	var auth types.AuthType
@@ -56,52 +54,80 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 
 	switch v.GetString(types.EnvAvpType) {
 	case types.VaultBackend:
-		switch authType {
-		case types.ApproleAuth:
-			if v.IsSet(types.EnvAvpRoleID) && v.IsSet(types.EnvAvpSecretID) {
-				auth = vault.NewAppRoleAuth(v.GetString(types.EnvAvpRoleID), v.GetString(types.EnvAvpSecretID))
-			} else {
-				return nil, fmt.Errorf("%s and %s for approle authentication cannot be empty", types.EnvAvpRoleID, types.EnvAvpSecretID)
+		{
+			apiClient, err := api.NewClient(api.DefaultConfig())
+			if err != nil {
+				return nil, err
 			}
-		case types.GithubAuth:
-			if v.IsSet(types.EnvAvpGithubToken) {
-				auth = vault.NewGithubAuth(v.GetString(types.EnvAvpGithubToken))
-			} else {
-				return nil, fmt.Errorf("%s for github authentication cannot be empty", types.EnvAvpGithubToken)
+
+			switch authType {
+			case types.ApproleAuth:
+				if v.IsSet(types.EnvAvpRoleID) && v.IsSet(types.EnvAvpSecretID) {
+					auth = vault.NewAppRoleAuth(v.GetString(types.EnvAvpRoleID), v.GetString(types.EnvAvpSecretID))
+				} else {
+					return nil, fmt.Errorf("%s and %s for approle authentication cannot be empty", types.EnvAvpRoleID, types.EnvAvpSecretID)
+				}
+			case types.GithubAuth:
+				if v.IsSet(types.EnvAvpGithubToken) {
+					auth = vault.NewGithubAuth(v.GetString(types.EnvAvpGithubToken))
+				} else {
+					return nil, fmt.Errorf("%s for github authentication cannot be empty", types.EnvAvpGithubToken)
+				}
+			case types.K8sAuth:
+				if v.IsSet(types.EnvAvpK8sRole) {
+					auth = vault.NewK8sAuth(
+						v.GetString(types.EnvAvpK8sRole),
+						v.GetString(types.EnvAvpK8sMountPath),
+						v.GetString(types.EnvAvpK8sTokenPath),
+					)
+				} else {
+					return nil, fmt.Errorf("%s cannot be empty when using Kubernetes Auth", types.EnvAvpK8sRole)
+				}
+			default:
+				return nil, errors.New("Must provide a supported Authentication Type")
 			}
-		case types.K8sAuth:
-			if v.IsSet(types.EnvAvpK8sRole) {
-				auth = vault.NewK8sAuth(
-					v.GetString(types.EnvAvpK8sRole),
-					v.GetString(types.EnvAvpK8sMountPath),
-					v.GetString(types.EnvAvpK8sTokenPath),
+			backend = backends.NewVaultBackend(auth, apiClient, v.GetString(types.EnvAvpKvVersion))
+		}
+	case types.IBMSecretsManagerbackend:
+		{
+			apiClient, err := api.NewClient(api.DefaultConfig())
+			if err != nil {
+				return nil, err
+			}
+
+			switch authType {
+			case types.IAMAuth:
+				if v.IsSet(types.EnvAvpIBMAPIKey) {
+					auth = ibmsecretsmanager.NewIAMAuth(v.GetString(types.EnvAvpIBMAPIKey))
+				} else {
+					return nil, fmt.Errorf("%s for iam authentication cannot be empty", types.EnvAvpIBMAPIKey)
+				}
+			default:
+				return nil, errors.New("Must provide a supported Authentication Type")
+			}
+			backend = backends.NewIBMSecretsManagerBackend(auth, apiClient)
+		}
+	case types.AWSSecretsManagerbackend:
+		{
+			if !v.IsSet(types.EnvAWSAccessKey) || !v.IsSet(types.EnvAWSSecretAccessKey) {
+				return nil, fmt.Errorf("Must provide %s and %s for backend type %s",
+					types.EnvAWSAccessKey,
+					types.EnvAWSSecretAccessKey,
+					types.AWSSecretsManagerbackend,
 				)
-			} else {
-				return nil, fmt.Errorf("%s cannot be empty when using Kubernetes Auth", types.EnvAvpK8sRole)
 			}
-		default:
-			return nil, errors.New("Must provide a supported Authentication Type")
+			s := session.Must(session.NewSession(&aws.Config{
+				Region: aws.String(v.GetString(types.EnvAWSRegion)),
+			}))
+			client := secretsmanager.New(s)
+			backend = backends.NewAWSSecretsManagerBackend(client)
 		}
-		backend = backends.NewVaultBackend(auth, apiClient, v.GetString(types.EnvAvpKvVersion))
-	case types.IbmSecretManagerbackend:
-		switch authType {
-		case types.IamAuth:
-			if v.IsSet(types.EnvAvpIbmAPIKey) {
-				auth = ibmsecretmanager.NewIAMAuth(v.GetString(types.EnvAvpIbmAPIKey))
-			} else {
-				return nil, fmt.Errorf("%s for iam authentication cannot be empty", types.EnvAvpIbmAPIKey)
-			}
-		default:
-			return nil, errors.New("Must provide a supported Authentication Type")
-		}
-		backend = backends.NewIBMSecretManagerBackend(auth, apiClient)
 	default:
 		return nil, errors.New("Must provide a supported Vault Type")
 	}
 
 	return &Config{
-		Backend:     backend,
-		VaultClient: apiClient,
+		Backend: backend,
 	}, nil
 }
 

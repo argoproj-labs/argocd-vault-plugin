@@ -7,25 +7,25 @@ import (
 	"github.com/hashicorp/vault/api"
 )
 
-// IBMSecretManager is a struct for working with IBM Secret Manager
-type IBMSecretManager struct {
+// IBMSecretsManager is a struct for working with IBM Secret Manager
+type IBMSecretsManager struct {
 	types.AuthType
 	IBMCloudAPIKey string
 	VaultClient    *api.Client
 }
 
-// NewIBMSecretManagerBackend initializes a new IBM Secret Manager backend
-func NewIBMSecretManagerBackend(authType types.AuthType, client *api.Client) *IBMSecretManager {
-	ibmSecretManager := &IBMSecretManager{
+// NewIBMSecretsManagerBackend initializes a new IBM Secret Manager backend
+func NewIBMSecretsManagerBackend(authType types.AuthType, client *api.Client) *IBMSecretsManager {
+	ibmSecretsManager := &IBMSecretsManager{
 		AuthType:    authType,
 		VaultClient: client,
 	}
 
-	return ibmSecretManager
+	return ibmSecretsManager
 }
 
 // Login authenticates with IBM Cloud Secret Manager using IAM and returns a token
-func (i *IBMSecretManager) Login() error {
+func (i *IBMSecretsManager) Login() error {
 	err := i.AuthType.Authenticate(i.VaultClient)
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ func (i *IBMSecretManager) Login() error {
 }
 
 // GetSecrets gets secrets from IBM Secret Manager and returns the formatted data
-func (i *IBMSecretManager) GetSecrets(path string, _ map[string]string) (map[string]interface{}, error) {
+func (i *IBMSecretsManager) GetSecrets(path string, _ map[string]string) (map[string]interface{}, error) {
 	secret, err := i.VaultClient.Logical().Read(path)
 	if err != nil {
 		return nil, err
