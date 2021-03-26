@@ -3,6 +3,7 @@ module github.com/IBM/argocd-vault-plugin
 go 1.14
 
 require (
+	github.com/aws/aws-sdk-go v1.34.28 // indirect
 	github.com/frankban/quicktest v1.11.2 // indirect
 	github.com/go-logr/logr v0.3.0 // indirect
 	github.com/golang/snappy v0.0.2 // indirect
