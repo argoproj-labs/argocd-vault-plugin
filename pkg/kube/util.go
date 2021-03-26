@@ -78,7 +78,7 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 		if modifier.MatchString(placeholder) {
 			modifierMatches := modifier.FindStringSubmatch(placeholder)
 			base64modifier = strings.TrimSpace(string(modifierMatches[1])) == "base64encode"
-			placeholder = strings.Split(placeholder, "|")[0]
+			placeholder = strings.TrimSpace(strings.Split(placeholder, "|")[0])
 		}
 
 		var secretValue interface{}
@@ -102,7 +102,7 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 			case string:
 				{
 					if base64modifier {
-						nonStringReplacement = []byte(string(match))
+						nonStringReplacement = []byte(stringify(secretValue))
 						return match
 					}
 					return []byte(secretValue.(string))
