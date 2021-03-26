@@ -17,30 +17,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// const (
-// 	// Environment Variable Constants
-// 	envAvpType         = "AVP_TYPE"
-// 	envAvpRoleID       = "AVP_ROLE_ID"
-// 	envAvpSecretID     = "AVP_SECRET_ID"
-// 	envAvpAuthType     = "AVP_AUTH_TYPE"
-// 	envAvpGithubToken  = "AVP_GITHUB_TOKEN"
-// 	envAvpK8sRole      = "AVP_K8S_ROLE"
-// 	envAvpK8sMountPath = "AVP_K8S_MOUNT_PATH"
-// 	envAvpK8sTokenPath = "AVP_K8S_TOKEN_PATH"
-// 	envAvpIbmAPIKey    = "AVP_IBM_API_KEY"
-// 	EnvAvpKvVersion    = "AVP_KV_VERSION"
-// 	envAvpPathPrefix   = "AVP_PATH_PREFIX"
-//
-// 	// Backend and Auth Constants
-// 	vaultBackend            = "vault"
-// 	ibmSecretManagerbackend = "ibmsecretmanager"
-// 	k8sAuth                 = "k8s"
-// 	approleAuth             = "approle"
-// 	githubAuth              = "github"
-// 	iamAuth                 = "iam"
-// )
-
-// Options TODO
+// Options options that can be passed to a Config struct
 type Options struct {
 	SecretName string
 	ConfigPath string
