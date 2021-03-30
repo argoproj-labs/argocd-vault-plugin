@@ -13,8 +13,8 @@ const (
 	EnvAvpIBMAPIKey       = "AVP_IBM_API_KEY"
 	EnvAvpKvVersion       = "AVP_KV_VERSION"
 	EnvAvpPathPrefix      = "AVP_PATH_PREFIX"
-	EnvAWSAccessKey       = "AWS_ACCESS_KEY_ID"
-	EnvAWSSecretAccessKey = "AWS_SECRET_ACCESS_KEY"
+	EnvAWSAccessKey       = "AVP_AWS_ACCESS_KEY_ID"
+	EnvAWSSecretAccessKey = "AVP_AWS_SECRET_ACCESS_KEY"
 	EnvAWSRegion          = "AVP_AWS_REGION"
 
 	// Backend and Auth Constants
