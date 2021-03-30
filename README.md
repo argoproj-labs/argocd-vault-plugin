@@ -246,37 +246,39 @@ In order to use Kubernetes Authentication a couple of things are required.
 
   1. Configuring ArgoCD
 
-  You can either use your own Service Account or the default ArgoCD service account. To use the default ArgoCD service account all you need to do is set `automountServiceAccountToken` to true in the `argocd-repo-server`.
+    You can either use your own Service Account or the default ArgoCD service account. To use the default ArgoCD service account all you need to do is set `automountServiceAccountToken` to true in the `argocd-repo-server`.
 
-  ```
-  kind: Deployment
-  apiVersion: apps/v1
-  metadata:
-    name: argocd-repo-server
-  spec:
-    template:
-      spec:
-        automountServiceAccountToken: true
-  ```
+    ```
+    kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: argocd-repo-server
+    spec:
+      template:
+        spec:
+          automountServiceAccountToken: true
+    ```
 
-  This will put the Service Account token in the default path of `/var/run/secrets/kubernetes.io/serviceaccount/token`.
+    This will put the Service Account token in the default path of `/var/run/secrets/kubernetes.io/serviceaccount/token`.
 
-  If you want to use your own Service Account, you would first create the Service Account.
-  `kubectl create serviceaccount your-service-account`
+    If you want to use your own Service Account, you would first create the Service Account.
+    `kubectl create serviceaccount your-service-account`.
 
-  And then you will update the `argocd-repo-server` to use that service account.
+    <b>*Note*</b>: The service account that you use must have access to the Kubernetes TokenReview API. You can find the Vault documentation on configuring Kubernetes [here](https://www.vaultproject.io/docs/auth/kubernetes#configuring-kubernetes).
 
-  ```
-  kind: Deployment
-  apiVersion: apps/v1
-  metadata:
-    name: argocd-repo-server
-  spec:
-    template:
-      spec:
-        serviceAccount: your-service-account
-        automountServiceAccountToken: true
-  ```
+    And then you will update the `argocd-repo-server` to use that service account.
+
+    ```
+    kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: argocd-repo-server
+    spec:
+      template:
+        spec:
+          serviceAccount: your-service-account
+          automountServiceAccountToken: true
+    ```
 
   2. Configuring Kubernetes  
 
