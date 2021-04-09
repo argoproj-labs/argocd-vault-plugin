@@ -68,9 +68,9 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":              "awssecretsmanager",
-				"AWS_ACCESS_KEY_ID":     "id",
-				"AWS_SECRET_ACCESS_KEY": "key",
+				"AVP_TYPE":                  "awssecretsmanager",
+				"AVP_AWS_ACCESS_KEY_ID":     "id",
+				"AVP_AWS_SECRET_ACCESS_KEY": "key",
 			},
 			"*backends.AWSSecretsManager",
 		},
@@ -164,8 +164,8 @@ func TestNewConfigMissingParameter(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":          "awssecretsmanager",
-				"AWS_ACCESS_KEY_ID": "id",
+				"AVP_TYPE":              "awssecretsmanager",
+				"AVP_AWS_ACCESS_KEY_ID": "id",
 			},
 			"*backends.AWSSecretsManager",
 		},
