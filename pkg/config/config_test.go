@@ -60,11 +60,19 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":        "ibmsecretmanager",
+				"AVP_TYPE":        "ibmsecretsmanager",
 				"AVP_AUTH_TYPE":   "iam",
 				"AVP_IBM_API_KEY": "token",
 			},
-			"*backends.IBMSecretManager",
+			"*backends.IBMSecretsManager",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":                  "awssecretsmanager",
+				"AVP_AWS_ACCESS_KEY_ID":     "id",
+				"AVP_AWS_SECRET_ACCESS_KEY": "key",
+			},
+			"*backends.AWSSecretsManager",
 		},
 	}
 	for _, tc := range testCases {
@@ -140,11 +148,26 @@ func TestNewConfigMissingParameter(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":        "secretmanager",
+				"AVP_TYPE":        "ibmsecretsmanager",
 				"AVP_AUTH_TYPE":   "iam",
 				"AVP_IAM_API_KEY": "token",
 			},
-			"*backends.IBMSecretManager",
+			"*backends.IBMSecretsManager",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":        "ibmsecretsmanager",
+				"AVP_AUTH_TYPE":   "wrong",
+				"AVP_IAM_API_KEY": "token",
+			},
+			"*backends.IBMSecretsManager",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":              "awssecretsmanager",
+				"AVP_AWS_ACCESS_KEY_ID": "id",
+			},
+			"*backends.AWSSecretsManager",
 		},
 	}
 	for _, tc := range testCases {

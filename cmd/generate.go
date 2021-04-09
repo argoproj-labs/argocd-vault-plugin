@@ -6,7 +6,6 @@ import (
 
 	"github.com/IBM/argocd-vault-plugin/pkg/config"
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
-	"github.com/IBM/argocd-vault-plugin/pkg/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -49,12 +48,9 @@ func NewGenerateCommand() *cobra.Command {
 				return err
 			}
 
-			err = utils.CheckExistingToken(config.VaultClient)
+			err = config.Backend.Login()
 			if err != nil {
-				err = config.Backend.Login()
-				if err != nil {
-					return err
-				}
+				return err
 			}
 
 			for _, manifest := range manifests {

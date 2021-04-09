@@ -9,11 +9,11 @@ import (
 	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
 )
 
-func TestSecretManagerGetSecrets(t *testing.T) {
+func TestSecretsManagerGetSecrets(t *testing.T) {
 	ln, client, _ := helpers.CreateTestVault(t)
 	defer ln.Close()
 
-	sm := backends.IBMSecretManager{
+	sm := backends.IBMSecretsManager{
 		IBMCloudAPIKey: "token",
 		VaultClient:    client,
 	}
@@ -33,11 +33,11 @@ func TestSecretManagerGetSecrets(t *testing.T) {
 	}
 }
 
-func TestSecretManagerGetSecretsFail(t *testing.T) {
+func TestSecretsmanagerGetSecretsFail(t *testing.T) {
 	ln, client, _ := helpers.CreateTestVault(t)
 	defer ln.Close()
 
-	sm := backends.IBMSecretManager{
+	sm := backends.IBMSecretsManager{
 		IBMCloudAPIKey: "token",
 		VaultClient:    client,
 	}
