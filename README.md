@@ -244,8 +244,7 @@ GITHUB_TOKEN: Your Github Personal Access Token
 ##### Kubernetes Authentication
 In order to use Kubernetes Authentication a couple of things are required.
 
-  1. Configuring ArgoCD
-
+1. Configuring ArgoCD
     You can either use your own Service Account or the default ArgoCD service account. To use the default ArgoCD service account all you need to do is set `automountServiceAccountToken` to true in the `argocd-repo-server`.
 
     ```
@@ -280,28 +279,28 @@ In order to use Kubernetes Authentication a couple of things are required.
           automountServiceAccountToken: true
     ```
 
-  2. Configuring Kubernetes  
+2. Configuring Kubernetes  
+    Use the /config endpoint to configure Vault to talk to Kubernetes. Use `kubectl cluster-info` to validate the Kubernetes host address and TCP port. For the list of available configuration options, please see the [API documentation](https://www.vaultproject.io/api/auth/kubernetes).
 
-  Use the /config endpoint to configure Vault to talk to Kubernetes. Use `kubectl cluster-info` to validate the Kubernetes host address and TCP port. For the list of available configuration options, please see the [API documentation](https://www.vaultproject.io/api/auth/kubernetes).
+    ```
+    $ vault write auth/kubernetes/config \
+        token_reviewer_jwt="<your service account JWT>" \
+        kubernetes_host=https://192.168.99.100:<your TCP port or blank for 443> \
+        kubernetes_ca_cert=@ca.crt
+    ```
 
-  ```
-  $ vault write auth/kubernetes/config \
-      token_reviewer_jwt="<your service account JWT>" \
-      kubernetes_host=https://192.168.99.100:<your TCP port or blank for 443> \
-      kubernetes_ca_cert=@ca.crt
-  ```
+    And then create a named role:
+    ```
+    vault write auth/kubernetes/role/argocd \
+        bound_service_account_names=your-service-account \
+        bound_service_account_namespaces=argocd \
+        policies=argocd \
+        ttl=1h
+    ```
+    This role authorizes the "vault-auth" service account in the default namespace and it gives it the default policy.
 
-  And then create a named role:
-  ```
-  vault write auth/kubernetes/role/argocd \
-      bound_service_account_names=your-service-account \
-      bound_service_account_namespaces=argocd \
-      policies=argocd \
-      ttl=1h
-  ```
-  This role authorizes the "vault-auth" service account in the default namespace and it gives it the default policy.
+    You can find the full documentation on configuring Kubernetes Authentication [Here](vaultproject.io/docs/auth/kubernetes#configuration).
 
-  You can find the full documentation on configuring Kubernetes Authentication [Here](vaultproject.io/docs/auth/kubernetes#configuration).
 
 Once ArgoCD and Kubernetes are configured, you can then set the required environment variables for the plugin:
 ```
