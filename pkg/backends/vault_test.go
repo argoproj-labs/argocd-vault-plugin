@@ -35,7 +35,10 @@ func TestVaultGetSecrets(t *testing.T) {
 	backend := backends.NewVaultBackend(auth, cluster.Cores[0].Client, "")
 
 	t.Run("will get data from vault with kv1", func(t *testing.T) {
-		data, err := backend.GetSecrets("secret/foo", "1")
+		annotations := map[string]string{
+			"kv_version": "1",
+		}
+		data, err := backend.GetSecrets("secret/foo", annotations)
 		if err != nil {
 			t.Fatalf("expected 0 errors but got: %s", err)
 		}
@@ -50,7 +53,10 @@ func TestVaultGetSecrets(t *testing.T) {
 	})
 
 	t.Run("will get data from vault with kv2", func(t *testing.T) {
-		data, err := backend.GetSecrets("kv/data/test", "2")
+		annotations := map[string]string{
+			"kv_version": "2",
+		}
+		data, err := backend.GetSecrets("kv/data/test", annotations)
 		if err != nil {
 			t.Fatalf("expected 0 errors but got: %s", err)
 		}
@@ -65,7 +71,10 @@ func TestVaultGetSecrets(t *testing.T) {
 	})
 
 	t.Run("will throw an error if cant find secrets", func(t *testing.T) {
-		_, err := backend.GetSecrets("kv/data/no_path", "2")
+		annotations := map[string]string{
+			"kv_version": "2",
+		}
+		_, err := backend.GetSecrets("kv/data/no_path", annotations)
 		if err == nil {
 			t.Fatalf("expected an error but did not get an error")
 		}
@@ -78,7 +87,10 @@ func TestVaultGetSecrets(t *testing.T) {
 	})
 
 	t.Run("will throw an error if cant find secrets", func(t *testing.T) {
-		_, err := backend.GetSecrets("kv/data/bad_test", "2")
+		annotations := map[string]string{
+			"kv_version": "2",
+		}
+		_, err := backend.GetSecrets("kv/data/bad_test", annotations)
 		if err == nil {
 			t.Fatalf("expected an error but did not get an error")
 		}
@@ -91,7 +103,10 @@ func TestVaultGetSecrets(t *testing.T) {
 	})
 
 	t.Run("will throw an error if unsupported kv version", func(t *testing.T) {
-		_, err := backend.GetSecrets("kv/data/test", "3")
+		annotations := map[string]string{
+			"kv_version": "3",
+		}
+		_, err := backend.GetSecrets("kv/data/test", annotations)
 		if err == nil {
 			t.Fatalf("expected an error but did not get an error")
 		}

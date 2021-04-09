@@ -13,6 +13,7 @@ require (
 	github.com/hashicorp/vault/api v1.0.5-0.20201001211907-38d91b749c77
 	github.com/hashicorp/vault/sdk v0.1.14-0.20201109203410-5e6e24692b32
 	github.com/pierrec/lz4 v2.6.0+incompatible // indirect
+	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/viper v1.7.0
 	golang.org/x/crypto v0.0.0-20201116153603-4be66e5b6582 // indirect

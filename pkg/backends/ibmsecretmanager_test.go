@@ -23,7 +23,7 @@ func TestSecretManagerGetSecrets(t *testing.T) {
 		"secret2": "value2",
 	}
 
-	data, err := sm.GetSecrets("secret/ibm/arbitrary/groups/1", "")
+	data, err := sm.GetSecrets("secret/ibm/arbitrary/groups/1", map[string]string{})
 	if err != nil {
 		t.Fatalf("expected 0 errors but got: %s", err)
 	}
@@ -42,7 +42,7 @@ func TestSecretManagerGetSecretsFail(t *testing.T) {
 		VaultClient:    client,
 	}
 
-	_, err := sm.GetSecrets("secret/ibm/arbitrary/groups/3", "")
+	_, err := sm.GetSecrets("secret/ibm/arbitrary/groups/3", map[string]string{})
 
 	expected := fmt.Sprintf("Could not find secrets at path %s", "secret/ibm/arbitrary/groups/3")
 
