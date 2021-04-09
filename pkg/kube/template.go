@@ -2,21 +2,20 @@ package kube
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	k8yaml "sigs.k8s.io/yaml"
+	yaml "sigs.k8s.io/yaml"
 )
 
 // A Resource is the basis for all Templates
 type Resource struct {
 	Kind              string
 	TemplateData      map[string]interface{} // The template as read from YAML
-	replaceable       bool                   // Whether there are placeholders to replace or not; if false, VaultData will be nil
+	Backend           types.Backend
 	replacementErrors []error                // Any errors encountered in performing replacements
-	VaultData         map[string]interface{} // The data to replace with, from Vault
+	Data              map[string]interface{} // The data to replace with, from Vault
+	Annotations       map[string]string
 }
 
 // Template is the template for Kubernetes
@@ -25,48 +24,26 @@ type Template struct {
 }
 
 // NewTemplate returns a *Template given the template's data, and a VaultType
-func NewTemplate(template map[string]interface{}, backend types.Backend, prefix string) (*Template, error) {
-	obj := &unstructured.Unstructured{}
-	err := kubeResourceDecoder(&template).Decode(&obj)
-	if err != nil {
-		return nil, fmt.Errorf("ToYAML: could not convert replaced template into %s: %s", obj.GetKind(), err)
-	}
+func NewTemplate(template unstructured.Unstructured, backend types.Backend) (*Template, error) {
+	annotations := template.GetAnnotations()
+	path := annotations["avp_path"]
 
-	path := fmt.Sprintf("%s/%s", prefix, strings.ToLower(obj.GetKind()))
-
-	annotations := obj.GetAnnotations()
-	if avpPath, ok := annotations["avp_path"]; ok {
-		path = avpPath
-	}
-
-	var kvVersion string
-	if kv, ok := annotations["kv_version"]; ok {
-		kvVersion = kv
-	}
-
-	var avpIgnore bool
-	if ignore, ok := annotations["avp_ignore"]; ok {
-		avpIgnore, err = strconv.ParseBool(ignore)
-	}
-
+	var err error
 	var data map[string]interface{}
-	var replaceable bool
-	if !avpIgnore {
-		replaceable = replaceableInner(&template)
-		if replaceable {
-			data, err = backend.GetSecrets(path, kvVersion)
-			if err != nil {
-				return nil, err
-			}
+	if path != "" {
+		data, err = backend.GetSecrets(path, annotations)
+		if err != nil {
+			return nil, err
 		}
 	}
 
 	return &Template{
 		Resource{
-			Kind:         obj.GetKind(),
-			TemplateData: template,
-			replaceable:  replaceable,
-			VaultData:    data,
+			Kind:         template.GetKind(),
+			TemplateData: template.Object,
+			Backend:      backend,
+			Data:         data,
+			Annotations:  annotations,
 		},
 	}, nil
 }
@@ -77,15 +54,9 @@ func NewTemplate(template map[string]interface{}, backend types.Backend, prefix 
 // For Secret's with <placeholder>'s in `.data`, the value in Vault is emitted as base64
 // For any hard-coded strings that aren't <placeholder>'s, the string is emitted as-is
 func (t *Template) Replace() error {
-	var replacerFunc func(string, string, map[string]interface{}) (interface{}, []error)
-
-	if !t.replaceable {
-		return nil
-	}
+	var replacerFunc func(string, string, Resource) (interface{}, []error)
 
 	switch t.Kind {
-	case "Secret":
-		return t.secretReplace()
 	case "ConfigMap":
 		replacerFunc = configReplacement
 	default:
@@ -100,54 +71,11 @@ func (t *Template) Replace() error {
 	return nil
 }
 
-func configReplacement(key, value string, vaultData map[string]interface{}) (interface{}, []error) {
-	res, err := genericReplacement(key, value, vaultData)
-	if err != nil {
-		return nil, err
-	}
-
-	// configMap data values must be strings
-	return stringify(res), err
-}
-
-// secretReplace will call replaceInner based on where there are placeholders to replace
-// It will return an error if an error occured during the replacement process
-func (t *Template) secretReplace() error {
-	var dataToReplace []map[string]interface{}
-
-	// Replace metadata normally
-	if metadata, ok := t.TemplateData["metadata"].(map[string]interface{}); ok {
-		dataToReplace = append(dataToReplace, metadata)
-	}
-	if stringData, ok := t.TemplateData["stringData"].(map[string]interface{}); ok {
-		dataToReplace = append(dataToReplace, stringData)
-	}
-	if data, ok := t.TemplateData["data"].(map[string]interface{}); ok {
-		dataToReplace = append(dataToReplace, data)
-	}
-
-	for _, v := range dataToReplace {
-		replaceInner(&t.Resource, &v, genericReplacement)
-		if len(t.replacementErrors) != 0 {
-
-			// TODO format multiple errors nicely
-			return fmt.Errorf("Replace: could not replace all placeholders in SecretTemplate metadata: %s", t.replacementErrors)
-		}
-	}
-
-	return nil
-}
-
 // ToYAML seralizes the completed template into YAML to be consumed by Kubernetes
 func (t *Template) ToYAML() (string, error) {
-	obj := &unstructured.Unstructured{}
-	err := kubeResourceDecoder(&t.TemplateData).Decode(&obj)
+	res, err := yaml.Marshal(&t.TemplateData)
 	if err != nil {
-		return "", fmt.Errorf("ToYAML: could not convert replaced template into %s: %s", obj.GetKind(), err)
-	}
-	res, err := k8yaml.Marshal(&obj)
-	if err != nil {
-		return "", fmt.Errorf("ToYAML: could not export %s into YAML: %s", obj.GetKind(), err)
+		return "", fmt.Errorf("ToYAML: could not export %s into YAML: %s", t.Kind, err)
 	}
 	return string(res), nil
 }

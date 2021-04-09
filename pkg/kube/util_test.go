@@ -16,8 +16,8 @@ func assertSuccessfulReplacement(actual, expected *Resource, t *testing.T) {
 		t.Fatalf("expected replaced template to look like %s\n but got: %s", expected.TemplateData, actual.TemplateData)
 	}
 
-	if !reflect.DeepEqual(actual.VaultData, expected.VaultData) {
-		t.Fatalf("expected Vault map to look like %s\n but got: %s", expected.VaultData, actual.VaultData)
+	if !reflect.DeepEqual(actual.Data, expected.Data) {
+		t.Fatalf("expected Vault map to look like %s\n but got: %s", expected.Data, actual.Data)
 	}
 }
 
@@ -30,8 +30,8 @@ func assertFailedReplacement(actual, expected *Resource, t *testing.T) {
 		t.Fatalf("expected replaced template to look like %s\n but got: %s", expected.TemplateData, actual.TemplateData)
 	}
 
-	if !reflect.DeepEqual(actual.VaultData, expected.VaultData) {
-		t.Fatalf("expected Vault map to look like %s\n but got: %s", expected.VaultData, actual.VaultData)
+	if !reflect.DeepEqual(actual.Data, expected.Data) {
+		t.Fatalf("expected Vault map to look like %s\n but got: %s", expected.Data, actual.Data)
 	}
 }
 
@@ -40,7 +40,7 @@ func TestGenericReplacement_simpleString(t *testing.T) {
 		TemplateData: map[string]interface{}{
 			"namespace": "<namespace>",
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 		},
 	}
@@ -51,7 +51,7 @@ func TestGenericReplacement_simpleString(t *testing.T) {
 		TemplateData: map[string]interface{}{
 			"namespace": "default",
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 		},
 		replacementErrors: []error{},
@@ -66,7 +66,7 @@ func TestGenericReplacement_multiString(t *testing.T) {
 			"namespace": "<namespace>",
 			"image":     "foo.io/<name>:<tag>",
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 			"name":      "app",
 			"tag":       "latest",
@@ -80,7 +80,38 @@ func TestGenericReplacement_multiString(t *testing.T) {
 			"namespace": "default",
 			"image":     "foo.io/app:latest",
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
+func TestGenericReplacement_Base64(t *testing.T) {
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": "<namespace | base64encode>",
+			"image":     "foo.io/<name>:<tag>",
+		},
+		Data: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": []uint8("default"),
+			"image":     "foo.io/app:latest",
+		},
+		Data: map[string]interface{}{
 			"namespace": "default",
 			"name":      "app",
 			"tag":       "latest",
@@ -101,7 +132,7 @@ func TestGenericReplacement_nestedString(t *testing.T) {
 				},
 			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 			"name":      "foo",
 		},
@@ -118,7 +149,7 @@ func TestGenericReplacement_nestedString(t *testing.T) {
 				},
 			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 			"name":      "foo",
 		},
@@ -136,7 +167,7 @@ func TestGenericReplacement_int(t *testing.T) {
 				"replicas": "<replicas>",
 			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 			"replicas":  1,
 		},
@@ -151,7 +182,7 @@ func TestGenericReplacement_int(t *testing.T) {
 				"replicas": 1,
 			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 			"replicas":  1,
 		},
@@ -169,7 +200,7 @@ func TestGenericReplacement_missingValue(t *testing.T) {
 				"replicas": "<replicas>",
 			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 		},
 	}
@@ -183,7 +214,7 @@ func TestGenericReplacement_missingValue(t *testing.T) {
 				"replicas": "<replicas>",
 			},
 		},
-		VaultData: map[string]interface{}{
+		Data: map[string]interface{}{
 			"namespace": "default",
 		},
 		replacementErrors: []error{

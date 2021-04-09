@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/config"
+	"github.com/spf13/viper"
 )
 
 func TestNewConfig(t *testing.T) {
@@ -70,7 +71,8 @@ func TestNewConfig(t *testing.T) {
 		for k, v := range tc.environment {
 			os.Setenv(k, v.(string))
 		}
-		config, err := config.New(&config.Options{})
+		viper := viper.New()
+		config, err := config.New(viper, &config.Options{})
 		if err != nil {
 			t.Error(err)
 			t.FailNow()
@@ -86,7 +88,8 @@ func TestNewConfig(t *testing.T) {
 }
 
 func TestNewConfigNoType(t *testing.T) {
-	_, err := config.New(&config.Options{})
+	viper := viper.New()
+	_, err := config.New(viper, &config.Options{})
 	expectedError := "Must provide a supported Vault Type"
 
 	if err.Error() != expectedError {
@@ -96,7 +99,8 @@ func TestNewConfigNoType(t *testing.T) {
 
 func TestNewConfigNoAuthType(t *testing.T) {
 	os.Setenv("AVP_TYPE", "vault")
-	_, err := config.New(&config.Options{})
+	viper := viper.New()
+	_, err := config.New(viper, &config.Options{})
 	expectedError := "Must provide a supported Authentication Type"
 
 	if err.Error() != expectedError {
@@ -147,7 +151,8 @@ func TestNewConfigMissingParameter(t *testing.T) {
 		for k, v := range tc.environment {
 			os.Setenv(k, v.(string))
 		}
-		_, err := config.New(&config.Options{})
+		viper := viper.New()
+		_, err := config.New(viper, &config.Options{})
 		if err == nil {
 			t.Fatalf("%s should not instantiate", tc.expectedType)
 		}
