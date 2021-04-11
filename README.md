@@ -71,7 +71,7 @@ data:
 <b>*Note*</b>: The plugin will attempt to read any strings that match the following PCRE regex: `<.*>` (any characters between matching angle brackets), in all YAML files at the path given as the `<path>` argument. If there are YAML files that use `<string>`'s for other purposes and should _not_ be replaced, you can tell AVP to skip that file by adding the annotation `avp_ignore: "true"`.
 
 ## Installation
-There are multiple ways to download and install argocd-vault-plugin depedning on your use case.
+There are multiple ways to download and install argocd-vault-plugin depending on your use case.
 
 #### `curl` command
 Use curl or wget to download the binary from Github and then move the binary to `/usr/local/bin` or another directory that is in you `PATH`
