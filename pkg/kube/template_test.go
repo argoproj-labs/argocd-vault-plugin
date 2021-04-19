@@ -2,6 +2,7 @@ package kube
 
 import (
 	"io/ioutil"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -15,7 +16,10 @@ func (v *MockVault) Login() error {
 }
 func (v *MockVault) GetSecrets(path, kvVersion string) (map[string]interface{}, error) {
 	v.GetSecretsCalled = true
-	return map[string]interface{}{}, nil
+	return map[string]interface{}{
+		"foo": "bar-value",
+		"baz": "baz-value",
+	}, nil
 }
 
 func TestNewTemplate(t *testing.T) {
@@ -105,6 +109,92 @@ func TestNewTemplate(t *testing.T) {
 		}
 		if mv.GetSecretsCalled {
 			t.Fatalf("template contains avp_ignore:True so GetSecrets should NOT be called")
+		}
+	})
+
+	t.Run("will auto template all 'data' keys when avp_all_keys_to: data", func(t *testing.T) {
+		mv := MockVault{}
+		template, _ := NewTemplate(map[string]interface{}{
+			"kind":       "Secret",
+			"apiVersion": "v1",
+			"metadata": map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "Secret",
+				"annotations": map[string]interface{}{
+					"avp_all_keys_to": "data",
+				},
+			},
+		}, &mv, "")
+
+		if !template.Resource.replaceable {
+			t.Fatalf("template contains avp_all_keys_to:data and should be replaced")
+		}
+
+		if !mv.GetSecretsCalled {
+			t.Fatalf("template contains avp_all_keys_to:data so GetSecrets should be called")
+		}
+
+		data := template.TemplateData["data"].(map[string]interface{})
+		if data["foo"].(string) != "<foo>" {
+			t.Fatalf("template contains avp_all_keys_to:data and should have a single key matching the secret")
+		}
+
+		if data["baz"].(string) != "<baz>" {
+			t.Fatalf("template contains avp_all_keys_to:data and should have a single key matching the secret")
+		}
+	})
+
+	t.Run("will auto template all 'stringData' keys when avp_all_keys_to: stringData", func(t *testing.T) {
+		mv := MockVault{}
+		template, _ := NewTemplate(map[string]interface{}{
+			"kind":       "Secret",
+			"apiVersion": "v1",
+			"metadata": map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "Secret",
+				"annotations": map[string]interface{}{
+					"avp_all_keys_to": "stringData",
+				},
+			},
+		}, &mv, "")
+
+		if !template.Resource.replaceable {
+			t.Fatalf("template contains avp_all_keys_to:data and should be replaced")
+		}
+
+		if !mv.GetSecretsCalled {
+			t.Fatalf("template contains avp_all_keys_to:data so GetSecrets should be called")
+		}
+
+		stringData := template.TemplateData["stringData"].(map[string]interface{})
+		if stringData["foo"].(string) != "<foo>" {
+			t.Fatalf("template contains avp_all_keys_to:data and should have a single key matching the secret")
+		}
+
+		if stringData["baz"].(string) != "<baz>" {
+			t.Fatalf("template contains avp_all_keys_to:data and should have a single key matching the secret")
+		}
+	})
+
+	t.Run("Cannot use avp_all_keys_to: stringData with ConfigMap", func(t *testing.T) {
+		mv := MockVault{}
+		_, err := NewTemplate(map[string]interface{}{
+			"kind":       "ConfigMap",
+			"apiVersion": "v1",
+			"metadata": map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "Secret",
+				"annotations": map[string]interface{}{
+					"avp_all_keys_to": "stringData",
+				},
+			},
+		}, &mv, "")
+
+		expected := "stringData can only be used with Secret! Got configmap"
+		actual := err.Error()
+
+		if !reflect.DeepEqual(actual, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, err.Error())
 		}
 	})
 }
@@ -297,6 +387,7 @@ func TestToYAML_Secret_HardcodedData(t *testing.T) {
 		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
 	}
 }
+
 func TestToYAML_Secret_MixedData(t *testing.T) {
 	d := Template{
 		Resource{

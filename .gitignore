@@ -4,3 +4,4 @@ bin
 .chglog
 test
 cover.out
+.idea

@@ -35,6 +35,31 @@ func assertFailedReplacement(actual, expected *Resource, t *testing.T) {
 	}
 }
 
+func TestGenericReplacement_simpleEncodedString(t *testing.T) {
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": "PG5hbWVzcGFjZT4K",
+		},
+		VaultData: map[string]interface{}{
+			"namespace": "default",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": "ZGVmYXVsdAo=",
+		},
+		VaultData: map[string]interface{}{
+			"namespace": "default",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
 func TestGenericReplacement_simpleString(t *testing.T) {
 	dummyResource := Resource{
 		TemplateData: map[string]interface{}{

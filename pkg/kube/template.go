@@ -32,7 +32,8 @@ func NewTemplate(template map[string]interface{}, backend types.Backend, prefix 
 		return nil, fmt.Errorf("ToYAML: could not convert replaced template into %s: %s", obj.GetKind(), err)
 	}
 
-	path := fmt.Sprintf("%s/%s", prefix, strings.ToLower(obj.GetKind()))
+	kind := strings.ToLower(obj.GetKind())
+	path := fmt.Sprintf("%s/%s", prefix, kind)
 
 	annotations := obj.GetAnnotations()
 	if avpPath, ok := annotations["avp_path"]; ok {
@@ -49,6 +50,30 @@ func NewTemplate(template map[string]interface{}, backend types.Backend, prefix 
 		avpIgnore, err = strconv.ParseBool(ignore)
 	}
 
+	var avpAllKeysTo string
+	const aktAnnotation = "avp_all_keys_to"
+	if allKeysTo, ok := annotations[aktAnnotation]; ok {
+		if kind != "secret" && kind != "configmap" {
+			return nil, fmt.Errorf("%s can only be used on Secret and ConfigMap! Got %s", aktAnnotation, kind)
+		}
+
+		if allKeysTo != "data" && allKeysTo != "stringData" {
+			return nil, fmt.Errorf("%s must be data or stringData! Got %s", aktAnnotation, allKeysTo)
+		}
+
+		if kind == "configmap" && allKeysTo == "stringData" {
+			return nil, fmt.Errorf("%s can only be used with Secret! Got %s", allKeysTo, kind)
+		}
+
+		if template[allKeysTo] != nil {
+			if _, ok := template[allKeysTo].(map[string]interface{}); !ok {
+				return nil, fmt.Errorf("%s must be a YAML object", aktAnnotation)
+			}
+		}
+
+		avpAllKeysTo = allKeysTo
+	}
+
 	var data map[string]interface{}
 	var replaceable bool
 	if !avpIgnore {
@@ -58,6 +83,30 @@ func NewTemplate(template map[string]interface{}, backend types.Backend, prefix 
 			if err != nil {
 				return nil, err
 			}
+		}
+
+		if avpAllKeysTo != "" {
+			// If we didn't already fetch secret data, do it now
+			if !replaceable {
+				data, err = backend.GetSecrets(path, kvVersion)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			// Build a template from existing secret keys
+			templateData := templateAllKeys(data)
+			if template[avpAllKeysTo] != nil {
+				existing := template[avpAllKeysTo].(map[string]interface{})
+				for k, v := range templateData {
+					existing[k] = v
+				}
+			} else {
+				template[avpAllKeysTo] = templateData
+			}
+
+			// Ensure the generated template is replaceable
+			replaceable = replaceableInner(&template)
 		}
 	}
 
@@ -69,6 +118,17 @@ func NewTemplate(template map[string]interface{}, backend types.Backend, prefix 
 			VaultData:    data,
 		},
 	}, nil
+}
+
+func templateAllKeys(data map[string]interface{}) map[string]interface{} {
+	templateData := make(map[string]interface{}, len(data))
+
+	// Create a template of all Secret Keys
+	for key := range data {
+		templateData[key] = encodePlaceholder(key)
+	}
+
+	return templateData
 }
 
 // Replace will replace the <placeholders> in the Template's data with values from Vault.

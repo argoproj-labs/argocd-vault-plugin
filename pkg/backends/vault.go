@@ -3,6 +3,7 @@ package backends
 import (
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	"github.com/hashicorp/vault/api"
@@ -37,7 +38,14 @@ func (v *Vault) Login() error {
 
 // GetSecrets gets secrets from vault and returns the formatted data
 func (v *Vault) GetSecrets(path, kvVersion string) (map[string]interface{}, error) {
-	secret, err := v.VaultClient.Logical().Read(path)
+	parsed, err := url.Parse(path)
+	if err != nil {
+		return nil, err
+	}
+
+	data := parsed.Query()
+	parsed.RawQuery = ""
+	secret, err := v.VaultClient.Logical().ReadWithData(parsed.String(), data)
 	if err != nil {
 		return nil, err
 	}

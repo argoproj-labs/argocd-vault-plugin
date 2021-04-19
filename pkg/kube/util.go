@@ -2,6 +2,7 @@ package kube
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -13,6 +14,12 @@ import (
 )
 
 var placeholder, _ = regexp.Compile(`(?mU)<(.*)>`)
+
+// Encodes a placeholder from an input string
+func encodePlaceholder(input string) string {
+	encoded := fmt.Sprintf("<%s>", input)
+	return encoded
+}
 
 // replaceableInner recurses through the given map and returns true if _any_ value is a `<placeholder>` string
 func replaceableInner(node *map[string]interface{}) bool {
@@ -40,7 +47,8 @@ func replaceableInner(node *map[string]interface{}) bool {
 					}
 				case string:
 					{
-						if placeholder.Match([]byte(elm.(string))) {
+						placeHolderValue, _ := tryDecode(elm.(string))
+						if placeholder.Match([]byte(placeHolderValue)) {
 							return true
 						}
 					}
@@ -51,7 +59,8 @@ func replaceableInner(node *map[string]interface{}) bool {
 				}
 			}
 		} else if valueType == reflect.String {
-			if placeholder.Match([]byte(value.(string))) {
+			placeHolderValue, _ := tryDecode(value.(string))
+			if placeholder.Match([]byte(placeHolderValue)) {
 				return true
 			}
 		}
@@ -87,11 +96,20 @@ func replaceInner(
 				case string:
 					{
 						// Base case, replace templated strings
-						replacement, err := replacerFunc(key, elm.(string), r.VaultData)
+						elmString, decoded := tryDecode(elm.(string))
+						replacement, err := replacerFunc(key, elmString, r.VaultData)
 						if len(err) != 0 {
 							r.replacementErrors = append(r.replacementErrors, err...)
 						}
-						value.([]interface{})[idx] = replacement
+
+						// if we decoded the input value, make an effort to put it back in the
+						// format we found it.
+						result := replacement
+						if decoded {
+							result = tryEncode(replacement)
+						}
+
+						value.([]interface{})[idx] = result
 					}
 				default:
 					{
@@ -100,14 +118,21 @@ func replaceInner(
 				}
 			}
 		} else if valueType == reflect.String {
-
 			// Base case, replace templated strings
-			replacement, err := replacerFunc(key, value.(string), r.VaultData)
+			valueString, decoded := tryDecode(value.(string))
+			replacement, err := replacerFunc(key, valueString, r.VaultData)
 			if len(err) != 0 {
 				r.replacementErrors = append(r.replacementErrors, err...)
 			}
 
-			obj[key] = replacement
+			// if we decoded the input value, make an effort to put it back in the
+			// format we found it.
+			result := replacement
+			if decoded {
+				result = tryEncode(replacement)
+			}
+
+			obj[key] = result
 		}
 	}
 }
@@ -170,4 +195,34 @@ func kubeResourceDecoder(data *map[string]interface{}) *k8yaml.YAMLToJSONDecoder
 	jsondata, _ := json.Marshal(data)
 	decoder := k8yaml.NewYAMLToJSONDecoder(bytes.NewReader(jsondata))
 	return decoder
+}
+
+func tryDecode(s string) (string, bool) {
+	decoded, err := base64.StdEncoding.DecodeString(s)
+	if err == nil {
+		return string(decoded[:]), true
+	}
+
+	return s, false
+}
+
+func tryEncode(s interface{}) interface{} {
+	switch s.(type) {
+	case []byte:
+		{
+			byteString := s.([]byte)
+			encoded := base64.StdEncoding.EncodeToString(byteString)
+			return encoded
+		}
+	case string:
+		{
+			byteString := []byte(s.(string))
+			encoded := base64.StdEncoding.EncodeToString(byteString)
+			return encoded
+		}
+	default:
+		{
+			return s
+		}
+	}
 }
