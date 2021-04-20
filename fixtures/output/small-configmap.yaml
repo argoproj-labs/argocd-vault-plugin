@@ -5,6 +5,6 @@ data:
 kind: ConfigMap
 metadata:
   annotations:
-    avp_path: path
+    avp.kubernetes.io/path: path
   name: my-app
   namespace: default

@@ -7,6 +7,7 @@ import (
 	"github.com/IBM/argocd-vault-plugin/pkg/auth/vault"
 	"github.com/IBM/argocd-vault-plugin/pkg/backends"
 	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
+	"github.com/IBM/argocd-vault-plugin/pkg/types"
 )
 
 func TestVaultLogin(t *testing.T) {
@@ -36,7 +37,7 @@ func TestVaultGetSecrets(t *testing.T) {
 
 	t.Run("will get data from vault with kv1", func(t *testing.T) {
 		annotations := map[string]string{
-			"kv_version": "1",
+			types.VaultKVVersionAnnotation: "1",
 		}
 		data, err := backend.GetSecrets("secret/foo", annotations)
 		if err != nil {
@@ -54,7 +55,7 @@ func TestVaultGetSecrets(t *testing.T) {
 
 	t.Run("will get data from vault with kv2", func(t *testing.T) {
 		annotations := map[string]string{
-			"kv_version": "2",
+			types.VaultKVVersionAnnotation: "2",
 		}
 		data, err := backend.GetSecrets("kv/data/test", annotations)
 		if err != nil {
@@ -72,7 +73,7 @@ func TestVaultGetSecrets(t *testing.T) {
 
 	t.Run("will throw an error if cant find secrets", func(t *testing.T) {
 		annotations := map[string]string{
-			"kv_version": "2",
+			types.VaultKVVersionAnnotation: "2",
 		}
 		_, err := backend.GetSecrets("kv/data/no_path", annotations)
 		if err == nil {
@@ -88,7 +89,7 @@ func TestVaultGetSecrets(t *testing.T) {
 
 	t.Run("will throw an error if cant find secrets", func(t *testing.T) {
 		annotations := map[string]string{
-			"kv_version": "2",
+			types.VaultKVVersionAnnotation: "2",
 		}
 		_, err := backend.GetSecrets("kv/data/bad_test", annotations)
 		if err == nil {
@@ -104,7 +105,7 @@ func TestVaultGetSecrets(t *testing.T) {
 
 	t.Run("will throw an error if unsupported kv version", func(t *testing.T) {
 		annotations := map[string]string{
-			"kv_version": "3",
+			types.VaultKVVersionAnnotation: "3",
 		}
 		_, err := backend.GetSecrets("kv/data/test", annotations)
 		if err == nil {

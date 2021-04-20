@@ -87,7 +87,7 @@ func TestMain(t *testing.T) {
 		}
 	})
 
-	t.Run("will ignore templates with avp_ignore set to True", func(t *testing.T) {
+	t.Run("will ignore templates with avp.kubernetes.io/ignore set to True", func(t *testing.T) {
 		args := []string{"../fixtures/input/nonempty/ignored-secret.yaml"}
 		cmd := NewGenerateCommand()
 
