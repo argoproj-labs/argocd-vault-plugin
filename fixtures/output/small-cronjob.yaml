@@ -2,7 +2,7 @@ apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
   annotations:
-    avp_path: path
+    avp.kubernetes.io/path: path
   name: my-app
 spec:
   jobTemplate:

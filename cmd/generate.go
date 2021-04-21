@@ -6,6 +6,7 @@ import (
 
 	"github.com/IBM/argocd-vault-plugin/pkg/config"
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
+	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -65,7 +66,7 @@ func NewGenerateCommand() *cobra.Command {
 				}
 
 				annotations := manifest.GetAnnotations()
-				avpIgnore, _ := strconv.ParseBool(annotations["avp_ignore"])
+				avpIgnore, _ := strconv.ParseBool(annotations[types.AVPIgnoreAnnotation])
 				if !avpIgnore {
 					err = template.Replace()
 					if err != nil {

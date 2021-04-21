@@ -25,4 +25,8 @@ const (
 	ApproleAuth              = "approle"
 	GithubAuth               = "github"
 	IAMAuth                  = "iam"
+
+	AVPPathAnnotation        = "avp.kubernetes.io/path"
+	AVPIgnoreAnnotation      = "avp.kubernetes.io/ignore"
+	VaultKVVersionAnnotation = "avp.kubernetes.io/kv-version"
 )

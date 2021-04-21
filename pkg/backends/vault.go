@@ -47,7 +47,7 @@ func (v *Vault) GetSecrets(path string, annotations map[string]string) (map[stri
 	}
 
 	var kvVersion = v.KvVersion
-	if kv, ok := annotations["kv_version"]; ok {
+	if kv, ok := annotations[types.VaultKVVersionAnnotation]; ok {
 		kvVersion = kv
 	}
 

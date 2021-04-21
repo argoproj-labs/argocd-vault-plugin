@@ -37,7 +37,7 @@ This plugin is aimed at helping to solve the issue of secret management with Git
 ### How it works
 The argocd-vault-plugin works by taking a directory of yaml files that have been templated out using the pattern of `<placeholder>` where you would want a value from Vault to go. The inside of the `<>` would be the actual key in Vault.
 
-An annotation can be used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp_path: "path/to/secret"`.
+An annotation can be used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp.kubernetes.io/path: "path/to/secret"`.
 
 For example, if you have a secret with the key `password-vault-key` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/secret/password-vault-key` and inject it into the secret yaml.
 
@@ -47,7 +47,7 @@ apiVersion: v1
 metadata:
   name: example-secret
   annotations:
-    avp_path: "path/to/secret"
+    avp.kubernetes.io/path: "path/to/secret"
 type: Opaque
 data:
   password: <password-vault-key>
@@ -60,13 +60,13 @@ apiVersion: v1
 metadata:
   name: example-secret
   annotations:
-    avp_path: "path/to/secret"
+    avp.kubernetes.io/path: "path/to/secret"
 type: Opaque
 data:
   password: cGFzc3dvcmQK # The Value from the key password-vault-key in vault
 ```
 
-The plugin also supports putting the path directly within the placeholder. The format must be `<path:path/to/secret#key>`, where `path/to/secret` is the vault path and the Vault key goes after the `#` symbol. Doing this does not require an `avp_path` annotation and will override any `avp_path` annotation that is set. For example:
+The plugin also supports putting the path directly within the placeholder. The format must be `<path:path/to/secret#key>`, where `path/to/secret` is the vault path and the Vault key goes after the `#` symbol. Doing this does not require an `avp.kubernetes.io/path` annotation and will override any `avp.kubernetes.io/path` annotation that is set. For example:
 
 ```
 kind: Secret
@@ -78,7 +78,7 @@ data:
   password: <path:path/to/secret#password-vault-key>
 ```
 
-<b>*Note*</b>: The plugin will attempt to read any strings that match the following PCRE regex: `<.*>` (any characters between matching angle brackets), in all YAML files at the path given as the `<path>` argument. If there are YAML files that use `<string>`'s for other purposes and should _not_ be replaced, you can tell AVP to skip that file by adding the annotation `avp_ignore: "true"`.
+<b>*Note*</b>: The plugin will attempt to read any strings that match the following PCRE regex: `<.*>` (any characters between matching angle brackets), in all YAML files at the path given as the `<path>` argument. If there are YAML files that use `<string>`'s for other purposes and should _not_ be replaced, you can tell AVP to skip that file by adding the annotation `avp.kubernetes.io/ignore: "true"`.
 
 ##### Modifiers
 By Default the plugin does not perform any transformation of the secrets in transit. So if you have plain text secrets in Vault, you will need to use the `stringData` field and if you have a base64 encoded secret in Vault, you will need to use the `data` field according to the [Kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret/).
@@ -356,8 +356,8 @@ AVP_IBM_API_KEY: Your IBM Cloud API Key
 These are the required parameters parameters for AWS:
 ```
 AVP_TYPE: awssecretmanager
-AWS_ACCESS_KEY_ID: Your AWS Access Key ID
-AWS_SECRET_ACCESS_KEY: Your AWS Secret Access Key
+AVP_AWS_ACCESS_KEY_ID: Your AWS Access Key ID
+AVP_AWS_SECRET_ACCESS_KEY: Your AWS Secret Access Key
 ```
 
 ## Configuration
@@ -406,7 +406,7 @@ We support all Vault Environment Variables listed [here](https://www.vaultprojec
 | Name            | Description | Notes |
 | --------------- | ----------- | ----- |
 | AVP_TYPE           | The type of Vault backend  | Supported values: `vault`, `ibmsecretsmanager` and `awssecretsmanager` |
-| AVP_KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `kv_version` annotation is present in a YAML resource.|
+| AVP_KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `avp.kubernetes.io/kv-version` annotation is present in a YAML resource.|
 | AVP_AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |
 | AVP_GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
 | AVP_ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
@@ -424,9 +424,28 @@ We support two different annotations that can be used inside a kubernetes resour
 
 | Annotation | Description |  
 | ---------- | ----------- |  
-| avp_path | Path to the Vault Secret |
-| avp_ignore | Boolean to tell the plugin whether or not to process the file. Invalid values translate to `false` |
-| kv_version | Version of the KV Secret Engine |
+| avp.kubernetes.io/path | Path to the Vault Secret |
+| avp.kubernetes.io/ignore | Boolean to tell the plugin whether or not to process the file. Invalid values translate to `false` |
+| avp.kubernetes.io/kv-version | Version of the KV Secret Engine |
+
+## 0.x to 1.x Migration Guide
+#### Annotation Changes
+In order to follow Kubernetes annotations, we have updated the supported annotations
+
+| Old        | New |  
+| ---------- | ----------- |  
+| avp_path   | avp.kubernetes.io/path  |
+| avp_ignore | avp.kubernetes.io/ignore |
+| kv_version | avp.kubernetes.io/kv-version |
+
+#### AVP Prefix
+The `AVP` prefix is now required for all configurations options not including `VAULT` environment variables (https://www.vaultproject.io/docs/commands#environment-variables).
+
+#### PATH_PREFIX
+The `PATH_PREFIX` environment variable has now been removed and is no longer available.
+
+### `secretmanager` is now `ibmsecretsmanager`
+With the addition of `awssecretsmanager` we have renamed `secretmanager` to be `ibmsecretsmanager` to follow a more consistent naming convention.
 
 ## Notes
 - The plugin tries to cache the Vault token obtained from logging into Vault on the `argocd-repo-server`'s container's disk, at `~/.avp/config.json` for the duration of the token's lifetime. This of course requires that the container user is able to write to that path. Some environments, like Openshift 4, will force a random user for containers to run with; therefore this feature will not work, and the plugin will attempt to login to Vault on every run. This can be fixed by ensuring the `argocd-repo-server`'s container runs with the user `argocd`.

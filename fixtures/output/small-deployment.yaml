@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    avp_path: path
+    avp.kubernetes.io/path: path
   name: my-app
   namespace: default
 spec:
