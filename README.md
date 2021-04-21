@@ -444,7 +444,7 @@ The `AVP` prefix is now required for all configurations options not including `V
 #### PATH_PREFIX
 The `PATH_PREFIX` environment variable has now been removed and is no longer available.
 
-### `secretmanager` is now `ibmsecretsmanager`
+#### `secretmanager` is now `ibmsecretsmanager`
 With the addition of `awssecretsmanager` we have renamed `secretmanager` to be `ibmsecretsmanager` to follow a more consistent naming convention.
 
 ## Notes
