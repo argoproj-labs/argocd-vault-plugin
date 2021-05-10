@@ -257,6 +257,58 @@ func TestToYAML_Secret_PlaceholderedData(t *testing.T) {
 	}
 }
 
+func TestToYAML_CRD_PlaceholderedData(t *testing.T) {
+	d := Template{
+		Resource{
+			Kind: "SomeCustomResource",
+			TemplateData: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "SomeCustomResource",
+				"metadata": map[string]interface{}{
+					"namespace": "default",
+					"name":      "<name>",
+				},
+				"data": map[string]interface{}{
+					"A_SEQUENCE": []interface{}{
+						1,
+						"<two>",
+					},
+					"A_YAML": "username: <username>\npassword: <password>",
+					"A_SHELL_SCRIPT": "bx login --apikey <apikey>",
+				},
+			},
+			replaceable: true,
+			VaultData: map[string]interface{}{
+				"name":   "my-app",
+				"two": "two",
+				"username": "user",
+				"password": "pass",
+				"apikey": "123",
+			},
+		},
+	}
+
+	err := d.Replace()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-custom-resource.yaml")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expected := string(expectedData)
+	actual, err := d.ToYAML()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if !strings.Contains(actual, expected) {
+		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
+	}
+}
+
 func TestToYAML_Secret_HardcodedData(t *testing.T) {
 	d := Template{
 		Resource{
