@@ -30,7 +30,7 @@ func replaceInner(
 		if valueType == reflect.Map {
 			inner, ok := value.(map[string]interface{})
 			if !ok {
-				panic(fmt.Sprintf("Deserialized YAML node is non map[string]interface{}"))
+				continue
 			}
 			replaceInner(r, &inner, replacerFunc)
 		} else if valueType == reflect.Slice {
@@ -49,10 +49,6 @@ func replaceInner(
 							r.replacementErrors = append(r.replacementErrors, err...)
 						}
 						value.([]interface{})[idx] = replacement
-					}
-				default:
-					{
-						panic(fmt.Sprintf("Deserialized YAML list node is non map[string]interface{} nor string"))
 					}
 				}
 			}

@@ -1,3 +1,10 @@
+<a name="v0.7.1"></a>
+## [v0.7.1](https://github.com/IBM/argocd-vault-plugin/compare/v0.7.0...v0.7.1) (2021-05-10)
+
+### Fix
+
+* Remove unnecessary panics on replace ([#121](https://github.com/IBM/argocd-vault-plugin/issues/121))
+
 <a name="v0.7.0"></a>
 ## [v0.7.0](https://github.com/IBM/argocd-vault-plugin/compare/v0.6.0...v0.7.0) (2021-03-24)
 
