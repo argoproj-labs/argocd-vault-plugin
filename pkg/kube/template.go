@@ -2,6 +2,7 @@ package kube
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -65,8 +66,11 @@ func (t *Template) Replace() error {
 
 	replaceInner(&t.Resource, &t.TemplateData, replacerFunc)
 	if len(t.replacementErrors) != 0 {
-		// TODO format multiple errors nicely
-		return fmt.Errorf("Replace: could not replace all placeholders in Template: %s", t.replacementErrors)
+		errMessages := make([]string, len(t.replacementErrors))
+		for idx, err := range(t.replacementErrors) {
+			errMessages[idx] = err.Error()
+		}
+		return fmt.Errorf("Replace: could not replace all placeholders in Template:\n%s", strings.Join(errMessages, "\n"))
 	}
 	return nil
 }
