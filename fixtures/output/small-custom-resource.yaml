@@ -1,0 +1,13 @@
+apiVersion: v1
+data:
+  A_SEQUENCE:
+  - 1
+  - two
+  A_SHELL_SCRIPT: bx login --apikey 123
+  A_YAML: |-
+    username: user
+    password: pass
+kind: SomeCustomResource
+metadata:
+  name: my-app
+  namespace: default

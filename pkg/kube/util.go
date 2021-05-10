@@ -17,13 +17,12 @@ var placeholder, _ = regexp.Compile(`(?mU)<(.*)>`)
 // replaceableInner recurses through the given map and returns true if _any_ value is a `<placeholder>` string
 func replaceableInner(node *map[string]interface{}) bool {
 	obj := *node
-
 	for _, value := range obj {
 		valueType := reflect.ValueOf(value).Kind()
 		if valueType == reflect.Map {
 			inner, ok := value.(map[string]interface{})
 			if !ok {
-				panic(fmt.Sprintf("Deserialized YAML node is non map[string]interface{}"))
+				continue
 			}
 			if replaceableInner(&inner) {
 				return true
@@ -43,10 +42,6 @@ func replaceableInner(node *map[string]interface{}) bool {
 						if placeholder.Match([]byte(elm.(string))) {
 							return true
 						}
-					}
-				default:
-					{
-						panic(fmt.Sprintf("Deserialized YAML list node is non map[string]interface{} nor string"))
 					}
 				}
 			}
@@ -73,7 +68,7 @@ func replaceInner(
 		if valueType == reflect.Map {
 			inner, ok := value.(map[string]interface{})
 			if !ok {
-				panic(fmt.Sprintf("Deserialized YAML node is non map[string]interface{}"))
+				continue
 			}
 			replaceInner(r, &inner, replacerFunc)
 		} else if valueType == reflect.Slice {
@@ -92,10 +87,6 @@ func replaceInner(
 							r.replacementErrors = append(r.replacementErrors, err...)
 						}
 						value.([]interface{})[idx] = replacement
-					}
-				default:
-					{
-						panic(fmt.Sprintf("Deserialized YAML list node is non map[string]interface{} nor string"))
 					}
 				}
 			}
