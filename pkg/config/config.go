@@ -155,7 +155,7 @@ func readConfigOrSecret(secretName, configPath string, v *viper.Viper) error {
 		}
 	}
 
-	for k, v := range viper.AllSettings() {
+	for k, v := range v.AllSettings() {
 		if strings.HasPrefix(k, "vault") {
 			var value string
 			switch v.(type) {
