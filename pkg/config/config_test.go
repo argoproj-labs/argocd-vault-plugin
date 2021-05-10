@@ -185,3 +185,15 @@ func TestNewConfigMissingParameter(t *testing.T) {
 	}
 
 }
+
+func TestExternalConfig(t *testing.T) {
+	os.Setenv("AVP_TYPE", "vault")
+	viper := viper.New()
+	viper.SetDefault("VAULT_ADDR", "http://my-vault:8200/")
+	config.New(viper, &config.Options{})
+	if os.Getenv("VAULT_ADDR") != "http://my-vault:8200/" {
+		t.Errorf("expected VAULT_ADDR env to be set from external config, was instead: %s", os.Getenv("VAULT_ADDR"))
+	}
+	os.Unsetenv("AVP_TYPE")
+	os.Unsetenv("VAULT_ADDR")
+}

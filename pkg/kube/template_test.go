@@ -21,6 +21,41 @@ func (v *MockVault) GetSecrets(path string, annotations map[string]string) (map[
 	return map[string]interface{}{}, nil
 }
 
+func TestToYAML_Missing_Placeholders(t *testing.T) {
+	d := Template{
+		Resource{
+			Kind: "Secret",
+			TemplateData: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "Secret",
+				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						types.AVPPathAnnotation: "path",
+					},
+					"namespace": "default",
+					"name":      "some-resource",
+				},
+				"stringData": map[string]interface{}{
+					"MY_SECRET_STRING": "<string>",
+				},
+			},
+			Data: map[string]interface{}{
+			},
+		},
+	}
+
+	err := d.Replace()
+	if err == nil {
+		t.Fatalf(err.Error())
+	}
+	
+	expectedErr := "Replace: could not replace all placeholders in Template:\nreplaceString: missing Vault value for placeholder string in string MY_SECRET_STRING: <string>"
+
+	if expectedErr != err.Error() {
+		t.Fatalf("expected error \n%s but got error \n%s", expectedErr, err.Error())
+	}
+}
+
 func TestNewTemplate(t *testing.T) {
 	t.Run("will GetSecrets for placeholder'd YAML", func(t *testing.T) {
 		mv := MockVault{}
