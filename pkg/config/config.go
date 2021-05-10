@@ -155,14 +155,14 @@ func readConfigOrSecret(secretName, configPath string, v *viper.Viper) error {
 		}
 	}
 
-	for k, v := range v.AllSettings() {
+	for k, viperValue := range v.AllSettings() {
 		if strings.HasPrefix(k, "vault") {
 			var value string
-			switch v.(type) {
+			switch viperValue.(type) {
 			case bool:
-				value = strconv.FormatBool(v.(bool))
+				value = strconv.FormatBool(viperValue.(bool))
 			default:
-				value = v.(string)
+				value = viperValue.(string)
 			}
 			os.Setenv(strings.ToUpper(k), value)
 		}
