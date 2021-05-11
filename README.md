@@ -3,19 +3,19 @@
 
 <img src="https://github.com/IBM/argocd-vault-plugin/raw/main/assets/argo_vault_logo.png" width="300">
 
-An ArgoCD plugin to retrieve secrets from Hashicorp Vault and inject them into Kubernetes secrets
+An Argo CD plugin to retrieve secrets from Hashicorp Vault and inject them into Kubernetes secrets
 
 <details><summary>Table of Contents</summary>
 
 - [Overview](#overview)
 - [Installation](#installation)
     + [`Curl` command](#curl-command)
-    + [Installing in ArgoCD](#installing-in-argocd)
+    + [Installing in Argo CD](#installing-in-argocd)
         + [InitContainer](#initcontainer)
         + [Custom Image](#custom-image)
 - [Using the Plugin](#using-the-plugin)
     + [Command Line](#command-line)
-    + [ArgoCD](#argocd)
+    + [Argo CD](#argocd)
 - [Backends](#backends)
     + [HashiCorp Vault](#hashicorp-vault)
         + [AppRole Authentication](#approle-authentication)
@@ -32,7 +32,7 @@ An ArgoCD plugin to retrieve secrets from Hashicorp Vault and inject them into K
 ## Overview
 
 ### Why use this plugin?
-This plugin is aimed at helping to solve the issue of secret management with GitOps and ArgoCD. We wanted to find a simple way to utilize Vault without having to rely on an operator or custom resource definition. This plugin can be used not just for secrets but also for deployments, configMaps or any other Kubernetes resource.
+This plugin is aimed at helping to solve the issue of secret management with GitOps and Argo CD. We wanted to find a simple way to utilize Vault without having to rely on an operator or custom resource definition. This plugin can be used not just for secrets but also for deployments, configMaps or any other Kubernetes resource.
 
 ### How it works
 The argocd-vault-plugin works by taking a directory of yaml files that have been templated out using the pattern of `<placeholder>` where you would want a value from Vault to go. The inside of the `<>` would be the actual key in Vault.
@@ -110,13 +110,13 @@ chmod +x argocd-vault-plugin
 mv argocd-vault-plugin /usr/local/bin
 ```
 
-#### Installing in ArgoCD
+#### Installing in Argo CD
 
-In order to use the plugin in ArgoCD you can add it to your Argo CD instance as a volume mount or build your own Argo CD image.
+In order to use the plugin in Argo CD you can add it to your Argo CD instance as a volume mount or build your own Argo CD image.
 
 The Argo CD docs provide information on how to get started https://argoproj.github.io/argo-cd/operator-manual/custom_tools/.
 
-*Note*: We have provided a Kustomize app that will install ArgoCD and configure the plugin [here](https://github.com/IBM/argocd-vault-plugin/blob/main/manifests/).
+*Note*: We have provided a Kustomize app that will install Argo CD and configure the plugin [here](https://github.com/IBM/argocd-vault-plugin/blob/main/manifests/).
 
 ##### InitContainer
 The first technique is to use an init container and a volumeMount to copy a different version of a tool into the repo-server container.
@@ -217,12 +217,12 @@ The plugin can be used via the command line or any shell script. Since the plugi
 
 This will pull the values from Vault, replace the placeholders and then apply the yamls to whatever kubernetes cluster you are connected to.
 
-### ArgoCD
-Before using the plugin in ArgoCD you must follow the [steps](#installing-in-argocd) to install the plugin to your ArgoCD instance. Once the plugin is installed, you can use it 3 ways.
+### Argo CD
+Before using the plugin in Argo CD you must follow the [steps](#installing-in-argocd) to install the plugin to your Argo CD instance. Once the plugin is installed, you can use it 3 ways.
 
 1. Select your plugin via the UI by selecting `New App` and then changing `Directory` at the bottom of the form to be `argocd-vault-plugin`.
 
-2. Apply a ArgoCD Application yaml that has `argocd-vault-plugin` as the plugin.
+2. Apply a Argo CD Application yaml that has `argocd-vault-plugin` as the plugin.
 ```
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -273,8 +273,8 @@ AVP_GITHUB_TOKEN: Your Github Personal Access Token
 ##### Kubernetes Authentication
 In order to use Kubernetes Authentication a couple of things are required.
 
-1. Configuring ArgoCD
-    You can either use your own Service Account or the default ArgoCD service account. To use the default ArgoCD service account all you need to do is set `automountServiceAccountToken` to true in the `argocd-repo-server`.
+1. Configuring Argo CD
+    You can either use your own Service Account or the default Argo CD service account. To use the default Argo CD service account all you need to do is set `automountServiceAccountToken` to true in the `argocd-repo-server`.
 
     ```
     kind: Deployment
@@ -331,7 +331,7 @@ In order to use Kubernetes Authentication a couple of things are required.
     You can find the full documentation on configuring Kubernetes Authentication [Here](vaultproject.io/docs/auth/kubernetes#configuration).
 
 
-Once ArgoCD and Kubernetes are configured, you can then set the required environment variables for the plugin:
+Once Argo CD and Kubernetes are configured, you can then set the required environment variables for the plugin:
 ```
 VAULT_ADDR: Your HashiCorp Vault Address
 AVP_TYPE: vault
@@ -367,7 +367,7 @@ AVP_AWS_SECRET_ACCESS_KEY: Your AWS Secret Access Key
 There are 3 different ways that parameters can be passed along to argocd-vault-plugin.
 
 ##### Kubernetes Secret
-You can define a Secret in the `argocd` namespace of your Argo CD cluster with the Vault configuration. The keys of the secret's `data`
+You can define a Secret in the `argocd` namespace of your Argo CD cluster with the Vault configuration. The keys of the secret's `data`/`stringData`
 should be the exact names given above, case-sensitive:
 ```yaml
 apiVersion: v1
@@ -386,14 +386,14 @@ You can use it like this: `argocd-vault-plugin generate /some/path -s vault-conf
 <b>Note</b>: this requires the `argocd-repo-server` to have a service account token mounted in the standard location.
 
 ##### Configuration File
-The configuration can be given in a file reachable from the plugin, in any Viper supported format (YAML, JSON, etc.):
+The configuration can be given in a file reachable from the plugin, in any Viper supported format (YAML, JSON, etc.). The keys must match the same names used in the the Kubernetes secret:
 ```yaml
-VAULT_ADDR: Zm9v
-AVP_AUTH_TYPE: Zm9v
-AVP_GITHUB_TOKEN: Zm9v
-AVP_TYPE: Zm9v
+VAULT_ADDR: http://vault
+AVP_AUTH_TYPE: github
+AVP_GITHUB_TOKEN: t0ke3n
+AVP_TYPE: vault
 ```
-You can use it like this: `argocd-vault-plugin generate /some/path -c /path/to/config/file.yaml`. This can be useful for usecases not involving Argo CD.
+You can use it like this: `argocd-vault-plugin generate /some/path -c /path/to/config/file.yaml`. This can be useful for use-cases not involving Argo CD.
 
 ##### Environment Variables
 The configuration can be set via environment variables, where each key is prefixed by `AVP_`:
