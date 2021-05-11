@@ -1,3 +1,24 @@
+<a name="v1.0.0"></a>
+## [v1.0.0](https://github.com/IBM/argocd-vault-plugin/compare/v0.7.1...v1.0.0) (2021-05-11)
+
+### Docs
+
+* Clarify config file formats
+* Update examples in readme
+* Update readme formatting
+* Add missing prefix to supported parameters
+
+### Feat
+
+* Update annotations to use kubernetes convention ([#114](https://github.com/IBM/argocd-vault-plugin/issues/114))
+* Add support for AWS Secrets Manager ([#110](https://github.com/IBM/argocd-vault-plugin/issues/110))
+* Allow passing <path:..> as a placeholder ([#106](https://github.com/IBM/argocd-vault-plugin/issues/106))
+* Use default vault environment variables ([#94](https://github.com/IBM/argocd-vault-plugin/issues/94))
+
+### Fix
+
+* Set VAULT_ variables from Viper and display replace errors better ([#122](https://github.com/IBM/argocd-vault-plugin/issues/122))
+
 <a name="v0.7.1"></a>
 ## [v0.7.1](https://github.com/IBM/argocd-vault-plugin/compare/v0.7.0...v0.7.1) (2021-05-10)
 
