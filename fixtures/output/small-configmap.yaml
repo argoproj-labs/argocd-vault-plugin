@@ -4,5 +4,7 @@ data:
   MY_NONSECRET_STRING: foo
 kind: ConfigMap
 metadata:
+  annotations:
+    avp.kubernetes.io/path: path
   name: my-app
   namespace: default

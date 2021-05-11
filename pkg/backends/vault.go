@@ -36,7 +36,7 @@ func (v *Vault) Login() error {
 }
 
 // GetSecrets gets secrets from vault and returns the formatted data
-func (v *Vault) GetSecrets(path, kvVersion string) (map[string]interface{}, error) {
+func (v *Vault) GetSecrets(path string, annotations map[string]string) (map[string]interface{}, error) {
 	secret, err := v.VaultClient.Logical().Read(path)
 	if err != nil {
 		return nil, err
@@ -46,11 +46,12 @@ func (v *Vault) GetSecrets(path, kvVersion string) (map[string]interface{}, erro
 		return nil, fmt.Errorf("Could not find secrets at path %s", path)
 	}
 
-	if kvVersion != "" {
-		v.KvVersion = kvVersion
+	var kvVersion = v.KvVersion
+	if kv, ok := annotations[types.VaultKVVersionAnnotation]; ok {
+		kvVersion = kv
 	}
 
-	if v.KvVersion == "2" {
+	if kvVersion == "2" {
 		if _, ok := secret.Data["data"]; ok {
 			return secret.Data["data"].(map[string]interface{}), nil
 		}
@@ -60,7 +61,7 @@ func (v *Vault) GetSecrets(path, kvVersion string) (map[string]interface{}, erro
 		return nil, errors.New("Could not get data from Vault, check that kv-v2 is the correct engine")
 	}
 
-	if v.KvVersion == "1" {
+	if kvVersion == "1" {
 		return secret.Data, nil
 	}
 

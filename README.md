@@ -3,19 +3,19 @@
 
 <img src="https://github.com/IBM/argocd-vault-plugin/raw/main/assets/argo_vault_logo.png" width="300">
 
-An ArgoCD plugin to retrieve secrets from Hashicorp Vault and inject them into Kubernetes secrets
+An Argo CD plugin to retrieve secrets from Hashicorp Vault and inject them into Kubernetes secrets
 
 <details><summary>Table of Contents</summary>
 
 - [Overview](#overview)
 - [Installation](#installation)
     + [`Curl` command](#curl-command)
-    + [Installing in ArgoCD](#installing-in-argocd)
+    + [Installing in Argo CD](#installing-in-argocd)
         + [InitContainer](#initcontainer)
         + [Custom Image](#custom-image)
 - [Using the Plugin](#using-the-plugin)
     + [Command Line](#command-line)
-    + [ArgoCD](#argocd)
+    + [Argo CD](#argocd)
 - [Backends](#backends)
     + [HashiCorp Vault](#hashicorp-vault)
         + [AppRole Authentication](#approle-authentication)
@@ -32,12 +32,12 @@ An ArgoCD plugin to retrieve secrets from Hashicorp Vault and inject them into K
 ## Overview
 
 ### Why use this plugin?
-This plugin is aimed at helping to solve the issue of secret management with GitOps and ArgoCD. We wanted to find a simple way to utilize Vault without having to rely on an operator or custom resource definition. This plugin can be used not just for secrets but also for deployments, configMaps or any other Kubernetes resource.
+This plugin is aimed at helping to solve the issue of secret management with GitOps and Argo CD. We wanted to find a simple way to utilize Vault without having to rely on an operator or custom resource definition. This plugin can be used not just for secrets but also for deployments, configMaps or any other Kubernetes resource.
 
 ### How it works
 The argocd-vault-plugin works by taking a directory of yaml files that have been templated out using the pattern of `<placeholder>` where you would want a value from Vault to go. The inside of the `<>` would be the actual key in Vault.
 
-An annotation or path prefix can be used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp_path: "path/to/secret"`. The path prefix is defined as an Environment Variable `PATH_PREFIX` and when set will concatenate the prefix with the resource type to create a path that is something like `PATH_PREFIX/configmap`. (See [Configuration](#configuration))
+An annotation can be used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp.kubernetes.io/path: "path/to/secret"`.
 
 For example, if you have a secret with the key `password-vault-key` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/secret/password-vault-key` and inject it into the secret yaml.
 
@@ -47,7 +47,7 @@ apiVersion: v1
 metadata:
   name: example-secret
   annotations:
-    avp_path: "path/to/secret"
+    avp.kubernetes.io/path: "path/to/secret"
 type: Opaque
 data:
   password: <password-vault-key>
@@ -60,15 +60,41 @@ apiVersion: v1
 metadata:
   name: example-secret
   annotations:
-    avp_path: "path/to/secret"
+    avp.kubernetes.io/path: "path/to/secret"
 type: Opaque
 data:
   password: cGFzc3dvcmQK # The Value from the key password-vault-key in vault
 ```
 
-<b>*Note*</b>: The plugin does not perform any transformation of the secrets in transit. So if you have plain text secrets in Vault, you will need to use the `stringData` field and if you have a base64 encoded secret in Vault, you will need to use the `data` field according to the [Kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret/).
+The plugin also supports putting the path directly within the placeholder. The format must be `<path:path/to/secret#key>`, where `path/to/secret` is the vault path and the Vault key goes after the `#` symbol. Doing this does not require an `avp.kubernetes.io/path` annotation and will override any `avp.kubernetes.io/path` annotation that is set. For example:
 
-<b>*Note*</b>: The plugin will attempt to read any strings that match the following PCRE regex: `<.*>` (any characters between matching angle brackets), in all YAML files at the path given as the `<path>` argument. If there are YAML files that use `<string>`'s for other purposes and should _not_ be replaced, you can tell AVP to skip that file by adding the annotation `avp_ignore: "true"`.
+```
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+type: Opaque
+data:
+  password: <path:path/to/secret#password-vault-key>
+```
+
+<b>*Note*</b>: The plugin will attempt to read any strings that match the following PCRE regex: `<.*>` (any characters between matching angle brackets), in all YAML files at the path given as the `<path>` argument. If there are YAML files that use `<string>`'s for other purposes and should _not_ be replaced, you can tell AVP to skip that file by adding the annotation `avp.kubernetes.io/ignore: "true"`.
+
+##### Modifiers
+By Default the plugin does not perform any transformation of the secrets in transit. So if you have plain text secrets in Vault, you will need to use the `stringData` field and if you have a base64 encoded secret in Vault, you will need to use the `data` field according to the [Kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret/).
+
+However, as of now, we support one modifier. And that is `base64encode`. So if you have a plain text value in Vault and would like to Base64 encode it on the fly to inject into a Kubernetes secret you can do:
+
+```
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+type: Opaque
+data:
+  password: <path:path/to/secret#password-vault-key | base64encode>
+```
+And the plugin will pull the value from Vault, Base64 encode the value and then inject it into the placeholder.
 
 ## Installation
 There are multiple ways to download and install argocd-vault-plugin depending on your use case.
@@ -84,13 +110,13 @@ chmod +x argocd-vault-plugin
 mv argocd-vault-plugin /usr/local/bin
 ```
 
-#### Installing in ArgoCD
+#### Installing in Argo CD
 
-In order to use the plugin in ArgoCD you can add it to your Argo CD instance as a volume mount or build your own Argo CD image.
+In order to use the plugin in Argo CD you can add it to your Argo CD instance as a volume mount or build your own Argo CD image.
 
 The Argo CD docs provide information on how to get started https://argoproj.github.io/argo-cd/operator-manual/custom_tools/.
 
-*Note*: We have provided a Kustomize app that will install ArgoCD and configure the plugin [here](https://github.com/IBM/argocd-vault-plugin/blob/main/manifests/).
+*Note*: We have provided a Kustomize app that will install Argo CD and configure the plugin [here](https://github.com/IBM/argocd-vault-plugin/blob/main/manifests/).
 
 ##### InitContainer
 The first technique is to use an init container and a volumeMount to copy a different version of a tool into the repo-server container.
@@ -113,7 +139,7 @@ initContainers:
   command: [sh, -c]
   args:
     - wget -O argocd-vault-plugin
-      https://github.com/IBM/argocd-vault-plugin/releases/download/v0.7.0/argocd-vault-plugin_0.7.0_linux_amd64
+      https://github.com/IBM/argocd-vault-plugin/releases/download/v1.0.0/argocd-vault-plugin_1.0.0_linux_amd64
 
       chmod +x argocd-vault-plugin && mv argocd-vault-plugin /custom-tools/
   volumeMounts:
@@ -140,7 +166,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install the AVP plugin (as root so we can copy to /usr/local/bin)
-RUN curl -L -o argocd-vault-plugin https://github.com/IBM/argocd-vault-plugin/releases/download/v0.7.0/argocd-vault-plugin_0.7.0_linux_amd64
+RUN curl -L -o argocd-vault-plugin https://github.com/IBM/argocd-vault-plugin/releases/download/v1.0.0/argocd-vault-plugin_1.0.0_linux_amd64
 RUN chmod +x argocd-vault-plugin
 RUN mv argocd-vault-plugin /usr/local/bin
 
@@ -163,6 +189,9 @@ If you want to use Helm along with argocd-vault-plugin add:
 ```
 configManagementPlugins: |
   - name: argocd-vault-plugin-helm
+    init:
+      command: [sh, -c]
+      args: ["helm dependency build"]
     generate:
       command: ["sh", "-c"]
       args: ["helm template . > all.yaml && argocd-vault-plugin generate all.yaml"]
@@ -171,7 +200,7 @@ configManagementPlugins: |
 Or if you are using Kustomize:
 ```
 configManagementPlugins: |
-  - name: argocd-vault-plugin-helm
+  - name: argocd-vault-plugin-kustomize
     generate:
       command: ["sh", "-c"]
       args: ["kustomize build . > all.yaml && argocd-vault-plugin generate all.yaml"]
@@ -188,12 +217,12 @@ The plugin can be used via the command line or any shell script. Since the plugi
 
 This will pull the values from Vault, replace the placeholders and then apply the yamls to whatever kubernetes cluster you are connected to.
 
-### ArgoCD
-Before using the plugin in ArgoCD you must follow the [steps](#installing-in-argocd) to install the plugin to your ArgoCD instance. Once the plugin is installed, you can use it 3 ways.
+### Argo CD
+Before using the plugin in Argo CD you must follow the [steps](#installing-in-argocd) to install the plugin to your Argo CD instance. Once the plugin is installed, you can use it 3 ways.
 
 1. Select your plugin via the UI by selecting `New App` and then changing `Directory` at the bottom of the form to be `argocd-vault-plugin`.
 
-2. Apply a ArgoCD Application yaml that has `argocd-vault-plugin` as the plugin.
+2. Apply a Argo CD Application yaml that has `argocd-vault-plugin` as the plugin.
 ```
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -226,26 +255,26 @@ We support AppRole and Github Auth Method for getting secrets from Vault.
 For AppRole Authentication, these are the required parameters:
 ```
 VAULT_ADDR: Your HashiCorp Vault Address
-TYPE: vault
-AUTH_TYPE: approle
-ROLE_ID: Your AppRole Role ID
-SECRET_ID: Your AppRole Secret ID
+AVP_TYPE: vault
+AVP_AUTH_TYPE: approle
+AVP_ROLE_ID: Your AppRole Role ID
+AVP_SECRET_ID: Your AppRole Secret ID
 ```
 
 ##### Github Authentication
 For Github Authentication, these are the required parameters:
 ```
 VAULT_ADDR: Your HashiCorp Vault Address
-TYPE: vault
-AUTH_TYPE: github
-GITHUB_TOKEN: Your Github Personal Access Token
+AVP_TYPE: vault
+AVP_AUTH_TYPE: github
+AVP_GITHUB_TOKEN: Your Github Personal Access Token
 ```
 
 ##### Kubernetes Authentication
 In order to use Kubernetes Authentication a couple of things are required.
 
-1. Configuring ArgoCD
-    You can either use your own Service Account or the default ArgoCD service account. To use the default ArgoCD service account all you need to do is set `automountServiceAccountToken` to true in the `argocd-repo-server`.
+1. Configuring Argo CD
+    You can either use your own Service Account or the default Argo CD service account. To use the default Argo CD service account all you need to do is set `automountServiceAccountToken` to true in the `argocd-repo-server`.
 
     ```
     kind: Deployment
@@ -302,41 +331,51 @@ In order to use Kubernetes Authentication a couple of things are required.
     You can find the full documentation on configuring Kubernetes Authentication [Here](vaultproject.io/docs/auth/kubernetes#configuration).
 
 
-Once ArgoCD and Kubernetes are configured, you can then set the required environment variables for the plugin:
+Once Argo CD and Kubernetes are configured, you can then set the required environment variables for the plugin:
 ```
 VAULT_ADDR: Your HashiCorp Vault Address
-TYPE: vault
-AUTH_TYPE: k8s
-K8S_MOUNT_PATH: Mount Path of your kubernetes Auth (optional)
-K8S_ROLE: Your Kuberetes Auth Role
-K8S_TOKEN_PATH: Path to JWT (optional)
+AVP_TYPE: vault
+AVP_AUTH_TYPE: k8s
+AVP_K8S_MOUNT_PATH: Mount Path of your kubernetes Auth (optional)
+AVP_K8S_ROLE: Your Kuberetes Auth Role
+AVP_K8S_TOKEN_PATH: Path to JWT (optional)
 ```
 
-### IBM Cloud Secret Manager
+### IBM Cloud Secrets Manager
 For IBM Cloud Secret Manager we only support using IAM authentication at this time.
 
 ##### IAM Authentication
 For IAM Authentication, these are the required parameters:
 ```
 VAULT_ADDR: Your IBM Cloud Secret Manager Endpoint
-TYPE: secretmanager
-AUTH_TYPE: iam
-IBM_API_KEY: Your IBM Cloud API Key
+AVP_TYPE: ibmsecretsmanager
+AVP_AUTH_TYPE: iam
+AVP_IBM_API_KEY: Your IBM Cloud API Key
+```
+
+### AWS Secrets Manager
+
+##### AWS Authentication
+These are the required parameters parameters for AWS:
+```
+AVP_TYPE: awssecretmanager
+AVP_AWS_ACCESS_KEY_ID: Your AWS Access Key ID
+AVP_AWS_SECRET_ACCESS_KEY: Your AWS Secret Access Key
 ```
 
 ## Configuration
 There are 3 different ways that parameters can be passed along to argocd-vault-plugin.
 
 ##### Kubernetes Secret
-You can define a Secret in the `argocd` namespace of your Argo CD cluster with the Vault configuration. The keys of the secret's `data`
+You can define a Secret in the `argocd` namespace of your Argo CD cluster with the Vault configuration. The keys of the secret's `data`/`stringData`
 should be the exact names given above, case-sensitive:
 ```yaml
 apiVersion: v1
 data:
   VAULT_ADDR: Zm9v
-  AUTH_TYPE: Zm9v
-  GITHUB_TOKEN: Zm9v
-  TYPE: Zm9v
+  AVP_AUTH_TYPE: Zm9v
+  AVP_GITHUB_TOKEN: Zm9v
+  AVP_TYPE: Zm9v
 kind: Secret
 metadata:
   name: vault-configuration
@@ -347,14 +386,14 @@ You can use it like this: `argocd-vault-plugin generate /some/path -s vault-conf
 <b>Note</b>: this requires the `argocd-repo-server` to have a service account token mounted in the standard location.
 
 ##### Configuration File
-The configuration can be given in a file reachable from the plugin, in any Viper supported format (YAML, JSON, etc.):
+The configuration can be given in a file reachable from the plugin, in any Viper supported format (YAML, JSON, etc.). The keys must match the same names used in the the Kubernetes secret:
 ```yaml
-VAULT_ADDR: Zm9v
-AUTH_TYPE: Zm9v
-GITHUB_TOKEN: Zm9v
-TYPE: Zm9v
+VAULT_ADDR: http://vault
+AVP_AUTH_TYPE: github
+AVP_GITHUB_TOKEN: t0ke3n
+AVP_TYPE: vault
 ```
-You can use it like this: `argocd-vault-plugin generate /some/path -c /path/to/config/file.yaml`. This can be useful for usecases not involving Argo CD.
+You can use it like this: `argocd-vault-plugin generate /some/path -c /path/to/config/file.yaml`. This can be useful for use-cases not involving Argo CD.
 
 ##### Environment Variables
 The configuration can be set via environment variables, where each key is prefixed by `AVP_`:
@@ -365,34 +404,51 @@ Make sure that these environment variables are available to the plugin when runn
 environment variables take precedence over configuration pulled from a Kubernetes Secret or a file.
 
 ### Full List of Supported Parameters
+We support all Vault Environment Variables listed [here](https://www.vaultproject.io/docs/commands#environment-variables) as well as:
 
 | Name            | Description | Notes |
 | --------------- | ----------- | ----- |
-| VAULT_ADDR     | Address of your Vault      | N/A                  |
-| VAULT_NAMESPACE | Your Vault Namespace      | Optional                 |
-| VAULT_CACERT | CACert is the path to a PEM-encoded CA cert file to use to verify the Vault server SSL certificate      | In order to use, you must create a secret with the certificate you want to load, and then mount that secret on the argocd-repo-server deployment. Then you can set this path to the mount point of the secret.                |
-| VAULT_CAPATH | CAPath is the path to a directory of PEM-encoded CA cert files to verify the Vault server SSL certificate.      | In order to use, you must create a secret with the certificate(s) you want to load, and then mount that secret on the argocd-repo-server deployment. Then you can set this path to the mount point of the secret.                 |
-| VAULT_SKIP_VERIFY | Enables or disables SSL verification      | Optional                 |
-| PATH_PREFIX    | Prefix of the vault path to look for the secrets (Will be deprecated in v1.0.0)| A `/` delimited path to a secret in Vault. This value is concatenated with the `kind` of the given resource; e.g, replacing a Secret with `PATH_PREFIX` `my-team/my-app` will use the path `my-team/my-app/secret`. PATH_PREFIX will be ignored if the `avp_path` annotation is present in a YAML resource. |
-| TYPE           | The type of Vault backend  | Supported values: `vault` and `secretmanager` |
-| KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `kv_version` annotation is present in a YAML resource.|
-| AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |
-| GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
-| ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
-| SECRET_ID      | Vault AppRole Secret_ID    | Required with `AUTH_TYPE` of `approle` |
-| K8S_MOUNT_PATH | Kuberentes Auth Mount PATH | Optional for `AUTH_TYPE` of `k8s` defaults to `auth/kubernetes` |
-| K8S_ROLE       | Kuberentes Auth Role      | Required with `AUTH_TYPE` of `k8s` |
-| K8S_TOKEN_PATH | Path to JWT for Kubernetes Auth  | Optional for `AUTH_TYPE` of `k8s` defaults to `/var/run/secrets/kubernetes.io/serviceaccount/token` |
-| IBM_API_KEY    | IBM Cloud IAM API Key      | Required with `TYPE` of `secretmanager` and `AUTH_TYPE` of `iam` |
+| AVP_TYPE           | The type of Vault backend  | Supported values: `vault`, `ibmsecretsmanager` and `awssecretsmanager` |
+| AVP_KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `avp.kubernetes.io/kv-version` annotation is present in a YAML resource.|
+| AVP_AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |
+| AVP_GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
+| AVP_ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
+| AVP_SECRET_ID      | Vault AppRole Secret_ID    | Required with `AUTH_TYPE` of `approle` |
+| AVP_K8S_MOUNT_PATH | Kuberentes Auth Mount PATH | Optional for `AUTH_TYPE` of `k8s` defaults to `auth/kubernetes` |
+| AVP_K8S_ROLE       | Kuberentes Auth Role      | Required with `AUTH_TYPE` of `k8s` |
+| AVP_K8S_TOKEN_PATH | Path to JWT for Kubernetes Auth  | Optional for `AUTH_TYPE` of `k8s` defaults to `/var/run/secrets/kubernetes.io/serviceaccount/token` |
+| AVP_IBM_API_KEY    | IBM Cloud IAM API Key      | Required with `TYPE` of `ibmsecretsmanager` and `AUTH_TYPE` of `iam` |
+| AVP_AWS_ACCESS_KEY_ID    | AWS Access Key ID      | Required with `TYPE` of `awssecretsmanager` |
+| AVP_AWS_SECRET_ACCESS_KEY | AWS Secret Access Key      | Required with `TYPE` of `awssecretsmanager` |
+| AVP_AWS_REGION    | AWS Secrets Manager Region      | Only valid with `TYPE` `awssecretsmanager` |
 
 ### Full List of Supported Annotation
 We support two different annotations that can be used inside a kubernetes resource. These annotations will override any corresponding configuration set via Environment Variable or Configuration File.
 
 | Annotation | Description |  
 | ---------- | ----------- |  
-| avp_path | Path to the Vault Secret |
-| avp_ignore | Boolean to tell the plugin whether or not to process the file. Invalid values translate to `false` |
-| kv_version | Version of the KV Secret Engine |
+| avp.kubernetes.io/path | Path to the Vault Secret |
+| avp.kubernetes.io/ignore | Boolean to tell the plugin whether or not to process the file. Invalid values translate to `false` |
+| avp.kubernetes.io/kv-version | Version of the KV Secret Engine |
+
+## 0.x to 1.x Migration Guide
+#### Annotation Changes
+In order to follow Kubernetes annotations, we have updated the supported annotations
+
+| Old        | New |  
+| ---------- | ----------- |  
+| avp_path   | avp.kubernetes.io/path  |
+| avp_ignore | avp.kubernetes.io/ignore |
+| kv_version | avp.kubernetes.io/kv-version |
+
+#### AVP Prefix
+The `AVP` prefix is now required for all configurations options not including `VAULT` environment variables (https://www.vaultproject.io/docs/commands#environment-variables).
+
+#### PATH_PREFIX
+The `PATH_PREFIX` environment variable has now been removed and is no longer available.
+
+#### `secretmanager` is now `ibmsecretsmanager`
+With the addition of `awssecretsmanager` we have renamed `secretmanager` to be `ibmsecretsmanager` to follow a more consistent naming convention.
 
 ## Notes
 - The plugin tries to cache the Vault token obtained from logging into Vault on the `argocd-repo-server`'s container's disk, at `~/.avp/config.json` for the duration of the token's lifetime. This of course requires that the container user is able to write to that path. Some environments, like Openshift 4, will force a random user for containers to run with; therefore this feature will not work, and the plugin will attempt to login to Vault on every run. This can be fixed by ensuring the `argocd-repo-server`'s container runs with the user `argocd`.

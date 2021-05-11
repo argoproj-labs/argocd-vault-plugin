@@ -1,6 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  annotations:
+    avp.kubernetes.io/path: path
   name: my-app
   namespace: default
 spec:

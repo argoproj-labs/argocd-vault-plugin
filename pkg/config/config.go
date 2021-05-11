@@ -1,126 +1,172 @@
 package config
 
 import (
+	"bytes"
 	"errors"
-	"net/http"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/auth/ibmsecretmanager"
+	"github.com/IBM/argocd-vault-plugin/pkg/auth/ibmsecretsmanager"
 	"github.com/IBM/argocd-vault-plugin/pkg/auth/vault"
 	"github.com/IBM/argocd-vault-plugin/pkg/backends"
+	"github.com/IBM/argocd-vault-plugin/pkg/kube"
 	"github.com/IBM/argocd-vault-plugin/pkg/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/hashicorp/vault/api"
 	"github.com/spf13/viper"
 )
 
+// Options options that can be passed to a Config struct
+type Options struct {
+	SecretName string
+	ConfigPath string
+}
+
 // Config is used to decide the backend and auth type
 type Config struct {
-	Address    string
-	PathPrefix string
-	types.Backend
-	VaultClient *api.Client
+	Backend types.Backend
 }
 
 // New returns a new Config struct
-func New(viper *viper.Viper, httpClient *http.Client) (*Config, error) {
+func New(v *viper.Viper, co *Options) (*Config, error) {
 
 	// Set Defaults
-	viper.SetDefault("VAULT_ADDR", "http://127.0.0.1:8200")
-	viper.SetDefault("KV_VERSION", "2")
+	v.SetDefault(types.EnvAvpKvVersion, "2")
+	v.SetDefault("AVP_AWS_REGION", "us-east-2")
 
-	// Instantiate Env
-	viper.SetEnvPrefix("AVP")
-	viper.AutomaticEnv()
-
-	config := &Config{
-		Address:    viper.GetString("VAULT_ADDR"),
-		PathPrefix: viper.GetString("PATH_PREFIX"),
-	}
-
-	apiConfig := &api.Config{
-		Address:    viper.GetString("VAULT_ADDR"),
-		HttpClient: httpClient,
-	}
-
-	tlsConfig := &api.TLSConfig{}
-
-	if viper.IsSet("VAULT_CAPATH") {
-		tlsConfig.CAPath = viper.GetString("VAULT_CAPATH")
-	}
-
-	if viper.IsSet("VAULT_CACERT") {
-		tlsConfig.CACert = viper.GetString("VAULT_CACERT")
-	}
-
-	if viper.IsSet("VAULT_SKIP_VERIFY") {
-		tlsConfig.Insecure = viper.GetBool("VAULT_SKIP_VERIFY")
-	}
-
-	if err := apiConfig.ConfigureTLS(tlsConfig); err != nil {
-		return nil, err
-	}
-
-	apiClient, err := api.NewClient(apiConfig)
+	// Read in config file or kubernetes secret and set as env vars
+	err := readConfigOrSecret(co.SecretName, co.ConfigPath, v)
 	if err != nil {
 		return nil, err
 	}
 
-	if viper.IsSet("VAULT_NAMESPACE") {
-		apiClient.SetNamespace(viper.GetString("VAULT_NAMESPACE"))
-	}
+	// Instantiate Env
+	v.AutomaticEnv()
 
-	if viper.IsSet("PATH_PREFIX") {
-		print("PATH_PREFIX will be deprecated in v1.0.0, please migrate to using the avp_path annotation.")
-	}
-
-	config.VaultClient = apiClient
-
-	authType := viper.GetString("AUTH_TYPE")
+	authType := v.GetString(types.EnvAvpAuthType)
 
 	var auth types.AuthType
-	switch viper.GetString("TYPE") {
-	case "vault":
-		switch authType {
-		case "approle":
-			if viper.IsSet("ROLE_ID") && viper.IsSet("SECRET_ID") {
-				auth = vault.NewAppRoleAuth(viper.GetString("ROLE_ID"), viper.GetString("SECRET_ID"))
-			} else {
-				return nil, errors.New("ROLE_ID and SECRET_ID for approle authentication cannot be empty")
+	var backend types.Backend
+
+	switch v.GetString(types.EnvAvpType) {
+	case types.VaultBackend:
+		{
+			apiClient, err := api.NewClient(api.DefaultConfig())
+			if err != nil {
+				return nil, err
 			}
-		case "github":
-			if viper.IsSet("GITHUB_TOKEN") {
-				auth = vault.NewGithubAuth(viper.GetString("GITHUB_TOKEN"))
-			} else {
-				return nil, errors.New("GITHUB_TOKEN for github authentication cannot be empty")
+
+			switch authType {
+			case types.ApproleAuth:
+				if v.IsSet(types.EnvAvpRoleID) && v.IsSet(types.EnvAvpSecretID) {
+					auth = vault.NewAppRoleAuth(v.GetString(types.EnvAvpRoleID), v.GetString(types.EnvAvpSecretID))
+				} else {
+					return nil, fmt.Errorf("%s and %s for approle authentication cannot be empty", types.EnvAvpRoleID, types.EnvAvpSecretID)
+				}
+			case types.GithubAuth:
+				if v.IsSet(types.EnvAvpGithubToken) {
+					auth = vault.NewGithubAuth(v.GetString(types.EnvAvpGithubToken))
+				} else {
+					return nil, fmt.Errorf("%s for github authentication cannot be empty", types.EnvAvpGithubToken)
+				}
+			case types.K8sAuth:
+				if v.IsSet(types.EnvAvpK8sRole) {
+					auth = vault.NewK8sAuth(
+						v.GetString(types.EnvAvpK8sRole),
+						v.GetString(types.EnvAvpK8sMountPath),
+						v.GetString(types.EnvAvpK8sTokenPath),
+					)
+				} else {
+					return nil, fmt.Errorf("%s cannot be empty when using Kubernetes Auth", types.EnvAvpK8sRole)
+				}
+			default:
+				return nil, errors.New("Must provide a supported Authentication Type")
 			}
-		case "k8s":
-			if viper.IsSet("K8S_ROLE") {
-				auth = vault.NewK8sAuth(
-					viper.GetString("K8S_ROLE"),
-					viper.GetString("K8S_MOUNT_PATH"),
-					viper.GetString("K8S_TOKEN_PATH"),
+			backend = backends.NewVaultBackend(auth, apiClient, v.GetString(types.EnvAvpKvVersion))
+		}
+	case types.IBMSecretsManagerbackend:
+		{
+			apiClient, err := api.NewClient(api.DefaultConfig())
+			if err != nil {
+				return nil, err
+			}
+
+			switch authType {
+			case types.IAMAuth:
+				if v.IsSet(types.EnvAvpIBMAPIKey) {
+					auth = ibmsecretsmanager.NewIAMAuth(v.GetString(types.EnvAvpIBMAPIKey))
+				} else {
+					return nil, fmt.Errorf("%s for iam authentication cannot be empty", types.EnvAvpIBMAPIKey)
+				}
+			default:
+				return nil, errors.New("Must provide a supported Authentication Type")
+			}
+			backend = backends.NewIBMSecretsManagerBackend(auth, apiClient)
+		}
+	case types.AWSSecretsManagerbackend:
+		{
+			if !v.IsSet(types.EnvAWSAccessKey) || !v.IsSet(types.EnvAWSSecretAccessKey) {
+				return nil, fmt.Errorf("Must provide %s and %s for backend type %s",
+					types.EnvAWSAccessKey,
+					types.EnvAWSSecretAccessKey,
+					types.AWSSecretsManagerbackend,
 				)
-			} else {
-				return nil, errors.New("K8S_ROLE cannot be empty when using Kubernetes Auth")
 			}
-		default:
-			return nil, errors.New("Must provide a supported Authentication Type")
+			s := session.Must(session.NewSession(&aws.Config{
+				Region: aws.String(v.GetString(types.EnvAWSRegion)),
+			}))
+			client := secretsmanager.New(s)
+			backend = backends.NewAWSSecretsManagerBackend(client)
 		}
-		config.Backend = backends.NewVaultBackend(auth, apiClient, viper.GetString("KV_VERSION"))
-	case "secretmanager":
-		switch authType {
-		case "iam":
-			if viper.IsSet("IBM_API_KEY") {
-				auth = ibmsecretmanager.NewIAMAuth(viper.GetString("IBM_API_KEY"))
-			} else {
-				return nil, errors.New("IBM_API_KEY for iam authentication cannot be empty")
-			}
-		default:
-			return nil, errors.New("Must provide a supported Authentication Type")
-		}
-		config.Backend = backends.NewIBMSecretManagerBackend(auth, apiClient)
 	default:
 		return nil, errors.New("Must provide a supported Vault Type")
 	}
 
-	return config, nil
+	return &Config{
+		Backend: backend,
+	}, nil
+}
+
+func readConfigOrSecret(secretName, configPath string, v *viper.Viper) error {
+	// If a secret name is passed, pull config from Kubernetes
+	if secretName != "" {
+		localClient, err := kube.NewClient()
+		if err != nil {
+			return err
+		}
+		yaml, err := localClient.ReadSecret(secretName)
+		if err != nil {
+			return err
+		}
+		v.SetConfigType("yaml")
+		v.ReadConfig(bytes.NewBuffer(yaml))
+	}
+
+	// If a config file path is passed, read in that file and overwrite all other
+	if configPath != "" {
+		v.SetConfigFile(configPath)
+		err := v.ReadInConfig()
+		if err != nil {
+			return err
+		}
+	}
+
+	for k, viperValue := range v.AllSettings() {
+		if strings.HasPrefix(k, "vault") {
+			var value string
+			switch viperValue.(type) {
+			case bool:
+				value = strconv.FormatBool(viperValue.(bool))
+			default:
+				value = viperValue.(string)
+			}
+			os.Setenv(strings.ToUpper(k), value)
+		}
+	}
+
+	return nil
 }

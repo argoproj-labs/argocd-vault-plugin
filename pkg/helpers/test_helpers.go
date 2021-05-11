@@ -168,12 +168,14 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 	}
 
 	_, err = client.Logical().Write("kv/data/testing", map[string]interface{}{
-		"name":        "test-kv-name",
-		"namespace":   "test-kv-namespace",
-		"version":     "1.2",
-		"replicas":    "3",
-		"tag":         "1.1",
-		"target-port": 80,
+		"data": map[string]interface{}{
+			"name":        "test-kv-name",
+			"namespace":   "test-kv-namespace",
+			"version":     "1.2",
+			"replicas":    "3",
+			"tag":         "1.1",
+			"target-port": 80,
+		},
 	})
 	if err != nil {
 		t.Fatal(err)

@@ -19,11 +19,11 @@ var client *api.Client
 func TestMain(t *testing.T) {
 	cluster, roleid, secretid = helpers.CreateTestAppRoleVault(t)
 	os.Setenv("AVP_TYPE", "vault")
-	os.Setenv("AVP_VAULT_ADDR", cluster.Cores[0].Client.Address())
+	os.Setenv("VAULT_ADDR", cluster.Cores[0].Client.Address())
 	os.Setenv("AVP_AUTH_TYPE", "approle")
 	os.Setenv("AVP_SECRET_ID", secretid)
 	os.Setenv("AVP_ROLE_ID", roleid)
-	os.Setenv("AVP_VAULT_SKIP_VERIFY", "true")
+	os.Setenv("VAULT_SKIP_VERIFY", "true")
 
 	t.Run("will throw an error expecting arguments", func(t *testing.T) {
 		args := []string{}
@@ -87,7 +87,7 @@ func TestMain(t *testing.T) {
 		}
 	})
 
-	t.Run("will ignore templates with avp_ignore set to True", func(t *testing.T) {
+	t.Run("will ignore templates with avp.kubernetes.io/ignore set to True", func(t *testing.T) {
 		args := []string{"../fixtures/input/nonempty/ignored-secret.yaml"}
 		cmd := NewGenerateCommand()
 
@@ -112,9 +112,9 @@ func TestMain(t *testing.T) {
 	})
 
 	os.Unsetenv("AVP_TYPE")
-	os.Unsetenv("AVP_VAULT_ADDR")
+	os.Unsetenv("VAULT_ADDR")
 	os.Unsetenv("AVP_AUTH_TYPE")
 	os.Unsetenv("AVP_SECRET_ID")
 	os.Unsetenv("AVP_ROLE_ID")
-	os.Unsetenv("AVP_VAULT_SKIP_VERIFY")
+	os.Unsetenv("VAULT_SKIP_VERIFY")
 }

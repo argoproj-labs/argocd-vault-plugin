@@ -9,11 +9,11 @@ import (
 	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
 )
 
-func TestSecretManagerGetSecrets(t *testing.T) {
+func TestSecretsManagerGetSecrets(t *testing.T) {
 	ln, client, _ := helpers.CreateTestVault(t)
 	defer ln.Close()
 
-	sm := backends.IBMSecretManager{
+	sm := backends.IBMSecretsManager{
 		IBMCloudAPIKey: "token",
 		VaultClient:    client,
 	}
@@ -23,7 +23,7 @@ func TestSecretManagerGetSecrets(t *testing.T) {
 		"secret2": "value2",
 	}
 
-	data, err := sm.GetSecrets("secret/ibm/arbitrary/groups/1", "")
+	data, err := sm.GetSecrets("secret/ibm/arbitrary/groups/1", map[string]string{})
 	if err != nil {
 		t.Fatalf("expected 0 errors but got: %s", err)
 	}
@@ -33,16 +33,16 @@ func TestSecretManagerGetSecrets(t *testing.T) {
 	}
 }
 
-func TestSecretManagerGetSecretsFail(t *testing.T) {
+func TestSecretsmanagerGetSecretsFail(t *testing.T) {
 	ln, client, _ := helpers.CreateTestVault(t)
 	defer ln.Close()
 
-	sm := backends.IBMSecretManager{
+	sm := backends.IBMSecretsManager{
 		IBMCloudAPIKey: "token",
 		VaultClient:    client,
 	}
 
-	_, err := sm.GetSecrets("secret/ibm/arbitrary/groups/3", "")
+	_, err := sm.GetSecrets("secret/ibm/arbitrary/groups/3", map[string]string{})
 
 	expected := fmt.Sprintf("Could not find secrets at path %s", "secret/ibm/arbitrary/groups/3")
 

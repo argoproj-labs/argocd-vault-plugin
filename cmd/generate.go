@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/config"
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
-	"github.com/IBM/argocd-vault-plugin/pkg/utils"
+	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -35,46 +36,42 @@ func NewGenerateCommand() *cobra.Command {
 
 			manifests, errs := readFilesAsManifests(files)
 			if len(errs) != 0 {
-
 				// TODO: handle multiple errors nicely
 				return fmt.Errorf("could not read YAML files: %s", errs)
 			}
 
-			viper := viper.New()
-			err = setConfig(secretName, configPath, viper)
+			v := viper.New()
+			config, err := config.New(v, &config.Options{
+				SecretName: secretName,
+				ConfigPath: configPath,
+			})
 			if err != nil {
 				return err
 			}
 
-			config, err := config.New(viper, utils.DefaultHttpClient())
+			err = config.Backend.Login()
 			if err != nil {
 				return err
-			}
-
-			backend := config.Backend
-
-			err = utils.CheckExistingToken(config.VaultClient)
-			if err != nil {
-				err = backend.Login()
-				if err != nil {
-					return err
-				}
 			}
 
 			for _, manifest := range manifests {
-				// skip empty manifests 
-				if len(manifest) == 0 {
+
+				if len(manifest.Object) == 0 {
 					continue
 				}
 
-				template, err := kube.NewTemplate(manifest, backend, config.PathPrefix)
+				template, err := kube.NewTemplate(manifest, config.Backend)
 				if err != nil {
 					return err
 				}
 
-				err = template.Replace()
-				if err != nil {
-					return err
+				annotations := manifest.GetAnnotations()
+				avpIgnore, _ := strconv.ParseBool(annotations[types.AVPIgnoreAnnotation])
+				if !avpIgnore {
+					err = template.Replace()
+					if err != nil {
+						return err
+					}
 				}
 
 				output, err := template.ToYAML()

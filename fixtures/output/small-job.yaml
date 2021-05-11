@@ -1,6 +1,8 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
+  annotations:
+    avp.kubernetes.io/path: path
   name: my-app
 spec:
   template:

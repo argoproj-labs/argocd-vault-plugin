@@ -8,8 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/kube"
-	"github.com/spf13/viper"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -29,7 +28,7 @@ func listYamlFiles(root string) ([]string, error) {
 	return files, nil
 }
 
-func readFilesAsManifests(paths []string) (result []map[string]interface{}, errs []error) {
+func readFilesAsManifests(paths []string) (result []unstructured.Unstructured, errs []error) {
 
 	for _, path := range paths {
 		manifest, err := manifestFromYAML(path)
@@ -42,16 +41,17 @@ func readFilesAsManifests(paths []string) (result []map[string]interface{}, errs
 	return result, errs
 }
 
-func manifestFromYAML(path string) ([]map[string]interface{}, error) {
+func manifestFromYAML(path string) ([]unstructured.Unstructured, error) {
 	rawdata, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("could not read YAML: %s from disk: %s", path, err)
 	}
-	decoder := k8yaml.NewYAMLToJSONDecoder(bytes.NewReader(rawdata))
-	var manifests []map[string]interface{}
 
+	decoder := k8yaml.NewYAMLToJSONDecoder(bytes.NewReader(rawdata))
+
+	var manifests []unstructured.Unstructured
 	for {
-		nxtManifest := make(map[string]interface{})
+		nxtManifest := unstructured.Unstructured{}
 		err := decoder.Decode(&nxtManifest)
 		if err != nil {
 			if err == io.EOF {
@@ -63,40 +63,4 @@ func manifestFromYAML(path string) ([]map[string]interface{}, error) {
 	}
 
 	return manifests, nil
-}
-
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
-}
-
-func setConfig(secretName, configPath string, viper *viper.Viper) error {
-	// If a secret name is passed, pull config from Kubernetes
-	if secretName != "" {
-		localClient, err := kube.NewClient()
-		if err != nil {
-			return err
-		}
-		yaml, err := localClient.ReadSecret(secretName)
-		if err != nil {
-			return err
-		}
-		viper.SetConfigType("yaml")
-		viper.ReadConfig(bytes.NewBuffer(yaml))
-	}
-
-	// If a config file path is passed, read in that file and overwrite all other
-	if configPath != "" {
-		viper.SetConfigFile(configPath)
-		err := viper.ReadInConfig()
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
