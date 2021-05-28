@@ -217,6 +217,10 @@ The plugin can be used via the command line or any shell script. Since the plugi
 
 This will pull the values from Vault, replace the placeholders and then apply the yamls to whatever kubernetes cluster you are connected to.
 
+You can also read from stdin like so:
+
+`cat example.yaml | argocd-vault-plugin generate - | kubectl apply -f -`
+
 ### Argo CD
 Before using the plugin in Argo CD you must follow the [steps](#installing-in-argocd) to install the plugin to your Argo CD instance. Once the plugin is installed, you can use it 3 ways.
 
