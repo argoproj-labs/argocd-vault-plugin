@@ -29,9 +29,12 @@ func listYamlFiles(root string) ([]string, error) {
 }
 
 func readFilesAsManifests(paths []string) (result []unstructured.Unstructured, errs []error) {
-
 	for _, path := range paths {
-		manifest, err := manifestFromYAML(path)
+		rawdata, err := ioutil.ReadFile(path)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("could not read YAML: %s from disk: %s", path, err))
+		}
+		manifest, err := readManifestData(bytes.NewReader(rawdata))
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -41,13 +44,8 @@ func readFilesAsManifests(paths []string) (result []unstructured.Unstructured, e
 	return result, errs
 }
 
-func manifestFromYAML(path string) ([]unstructured.Unstructured, error) {
-	rawdata, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("could not read YAML: %s from disk: %s", path, err)
-	}
-
-	decoder := k8yaml.NewYAMLToJSONDecoder(bytes.NewReader(rawdata))
+func readManifestData(yamlData io.Reader) ([]unstructured.Unstructured, error) {
+	decoder := k8yaml.NewYAMLToJSONDecoder(yamlData)
 
 	var manifests []unstructured.Unstructured
 	for {
@@ -57,7 +55,7 @@ func manifestFromYAML(path string) ([]unstructured.Unstructured, error) {
 			if err == io.EOF {
 				break
 			}
-			return nil, fmt.Errorf("could not read YAML: %s into a manifest: %s", path, err)
+			return nil, fmt.Errorf("could not read YAML into a manifest: %s", err)
 		}
 		manifests = append(manifests, nxtManifest)
 	}

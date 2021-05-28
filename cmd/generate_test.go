@@ -111,6 +111,38 @@ func TestMain(t *testing.T) {
 		}
 	})
 
+	t.Run("will read from STDIN", func(t *testing.T) {
+		stdin := bytes.NewBufferString("")
+		inputBuf, err := ioutil.ReadFile("../fixtures/input/nonempty/full.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+		stdin.Write(inputBuf)
+
+		args := []string{"-"}
+		cmd := NewGenerateCommand()
+
+		stdout := bytes.NewBufferString("")
+		cmd.SetArgs(args)
+		cmd.SetOut(stdout)
+		cmd.SetIn(stdin)
+		cmd.Execute()
+		out, err := ioutil.ReadAll(stdout) // Read buffer to bytes
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		buf, err := ioutil.ReadFile("../fixtures/output/stdin-full.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expected := string(buf)
+		if string(buf) != expected {
+			t.Fatalf("expected %s but got %s", expected, string(out))
+		}
+	})
+
 	os.Unsetenv("AVP_TYPE")
 	os.Unsetenv("VAULT_ADDR")
 	os.Unsetenv("AVP_AUTH_TYPE")

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"strconv"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/config"
@@ -13,6 +14,7 @@ import (
 
 // NewGenerateCommand initializes the generate command
 func NewGenerateCommand() *cobra.Command {
+	const StdIn = "-"
 	var configPath, secretName string
 
 	var command = &cobra.Command{
@@ -25,23 +27,35 @@ func NewGenerateCommand() *cobra.Command {
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var manifests []unstructured.Unstructured
+			var errs []error
+			var err error
+
 			path := args[0]
-			files, err := listYamlFiles(path)
-			if len(files) < 1 {
-				return fmt.Errorf("no YAML files were found in %s", path)
-			}
-			if err != nil {
-				return err
+			if path == StdIn {
+				manifests, err = readManifestData(cmd.InOrStdin())
+				if err != nil {
+					errs = append(errs, err)
+				}
+			} else {
+				files, err := listYamlFiles(path)
+				if len(files) < 1 {
+					return fmt.Errorf("no YAML files were found in %s", path)
+				}
+				if err != nil {
+					return err
+				}
+
+				manifests, errs = readFilesAsManifests(files)
 			}
 
-			manifests, errs := readFilesAsManifests(files)
 			if len(errs) != 0 {
 				// TODO: handle multiple errors nicely
 				return fmt.Errorf("could not read YAML files: %s", errs)
 			}
 
 			v := viper.New()
-			config, err := config.New(v, &config.Options{
+			cmdConfig, err := config.New(v, &config.Options{
 				SecretName: secretName,
 				ConfigPath: configPath,
 			})
@@ -49,7 +63,7 @@ func NewGenerateCommand() *cobra.Command {
 				return err
 			}
 
-			err = config.Backend.Login()
+			err = cmdConfig.Backend.Login()
 			if err != nil {
 				return err
 			}
@@ -60,7 +74,7 @@ func NewGenerateCommand() *cobra.Command {
 					continue
 				}
 
-				template, err := kube.NewTemplate(manifest, config.Backend)
+				template, err := kube.NewTemplate(manifest, cmdConfig.Backend)
 				if err != nil {
 					return err
 				}

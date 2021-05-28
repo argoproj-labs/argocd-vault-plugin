@@ -4,3 +4,7 @@ bin
 .chglog
 test
 cover.out
+
+# Project workspaces
+.idea
+.vscode
