@@ -28,14 +28,13 @@ func NewGenerateCommand() *cobra.Command {
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var manifests []unstructured.Unstructured
-			var errs []error
 			var err error
 
 			path := args[0]
 			if path == StdIn {
 				manifests, err = readManifestData(cmd.InOrStdin())
 				if err != nil {
-					errs = append(errs, err)
+					return err
 				}
 			} else {
 				files, err := listYamlFiles(path)
@@ -46,12 +45,12 @@ func NewGenerateCommand() *cobra.Command {
 					return err
 				}
 
+				var errs []error
 				manifests, errs = readFilesAsManifests(files)
-			}
-
-			if len(errs) != 0 {
-				// TODO: handle multiple errors nicely
-				return fmt.Errorf("could not read YAML files: %s", errs)
+				if len(errs) != 0 {
+					// TODO: handle multiple errors nicely
+					return fmt.Errorf("could not read YAML files: %s", errs)
+				}
 			}
 
 			v := viper.New()

@@ -36,7 +36,7 @@ func readFilesAsManifests(paths []string) (result []unstructured.Unstructured, e
 		}
 		manifest, err := readManifestData(bytes.NewReader(rawdata))
 		if err != nil {
-			errs = append(errs, err)
+			errs = append(errs, fmt.Errorf("could not read YAML: %s from disk: %s", path, err))
 		}
 		result = append(result, manifest...)
 	}
@@ -55,7 +55,7 @@ func readManifestData(yamlData io.Reader) ([]unstructured.Unstructured, error) {
 			if err == io.EOF {
 				break
 			}
-			return nil, fmt.Errorf("could not read YAML into a manifest: %s", err)
+			return nil, err
 		}
 		manifests = append(manifests, nxtManifest)
 	}

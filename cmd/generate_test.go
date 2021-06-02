@@ -138,7 +138,34 @@ func TestMain(t *testing.T) {
 		}
 
 		expected := string(buf)
-		if string(buf) != expected {
+		if string(out) != expected {
+			t.Fatalf("expected %s but got %s", expected, string(out))
+		}
+	})
+
+	t.Run("will return invalid yaml error from STDIN", func(t *testing.T) {
+		stdin := bytes.NewBufferString("")
+		inputBuf, err := ioutil.ReadFile("../fixtures/input/invalid.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+		stdin.Write(inputBuf)
+
+		args := []string{"-"}
+		cmd := NewGenerateCommand()
+
+		stderr := bytes.NewBufferString("")
+		cmd.SetArgs(args)
+		cmd.SetErr(stderr)
+		cmd.SetIn(stdin)
+		cmd.Execute()
+		out, err := ioutil.ReadAll(stderr) // Read buffer to bytes
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expected := "Error: error converting YAML to JSON: yaml: line 18: did not find expected key"
+		if strings.TrimSpace(string(out)) != expected {
 			t.Fatalf("expected %s but got %s", expected, string(out))
 		}
 	})
