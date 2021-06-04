@@ -111,6 +111,65 @@ func TestMain(t *testing.T) {
 		}
 	})
 
+	t.Run("will read from STDIN", func(t *testing.T) {
+		stdin := bytes.NewBufferString("")
+		inputBuf, err := ioutil.ReadFile("../fixtures/input/nonempty/full.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+		stdin.Write(inputBuf)
+
+		args := []string{"-"}
+		cmd := NewGenerateCommand()
+
+		stdout := bytes.NewBufferString("")
+		cmd.SetArgs(args)
+		cmd.SetOut(stdout)
+		cmd.SetIn(stdin)
+		cmd.Execute()
+		out, err := ioutil.ReadAll(stdout) // Read buffer to bytes
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		buf, err := ioutil.ReadFile("../fixtures/output/stdin-full.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expected := string(buf)
+		if string(out) != expected {
+			t.Fatalf("expected %s but got %s", expected, string(out))
+		}
+	})
+
+	t.Run("will return invalid yaml error from STDIN", func(t *testing.T) {
+		stdin := bytes.NewBufferString("")
+		inputBuf, err := ioutil.ReadFile("../fixtures/input/invalid.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+		stdin.Write(inputBuf)
+
+		args := []string{"-"}
+		cmd := NewGenerateCommand()
+
+		stderr := bytes.NewBufferString("")
+		cmd.SetArgs(args)
+		cmd.SetErr(stderr)
+		cmd.SetIn(stdin)
+		cmd.Execute()
+		out, err := ioutil.ReadAll(stderr) // Read buffer to bytes
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expected := "Error: error converting YAML to JSON: yaml: line 18: did not find expected key"
+		if strings.TrimSpace(string(out)) != expected {
+			t.Fatalf("expected %s but got %s", expected, string(out))
+		}
+	})
+
 	os.Unsetenv("AVP_TYPE")
 	os.Unsetenv("VAULT_ADDR")
 	os.Unsetenv("AVP_AUTH_TYPE")

@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    avp.kubernetes.io/path: kv/data/testing
+  labels:
+    app: test-kv-name
+  name: test-kv-name
+  namespace: test-kv-namespace
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: test-kv-name
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    avp.kubernetes.io/path: kv/data/testing
+  labels:
+    app: test-kv-name
+    version: "1.2"
+  name: test-kv-name
+  namespace: test-kv-namespace
+spec:
+  minReadySeconds: 5
+  replicas: "3"
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: test-kv-name
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: test-kv-name
+      name: test-kv-name
+    spec:
+      containers:
+      - image: foo.com/test-kv-name:1.1
+        imagePullPolicy: Always
+        name: test-kv-name
+---
