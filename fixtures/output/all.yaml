@@ -119,3 +119,14 @@ metadata:
   namespace: default
 type: Opaque
 ---
+apiVersion: v1
+data:
+  SECRET_VAR: dGVzdC1wYXNzd29yZA==
+kind: Secret
+metadata:
+  annotations:
+    avp.kubernetes.io/kv-version: "1"
+  name: example-secret-base64
+  namespace: default
+type: Opaque
+---
