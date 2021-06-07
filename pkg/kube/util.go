@@ -2,6 +2,7 @@ package kube
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -133,6 +134,15 @@ func configReplacement(key, value string, resource Resource) (interface{}, []err
 
 	// configMap data values must be strings
 	return stringify(res), err
+}
+
+func secretReplacement(key, value string, resource Resource) (interface{}, []error) {
+	decoded, err := base64.StdEncoding.DecodeString(value)
+	if err == nil && placeholder.Match(decoded) {
+		return genericReplacement(key, string(decoded), resource)
+	}
+
+	return genericReplacement(key, value, resource)
 }
 
 func stringify(input interface{}) string {

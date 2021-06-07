@@ -60,6 +60,8 @@ func (t *Template) Replace() error {
 	switch t.Kind {
 	case "ConfigMap":
 		replacerFunc = configReplacement
+	case "Secret":
+		replacerFunc = secretReplacement
 	default:
 		replacerFunc = genericReplacement
 	}
