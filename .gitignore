@@ -8,3 +8,4 @@ cover.out
 # Project workspaces
 .idea
 .vscode
+dist
