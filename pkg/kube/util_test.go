@@ -225,6 +225,68 @@ func TestGenericReplacement_missingValue(t *testing.T) {
 	assertFailedReplacement(&dummyResource, &expected, t)
 }
 
+func TestSecretReplacement(t *testing.T) {
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": "<namespace | base64encode>",
+			"image":     "foo.io/<name>:<tag>",
+		},
+		Data: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, secretReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": []uint8("default"),
+			"image":     "foo.io/app:latest",
+		},
+		Data: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
+func TestSecretReplacement_Base64(t *testing.T) {
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": "PG5hbWVzcGFjZSB8IGJhc2U2NGVuY29kZT4=",
+			"image":     "foo.io/<name>:<tag>",
+		},
+		Data: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, secretReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": []uint8("default"),
+			"image":     "foo.io/app:latest",
+		},
+		Data: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
 func TestStringify(t *testing.T) {
 	testCases := []struct {
 		input    interface{}
