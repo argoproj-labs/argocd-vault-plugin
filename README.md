@@ -41,7 +41,7 @@ An annotation can be used to specify exactly where the plugin should look for th
 
 For example, if you have a secret with the key `password-vault-key` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/secret/password-vault-key` and inject it into the secret yaml.
 
-```
+```yaml
 kind: Secret
 apiVersion: v1
 metadata:
@@ -54,7 +54,7 @@ data:
 ```
 
 And then once the plugin is done doing the substitutions, it outputs the yaml to standard out to then be applied by Argo CD. The resulting yaml would look like:
-```
+```yaml
 kind: Secret
 apiVersion: v1
 metadata:
@@ -68,7 +68,7 @@ data:
 
 The plugin also supports putting the path directly within the placeholder. The format must be `<path:path/to/secret#key>`, where `path/to/secret` is the vault path and the Vault key goes after the `#` symbol. Doing this does not require an `avp.kubernetes.io/path` annotation and will override any `avp.kubernetes.io/path` annotation that is set. For example:
 
-```
+```yaml
 kind: Secret
 apiVersion: v1
 metadata:
@@ -78,14 +78,63 @@ data:
   password: <path:path/to/secret#password-vault-key>
 ```
 
-<b>*Note*</b>: The plugin will attempt to read any strings that match the following PCRE regex: `<.*>` (any characters between matching angle brackets), in all YAML files at the path given as the `<path>` argument. If there are YAML files that use `<string>`'s for other purposes and should _not_ be replaced, you can tell AVP to skip that file by adding the annotation `avp.kubernetes.io/ignore: "true"`.
+The plugin tries to be helpful and will ignore strings in the format `<string>` if the `avp.kubernetes.io/path` annotation is missing, and only consider strings in the format `<path:/path/to/secret#key>` as placeholders. This can be very useful when using AVP with YAML that uses `<string>`'s for other purposes, for example in CRD's with usage information:
+
+```yaml
+kind: CustomResourceDefinition
+apiVersion: v1
+metadata:
+  name: some-crd
+
+  # Notice, no `avp.kuberenetes.io/path` annotation here
+  annotations: {}
+type: Opaque
+fieldRef:
+
+  # So, <key> is NOT a placeholder 
+  description: 'Selects a field of
+    the pod: supports metadata.name,
+    metadata.namespace, `metadata.labels[''<KEY>'']`,
+    `metadata.annotations[''<KEY>'']`,
+    spec.nodeName, spec.serviceAccountName,
+    status.hostIP, status.podIP, status.podIPs.'
+
+  # But, THIS is still a placeholder
+  some-credential: <path:somewhere/in/my/vault#credential>
+```
+
+Finally, the plugin will ignore any given YAML file outright with the `avp.kubernetes.io/ignore` annotation set to `"true"`:
+
+```yaml
+kind: CustomResourceDefinition
+apiVersion: v1
+metadata:
+  name: some-crd
+
+  # Notice, `avp.kuberenetes.io/ignore` annotation is set
+  annotations: 
+    avp.kuberenetes.io/ignore: "true"
+type: Opaque
+fieldRef:
+
+  # So, <key> is NOT a placeholder 
+  description: 'Selects a field of
+    the pod: supports metadata.name,
+    metadata.namespace, `metadata.labels[''<KEY>'']`,
+    `metadata.annotations[''<KEY>'']`,
+    spec.nodeName, spec.serviceAccountName,
+    status.hostIP, status.podIP, status.podIPs.'
+
+  # Neither is this
+  some-credential: <path:somewhere/in/my/vault#credential
+```
 
 ##### Modifiers
-By Default the plugin does not perform any transformation of the secrets in transit. So if you have plain text secrets in Vault, you will need to use the `stringData` field and if you have a base64 encoded secret in Vault, you will need to use the `data` field according to the [Kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret/).
+By default the plugin does not perform any transformation of the secrets in transit. So if you have plain text secrets in Vault, you will need to use the `stringData` field and if you have a base64 encoded secret in Vault, you will need to use the `data` field according to the [Kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret/).
 
 However, as of now, we support one modifier. And that is `base64encode`. So if you have a plain text value in Vault and would like to Base64 encode it on the fly to inject into a Kubernetes secret you can do:
 
-```
+```yaml
 kind: Secret
 apiVersion: v1
 metadata:
@@ -120,7 +169,7 @@ The Argo CD docs provide information on how to get started https://argoproj.gith
 
 ##### InitContainer
 The first technique is to use an init container and a volumeMount to copy a different version of a tool into the repo-server container.
-```
+```yaml
 containers:
 - name: argocd-repo-server
   volumeMounts:
@@ -149,7 +198,7 @@ initContainers:
 
 ##### Custom Image
 The following example builds an entirely customized repo-server from a Dockerfile, installing extra dependencies that may be needed for generating manifests.
-```
+```Dockerfile
 FROM argoproj/argocd:latest
 
 # Switch to root for the ability to perform install
@@ -176,7 +225,7 @@ USER argocd
 After making the plugin available, you must then register the plugin, documentation can be found at https://argoproj.github.io/argo-cd/user-guide/config-management-plugins/#plugins on how to do that.
 
 For this plugin, you would add this:
-```
+```yaml
 data:
   configManagementPlugins: |-
     - name: argocd-vault-plugin
@@ -186,7 +235,7 @@ data:
 ```
 
 If you want to use Helm along with argocd-vault-plugin add:
-```
+```yaml
 configManagementPlugins: |
   - name: argocd-vault-plugin-helm
     init:
@@ -198,7 +247,7 @@ configManagementPlugins: |
 ```
 
 Or if you are using Kustomize:
-```
+```yaml
 configManagementPlugins: |
   - name: argocd-vault-plugin-kustomize
     generate:
@@ -227,7 +276,7 @@ Before using the plugin in Argo CD you must follow the [steps](#installing-in-ar
 1. Select your plugin via the UI by selecting `New App` and then changing `Directory` at the bottom of the form to be `argocd-vault-plugin`.
 
 2. Apply a Argo CD Application yaml that has `argocd-vault-plugin` as the plugin.
-```
+```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -280,7 +329,7 @@ In order to use Kubernetes Authentication a couple of things are required.
 1. Configuring Argo CD
     You can either use your own Service Account or the default Argo CD service account. To use the default Argo CD service account all you need to do is set `automountServiceAccountToken` to true in the `argocd-repo-server`.
 
-    ```
+    ```yaml
     kind: Deployment
     apiVersion: apps/v1
     metadata:
@@ -300,7 +349,7 @@ In order to use Kubernetes Authentication a couple of things are required.
 
     And then you will update the `argocd-repo-server` to use that service account.
 
-    ```
+    ```yaml
     kind: Deployment
     apiVersion: apps/v1
     metadata:
@@ -427,7 +476,7 @@ We support all Vault Environment Variables listed [here](https://www.vaultprojec
 | AVP_AWS_REGION    | AWS Secrets Manager Region      | Only valid with `TYPE` `awssecretsmanager` |
 
 ### Full List of Supported Annotation
-We support two different annotations that can be used inside a kubernetes resource. These annotations will override any corresponding configuration set via Environment Variable or Configuration File.
+We support several different annotations that can be used inside a kubernetes resource. These annotations will override any corresponding configuration set via Environment Variable or Configuration File.
 
 | Annotation | Description |  
 | ---------- | ----------- |  
