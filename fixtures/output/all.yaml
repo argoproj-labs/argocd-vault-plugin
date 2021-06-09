@@ -130,3 +130,14 @@ metadata:
   namespace: default
 type: Opaque
 ---
+apiVersion: v1
+data:
+  secret.yaml: cGFzc3dvcmQxOiB0ZXN0LXBhc3N3b3JkCnBhc3N3b3JkMjogdGVzdC1wYXNzd29yZA==
+kind: Secret
+metadata:
+  annotations:
+    avp.kubernetes.io/kv-version: "1"
+  name: example-secret-base64-substring
+  namespace: default
+type: Opaque
+---
