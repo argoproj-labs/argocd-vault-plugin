@@ -225,3 +225,19 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 
 	return cluster, roleID, secretID
 }
+
+type MockVault struct {
+	GetSecretsCalled bool
+	Data             map[string]interface{}
+}
+
+func (v *MockVault) Login() error {
+	return nil
+}
+func (v *MockVault) LoadData(data map[string]interface{}) {
+	v.Data = data
+}
+func (v *MockVault) GetSecrets(path string, annotations map[string]string) (map[string]interface{}, error) {
+	v.GetSecretsCalled = true
+	return v.Data, nil
+}
