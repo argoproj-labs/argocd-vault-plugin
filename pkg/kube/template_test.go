@@ -5,33 +5,23 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
 	"github.com/IBM/argocd-vault-plugin/pkg/types"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
-
-type MockVault struct {
-	GetSecretsCalled bool
-}
-
-func (v *MockVault) Login() error {
-	return nil
-}
-func (v *MockVault) GetSecrets(path string, annotations map[string]string) (map[string]interface{}, error) {
-	v.GetSecretsCalled = true
-	return map[string]interface{}{}, nil
-}
 
 func TestToYAML_Missing_Placeholders(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Secret",
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
 			TemplateData: map[string]interface{}{
 				"apiVersion": "v1",
 				"kind":       "Secret",
 				"metadata": map[string]interface{}{
-					"annotations": map[string]interface{}{
-						types.AVPPathAnnotation: "path",
-					},
 					"namespace": "default",
 					"name":      "some-resource",
 				},
@@ -43,21 +33,60 @@ func TestToYAML_Missing_Placeholders(t *testing.T) {
 		},
 	}
 
+	expectedErr := "Replace: could not replace all placeholders in Template:\nreplaceString: missing Vault value for placeholder string in string MY_SECRET_STRING: <string>"
+
 	err := d.Replace()
 	if err == nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("expected error %s but got success", expectedErr)
 	}
-
-	expectedErr := "Replace: could not replace all placeholders in Template:\nreplaceString: missing Vault value for placeholder string in string MY_SECRET_STRING: <string>"
 
 	if expectedErr != err.Error() {
 		t.Fatalf("expected error \n%s but got error \n%s", expectedErr, err.Error())
 	}
 }
 
+func TestToYAML_Missing_PlaceholdersSpecificPath(t *testing.T) {
+	mv := helpers.MockVault{}
+	mv.LoadData(map[string]interface{}{
+		"different-placeholder": "string",
+	})
+
+	d := Template{
+		Resource{
+			Kind:        "Secret",
+			Annotations: map[string]string{},
+			TemplateData: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "Secret",
+				"metadata": map[string]interface{}{
+					"namespace": "default",
+					"name":      "some-resource",
+				},
+				"stringData": map[string]interface{}{
+					"MY_SECRET_STRING": "<path:somewhere#string>",
+				},
+			},
+			Backend: &mv,
+			Data: map[string]interface{}{
+				"string": "this-wont-be-used",
+			},
+		},
+	}
+
+	expectedErr := "Replace: could not replace all placeholders in Template:\nreplaceString: missing Vault value for placeholder path:somewhere#string in string MY_SECRET_STRING: <path:somewhere#string>"
+
+	err := d.Replace()
+	if err == nil {
+		t.Fatalf("expected error %s but got success", expectedErr)
+	}
+
+	if expectedErr != err.Error() {
+		t.Fatalf("expected error \n%s but got error \n%s", expectedErr, err.Error())
+	}
+}
 func TestNewTemplate(t *testing.T) {
 	t.Run("will GetSecrets for placeholder'd YAML", func(t *testing.T) {
-		mv := MockVault{}
+		mv := helpers.MockVault{}
 
 		template, _ := NewTemplate(unstructured.Unstructured{
 			Object: map[string]interface{}{
@@ -92,7 +121,7 @@ func TestNewTemplate(t *testing.T) {
 		}
 	})
 	t.Run("will GetSecrets only for YAMLs w/o avp.kubernetes.io/ignore: True", func(t *testing.T) {
-		mv := MockVault{}
+		mv := helpers.MockVault{}
 		NewTemplate(unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"kind":       "Service",
@@ -126,6 +155,9 @@ func TestToYAML_Deployment(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Deployment",
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
 			TemplateData: map[string]interface{}{
 				"apiVersion": "apps/v1",
 				"kind":       "Deployment",
@@ -179,6 +211,9 @@ func TestToYAML_Service(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Service",
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
 			TemplateData: map[string]interface{}{
 				"kind":       "Service",
 				"apiVersion": "v1",
@@ -232,6 +267,9 @@ func TestToYAML_Secret_PlaceholderedData(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Secret",
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
 			TemplateData: map[string]interface{}{
 				"apiVersion": "v1",
 				"kind":       "Secret",
@@ -281,6 +319,9 @@ func TestToYAML_CRD_PlaceholderedData(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "SomeCustomResource",
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
 			TemplateData: map[string]interface{}{
 				"apiVersion": "v1",
 				"kind":       "SomeCustomResource",
@@ -327,11 +368,60 @@ func TestToYAML_CRD_PlaceholderedData(t *testing.T) {
 		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
 	}
 }
+func TestToYAML_CRD_FakePlaceholders(t *testing.T) {
+	mv := helpers.MockVault{}
+	mv.LoadData(map[string]interface{}{
+		"apikey": "123",
+	})
+
+	d := Template{
+		Resource{
+			Kind: "SomeCustomResource",
+			TemplateData: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "SomeCustomResource",
+				"metadata": map[string]interface{}{
+					"namespace": "default",
+					"name":      "some-resource",
+				},
+				"data": map[string]interface{}{
+					"description":    "supported options: <beep>, <boop>",
+					"A_SHELL_SCRIPT": "bx login --apikey <path:a/path#apikey>",
+				},
+			},
+			Backend: &mv,
+			Data:    map[string]interface{}{},
+		},
+	}
+
+	err := d.Replace()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-custom-resource-fake-placeholders.yaml")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expected := string(expectedData)
+	actual, err := d.ToYAML()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if !strings.Contains(actual, expected) {
+		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
+	}
+}
 
 func TestToYAML_Secret_HardcodedData(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Secret",
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
 			TemplateData: map[string]interface{}{
 				"apiVersion": "v1",
 				"kind":       "Secret",
@@ -374,6 +464,9 @@ func TestToYAML_Secret_MixedData(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Secret",
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
 			TemplateData: map[string]interface{}{
 				"apiVersion": "v1",
 				"kind":       "Secret",
@@ -423,6 +516,9 @@ func TestToYAML_Secret_PlaceholderedStringData(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Secret",
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
 			TemplateData: map[string]interface{}{
 				"apiVersion": "v1",
 				"kind":       "Secret",
@@ -471,6 +567,9 @@ func TestToYAML_ConfigMap(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "ConfigMap",
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
 			TemplateData: map[string]interface{}{
 				"apiVersion": "v1",
 				"kind":       "ConfigMap",
@@ -519,6 +618,9 @@ func TestToYAML_Ingress(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Ingress",
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
 			TemplateData: map[string]interface{}{
 				"apiVersion": "networking.k8s.io/v1",
 				"kind":       "Ingress",
@@ -573,6 +675,9 @@ func TestToYAML_CronJob(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "CronJob",
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
 			TemplateData: map[string]interface{}{
 				"apiVersion": "batch/v1beta1",
 				"kind":       "CronJob",
@@ -632,6 +737,9 @@ func TestToYAML_Job(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "Job",
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
 			TemplateData: map[string]interface{}{
 				"apiVersion": "batch/v1",
 				"kind":       "Job",
