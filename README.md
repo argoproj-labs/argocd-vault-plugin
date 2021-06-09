@@ -411,9 +411,9 @@ AVP_IBM_API_KEY: Your IBM Cloud API Key
 ##### AWS Authentication
 These are the required parameters parameters for AWS:
 ```
-AVP_TYPE: awssecretmanager
-AVP_AWS_ACCESS_KEY_ID: Your AWS Access Key ID
-AVP_AWS_SECRET_ACCESS_KEY: Your AWS Secret Access Key
+AVP_TYPE: awssecretsmanager
+AWS_ACCESS_KEY_ID: Your AWS Access Key ID
+AWS_SECRET_ACCESS_KEY: Your AWS Secret Access Key
 ```
 
 ## Configuration
@@ -463,7 +463,7 @@ We support all Vault Environment Variables listed [here](https://www.vaultprojec
 | --------------- | ----------- | ----- |
 | AVP_TYPE           | The type of Vault backend  | Supported values: `vault`, `ibmsecretsmanager` and `awssecretsmanager` |
 | AVP_KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `avp.kubernetes.io/kv-version` annotation is present in a YAML resource.|
-| AVP_AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github`   secretmanager: `iam` |
+| AVP_AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github, k8s`   ibmsecretsmanager: `iam` |
 | AVP_GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
 | AVP_ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
 | AVP_SECRET_ID      | Vault AppRole Secret_ID    | Required with `AUTH_TYPE` of `approle` |
@@ -471,9 +471,9 @@ We support all Vault Environment Variables listed [here](https://www.vaultprojec
 | AVP_K8S_ROLE       | Kuberentes Auth Role      | Required with `AUTH_TYPE` of `k8s` |
 | AVP_K8S_TOKEN_PATH | Path to JWT for Kubernetes Auth  | Optional for `AUTH_TYPE` of `k8s` defaults to `/var/run/secrets/kubernetes.io/serviceaccount/token` |
 | AVP_IBM_API_KEY    | IBM Cloud IAM API Key      | Required with `TYPE` of `ibmsecretsmanager` and `AUTH_TYPE` of `iam` |
-| AVP_AWS_ACCESS_KEY_ID    | AWS Access Key ID      | Required with `TYPE` of `awssecretsmanager` |
-| AVP_AWS_SECRET_ACCESS_KEY | AWS Secret Access Key      | Required with `TYPE` of `awssecretsmanager` |
-| AVP_AWS_REGION    | AWS Secrets Manager Region      | Only valid with `TYPE` `awssecretsmanager` |
+| AWS_ACCESS_KEY_ID    | AWS Access Key ID      | Required with `TYPE` of `awssecretsmanager` |
+| AWS_SECRET_ACCESS_KEY | AWS Secret Access Key      | Required with `TYPE` of `awssecretsmanager` |
+| AWS_REGION    | AWS Secrets Manager Region      | Only valid with `TYPE` `awssecretsmanager` |
 
 ### Full List of Supported Annotation
 We support several different annotations that can be used inside a kubernetes resource. These annotations will override any corresponding configuration set via Environment Variable or Configuration File.
