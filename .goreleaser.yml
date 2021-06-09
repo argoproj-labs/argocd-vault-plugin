@@ -24,4 +24,4 @@ release:
 changelog:
   filters:
     exclude:
-      - "^(ci|style|test)(\\([^)]+\\))?(!)?:"
+      - "^(ci|style|test|tests)(\\([^)]+\\))?(!)?:"
