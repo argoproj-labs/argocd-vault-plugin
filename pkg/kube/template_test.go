@@ -5,21 +5,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
 	"github.com/IBM/argocd-vault-plugin/pkg/types"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
-
-type MockVault struct {
-	GetSecretsCalled bool
-}
-
-func (v *MockVault) Login() error {
-	return nil
-}
-func (v *MockVault) GetSecrets(path string, annotations map[string]string) (map[string]interface{}, error) {
-	v.GetSecretsCalled = true
-	return map[string]interface{}{}, nil
-}
 
 func TestToYAML_Missing_Placeholders(t *testing.T) {
 	d := Template{
@@ -43,12 +33,12 @@ func TestToYAML_Missing_Placeholders(t *testing.T) {
 		},
 	}
 
+	expectedErr := "Replace: could not replace all placeholders in Template:\nreplaceString: missing Vault value for placeholder string in string MY_SECRET_STRING: <string>"
+
 	err := d.Replace()
 	if err == nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("expected error %s but got success", expectedErr)
 	}
-
-	expectedErr := "Replace: could not replace all placeholders in Template:\nreplaceString: missing Vault value for placeholder string in string MY_SECRET_STRING: <string>"
 
 	if expectedErr != err.Error() {
 		t.Fatalf("expected error \n%s but got error \n%s", expectedErr, err.Error())
@@ -57,7 +47,7 @@ func TestToYAML_Missing_Placeholders(t *testing.T) {
 
 func TestNewTemplate(t *testing.T) {
 	t.Run("will GetSecrets for placeholder'd YAML", func(t *testing.T) {
-		mv := MockVault{}
+		mv := helpers.MockVault{}
 
 		template, _ := NewTemplate(unstructured.Unstructured{
 			Object: map[string]interface{}{
@@ -92,7 +82,7 @@ func TestNewTemplate(t *testing.T) {
 		}
 	})
 	t.Run("will GetSecrets only for YAMLs w/o avp.kubernetes.io/ignore: True", func(t *testing.T) {
-		mv := MockVault{}
+		mv := helpers.MockVault{}
 		NewTemplate(unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"kind":       "Service",
@@ -281,6 +271,9 @@ func TestToYAML_CRD_PlaceholderedData(t *testing.T) {
 	d := Template{
 		Resource{
 			Kind: "SomeCustomResource",
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
 			TemplateData: map[string]interface{}{
 				"apiVersion": "v1",
 				"kind":       "SomeCustomResource",
@@ -313,6 +306,52 @@ func TestToYAML_CRD_PlaceholderedData(t *testing.T) {
 	}
 
 	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-custom-resource.yaml")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expected := string(expectedData)
+	actual, err := d.ToYAML()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if !strings.Contains(actual, expected) {
+		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
+	}
+}
+func TestToYAML_CRD_FakePlaceholders(t *testing.T) {
+	mv := helpers.MockVault{}
+	mv.LoadData(map[string]interface{}{
+		"apikey": "123",
+	})
+
+	d := Template{
+		Resource{
+			Kind: "SomeCustomResource",
+			TemplateData: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "SomeCustomResource",
+				"metadata": map[string]interface{}{
+					"namespace": "default",
+					"name":      "some-resource",
+				},
+				"data": map[string]interface{}{
+					"description":    "supported options: <beep>, <boop>",
+					"A_SHELL_SCRIPT": "bx login --apikey <path:a/path#apikey>",
+				},
+			},
+			Backend: &mv,
+			Data:    map[string]interface{}{},
+		},
+	}
+
+	err := d.Replace()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-custom-resource-fake-placeholders.yaml")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}

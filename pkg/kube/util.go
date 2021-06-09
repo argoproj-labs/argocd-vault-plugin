@@ -10,11 +10,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
-var placeholder, _ = regexp.Compile(`(?mU)<(.*)>`)
-var indivPlacholder, _ = regexp.Compile(`(?mU)path:(.+?)\#(.+?)`)
+var genericPlaceholder, _ = regexp.Compile(`(?mU)<(.*)>`)
+var specificPathPlaceholder, _ = regexp.Compile(`(?mU)<path:(.+?)\#(.+?)>`)
+var indivPlaceholderSyntax, _ = regexp.Compile(`(?mU)path:(.+?)\#(.+?)`)
 var modifier, _ = regexp.Compile(`\|(.*)`)
 
 // replaceInner recurses through the given map and replaces the placeholders by calling `replacerFunc`
@@ -67,10 +69,20 @@ func replaceInner(
 
 func genericReplacement(key, value string, resource Resource) (_ interface{}, err []error) {
 	var nonStringReplacement interface{}
+	var placeholderRegex *regexp.Regexp = specificPathPlaceholder
 
-	res := placeholder.ReplaceAllFunc([]byte(value), func(match []byte) []byte {
+	// If the Vault path annotation is present, there may be placeholders with/without an explicit path
+	// so we look for those. Only if the annotation is absent do we narrow the search to placeholders with
+	// explicit paths, to prevent catching <things> that aren't placeholders
+	// See https://github.com/IBM/argocd-vault-plugin/issues/130
+	if _, pathAnnotationPresent := resource.Annotations[types.AVPPathAnnotation]; pathAnnotationPresent {
+		placeholderRegex = genericPlaceholder
+	}
+
+	res := placeholderRegex.ReplaceAllFunc([]byte(value), func(match []byte) []byte {
 		placeholder := strings.Trim(string(match), "<>")
 
+		// Check for base64 modifier
 		var base64modifier bool
 		if modifier.MatchString(placeholder) {
 			modifierMatches := modifier.FindStringSubmatch(placeholder)
@@ -79,9 +91,9 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 		}
 
 		var secretValue interface{}
-		// check to see if should call out to get individual secret
-		if indivPlacholder.Match([]byte(placeholder)) {
-			indivSecretMatches := indivPlacholder.FindSubmatch([]byte(placeholder))
+		// Check to see if should call out to get individual secret (specific path in placeholder)
+		if indivPlaceholderSyntax.Match([]byte(placeholder)) {
+			indivSecretMatches := indivPlaceholderSyntax.FindSubmatch([]byte(placeholder))
 			secrets, secretErr := resource.Backend.GetSecrets(string(indivSecretMatches[1]), resource.Annotations)
 			if secretErr != nil {
 				err = append(err, secretErr)
@@ -93,7 +105,7 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 			secretValue = resource.Data[string(placeholder)]
 		}
 
-		// check for value in data
+		// Check for value in data
 		if secretValue != nil {
 			switch secretValue.(type) {
 			case string:
@@ -138,7 +150,7 @@ func configReplacement(key, value string, resource Resource) (interface{}, []err
 
 func secretReplacement(key, value string, resource Resource) (interface{}, []error) {
 	decoded, err := base64.StdEncoding.DecodeString(value)
-	if err == nil && placeholder.Match(decoded) {
+	if err == nil && genericPlaceholder.Match(decoded) {
 		return genericReplacement(key, string(decoded), resource)
 	}
 

@@ -5,6 +5,9 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+
+	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
+	"github.com/IBM/argocd-vault-plugin/pkg/types"
 )
 
 func assertSuccessfulReplacement(actual, expected *Resource, t *testing.T) {
@@ -34,7 +37,6 @@ func assertFailedReplacement(actual, expected *Resource, t *testing.T) {
 		t.Fatalf("expected Vault map to look like %s\n but got: %s", expected.Data, actual.Data)
 	}
 }
-
 func TestGenericReplacement_simpleString(t *testing.T) {
 	dummyResource := Resource{
 		TemplateData: map[string]interface{}{
@@ -42,6 +44,9 @@ func TestGenericReplacement_simpleString(t *testing.T) {
 		},
 		Data: map[string]interface{}{
 			"namespace": "default",
+		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
 		},
 	}
 
@@ -60,6 +65,89 @@ func TestGenericReplacement_simpleString(t *testing.T) {
 	assertSuccessfulReplacement(&dummyResource, &expected, t)
 }
 
+func TestGenericReplacement_specificPath(t *testing.T) {
+	// Test that the specific-path placeholder syntax is used to find/replace placeholders
+	// along with the generic syntax, since the generic Vault path is defined
+	mv := helpers.MockVault{}
+	mv.LoadData(map[string]interface{}{
+		"namespace": "default",
+	})
+
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": "<path:blah/blah#namespace>",
+			"name":      "<name>",
+		},
+		Data: map[string]interface{}{
+			"namespace": "something-else",
+			"name":      "foo",
+		},
+		Backend: &mv,
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+	if !mv.GetSecretsCalled {
+		t.Fatalf("expected GetSecrets to be called since placeholder contains explicit path so Vault lookup is neeed")
+	}
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": "default",
+			"name":      "foo",
+		},
+		Data: map[string]interface{}{
+			"namespace": "something-else",
+			"name":      "foo",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+func TestGenericReplacement_specificPathNoAnnotation(t *testing.T) {
+	mv := helpers.MockVault{}
+	mv.LoadData(map[string]interface{}{
+		"namespace": "default",
+	})
+
+	// Test that the specific-path placeholder syntax is used to find/replace placeholders
+	// and NOT the generic one, since the generic Vault path is undefined
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace":   "<path:blah/blah#namespace>",
+			"description": "for example, write <key>",
+		},
+		Data: map[string]interface{}{
+			"namespace": "something-else",
+		},
+		Backend:     &mv,
+		Annotations: map[string]string{},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+	if !mv.GetSecretsCalled {
+		t.Fatalf("expected GetSecrets to be called since placeholder contains explicit path, was not")
+	}
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace":   "default",
+			"description": "for example, write <key>",
+		},
+		Data: map[string]interface{}{
+			"namespace": "something-else",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
 func TestGenericReplacement_multiString(t *testing.T) {
 	dummyResource := Resource{
 		TemplateData: map[string]interface{}{
@@ -70,6 +158,9 @@ func TestGenericReplacement_multiString(t *testing.T) {
 			"namespace": "default",
 			"name":      "app",
 			"tag":       "latest",
+		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
 		},
 	}
 
@@ -101,6 +192,9 @@ func TestGenericReplacement_Base64(t *testing.T) {
 			"namespace": "default",
 			"name":      "app",
 			"tag":       "latest",
+		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
 		},
 	}
 
@@ -135,6 +229,9 @@ func TestGenericReplacement_nestedString(t *testing.T) {
 		Data: map[string]interface{}{
 			"namespace": "default",
 			"name":      "foo",
+		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
 		},
 	}
 
@@ -171,6 +268,9 @@ func TestGenericReplacement_int(t *testing.T) {
 			"namespace": "default",
 			"replicas":  1,
 		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+		},
 	}
 
 	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
@@ -202,6 +302,9 @@ func TestGenericReplacement_missingValue(t *testing.T) {
 		},
 		Data: map[string]interface{}{
 			"namespace": "default",
+		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
 		},
 	}
 
@@ -236,6 +339,9 @@ func TestSecretReplacement(t *testing.T) {
 			"name":      "app",
 			"tag":       "latest",
 		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+		},
 	}
 
 	replaceInner(&dummyResource, &dummyResource.TemplateData, secretReplacement)
@@ -266,6 +372,9 @@ func TestSecretReplacement_Base64(t *testing.T) {
 			"namespace": "default",
 			"name":      "app",
 			"tag":       "latest",
+		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
 		},
 	}
 
