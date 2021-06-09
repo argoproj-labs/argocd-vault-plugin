@@ -382,13 +382,47 @@ func TestSecretReplacement_Base64(t *testing.T) {
 
 	expected := Resource{
 		TemplateData: map[string]interface{}{
-			"namespace": []uint8("default"),
+			"namespace": "ZGVmYXVsdA==",
 			"image":     "foo.io/app:latest",
 		},
 		Data: map[string]interface{}{
 			"namespace": "default",
 			"name":      "app",
 			"tag":       "latest",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
+func TestSecretReplacement_Base64Substrings(t *testing.T) {
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"data": map[string]interface{}{
+				"credentials": `W2RlZmF1bHRdCmF3c19hY2Nlc3Nfa2V5X2lkPTxhY2Nlc3Nfa2V5X2lkPgphd3Nfc2VjcmV0X2FjY2Vzc19rZXk9PHNlY3JldF9hY2Nlc3Nfa2V5X2lkPgo=`,
+			},
+		},
+		Data: map[string]interface{}{
+			"access_key_id":        "testkey",
+			"secret_access_key_id": "testsecret",
+		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, secretReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"data": map[string]interface{}{
+				"credentials": `W2RlZmF1bHRdCmF3c19hY2Nlc3Nfa2V5X2lkPXRlc3RrZXkKYXdzX3NlY3JldF9hY2Nlc3Nfa2V5PXRlc3RzZWNyZXQK`,
+			},
+		},
+		Data: map[string]interface{}{
+			"access_key_id":        "testkey",
+			"secret_access_key_id": "testsecret",
 		},
 		replacementErrors: []error{},
 	}
@@ -416,6 +450,10 @@ func TestStringify(t *testing.T) {
 		{
 			json.Number("123"),
 			"123",
+		},
+		{
+			[]byte("bytes"),
+			"bytes",
 		},
 	}
 

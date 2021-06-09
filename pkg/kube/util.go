@@ -151,7 +151,8 @@ func configReplacement(key, value string, resource Resource) (interface{}, []err
 func secretReplacement(key, value string, resource Resource) (interface{}, []error) {
 	decoded, err := base64.StdEncoding.DecodeString(value)
 	if err == nil && genericPlaceholder.Match(decoded) {
-		return genericReplacement(key, string(decoded), resource)
+		res, err := genericReplacement(key, string(decoded), resource)
+		return base64.StdEncoding.EncodeToString([]byte(stringify(res))), err
 	}
 
 	return genericReplacement(key, value, resource)
@@ -170,6 +171,10 @@ func stringify(input interface{}) string {
 	case json.Number:
 		{
 			return string(input.(json.Number))
+		}
+	case []byte:
+		{
+			return string(input.([]byte))
 		}
 	default:
 		{
