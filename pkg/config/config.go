@@ -36,7 +36,7 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 
 	// Set Defaults
 	v.SetDefault(types.EnvAvpKvVersion, "2")
-	v.SetDefault("AVP_AWS_REGION", "us-east-2")
+	v.SetDefault("AWS_REGION", "us-east-2")
 
 	// Read in config file or kubernetes secret and set as env vars
 	err := readConfigOrSecret(co.SecretName, co.ConfigPath, v)
