@@ -91,7 +91,7 @@ metadata:
 type: Opaque
 fieldRef:
 
-  # So, <key> is NOT a placeholder 
+  # So, <key> is NOT a placeholder
   description: 'Selects a field of
     the pod: supports metadata.name,
     metadata.namespace, `metadata.labels[''<KEY>'']`,
@@ -112,12 +112,12 @@ metadata:
   name: some-crd
 
   # Notice, `avp.kuberenetes.io/ignore` annotation is set
-  annotations: 
+  annotations:
     avp.kuberenetes.io/ignore: "true"
 type: Opaque
 fieldRef:
 
-  # So, <key> is NOT a placeholder 
+  # So, <key> is NOT a placeholder
   description: 'Selects a field of
     the pod: supports metadata.name,
     metadata.namespace, `metadata.labels[''<KEY>'']`,
@@ -414,6 +414,7 @@ These are the required parameters parameters for AWS:
 AVP_TYPE: awssecretsmanager
 AWS_ACCESS_KEY_ID: Your AWS Access Key ID
 AWS_SECRET_ACCESS_KEY: Your AWS Secret Access Key
+AWS_REGION: Your AWS Region (Optional: defaults to us-east-2)
 ```
 
 ## Configuration
