@@ -5,7 +5,7 @@ builds:
     flags: "-trimpath"
     ldflags: >-
       -s -w
-      -X "github.com/IBM/argocd-vault-plugin/version.Version={{.Version}}"
+      -X "github.com/IBM/argocd-vault-plugin/version.Version={{.Tag}}"
       -X "github.com/IBM/argocd-vault-plugin/version.BuildDate={{.Date}}"
       -X "github.com/IBM/argocd-vault-plugin/version.CommitSHA={{.Commit}}"
     env:
