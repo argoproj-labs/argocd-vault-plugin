@@ -1,3 +1,27 @@
+<a name="v1.1.0"></a>
+## [v1.1.0](https://github.com/IBM/argocd-vault-plugin/compare/v1.0.0...v1.1.0) (2021-06-10)
+
+### Docs
+
+* add documentation for base64 decode feature [#124](https://github.com/IBM/argocd-vault-plugin/issues/124)
+
+### Feat
+
+* Skip <string>'s with absence of path annotation ([#137](https://github.com/IBM/argocd-vault-plugin/issues/137))
+* decode base64 encoded placeholders in secrets
+* allow objects to be passed from STDIN. ([#129](https://github.com/IBM/argocd-vault-plugin/issues/129))
+
+### Fix
+
+* implicitly base64 encode base64 secret values
+* Set proper aws default region ([#141](https://github.com/IBM/argocd-vault-plugin/issues/141))
+* remove avp prefix from aws env vars ([#134](https://github.com/IBM/argocd-vault-plugin/issues/134))
+
+### Test
+
+* add kube.secretReplacement unit tests
+
+
 <a name="v1.0.0"></a>
 ## [v1.0.0](https://github.com/IBM/argocd-vault-plugin/compare/v0.7.1...v1.0.0) (2021-05-11)
 
