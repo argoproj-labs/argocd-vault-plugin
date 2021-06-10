@@ -91,7 +91,7 @@ metadata:
 type: Opaque
 fieldRef:
 
-  # So, <key> is NOT a placeholder
+  # So, <KEY> is NOT a placeholder
   description: 'Selects a field of
     the pod: supports metadata.name,
     metadata.namespace, `metadata.labels[''<KEY>'']`,
@@ -117,7 +117,7 @@ metadata:
 type: Opaque
 fieldRef:
 
-  # So, <key> is NOT a placeholder
+  # So, <KEY> is NOT a placeholder
   description: 'Selects a field of
     the pod: supports metadata.name,
     metadata.namespace, `metadata.labels[''<KEY>'']`,
