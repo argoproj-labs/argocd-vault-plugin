@@ -103,6 +103,20 @@ fieldRef:
   some-credential: <path:somewhere/in/my/vault#credential>
 ```
 
+In addition to the default behavior, the plugin will attempt to decode base64 encoded strings in Secrets to look for placeholders.  If a placeholder is found, it is replaced and the resulting string is re-base64 encoded.  In most cases it is not necessary to use the `base64encode` modifier in this scenario. In the following example the plugin will decode the `POSTGRES_URL` value, find the template `postgres://<username>:<password>@<host>:<port>/<database>?sslmode=require`, and base64 encode it after replacement.
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/path: "path/to/secret"
+type: Opaque
+data:
+  POSTGRES_URL: cG9zdGdyZXM6Ly88dXNlcm5hbWU+OjxwYXNzd29yZD5APGhvc3Q+Ojxwb3J0Pi88ZGF0YWJhc2U+P3NzbG1vZGU9cmVxdWlyZQ==
+```
+
 Finally, the plugin will ignore any given YAML file outright with the `avp.kubernetes.io/ignore` annotation set to `"true"`:
 
 ```yaml
