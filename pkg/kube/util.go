@@ -15,8 +15,8 @@ import (
 )
 
 var genericPlaceholder, _ = regexp.Compile(`(?mU)<(.*)>`)
-var specificPathPlaceholder, _ = regexp.Compile(`(?mU)<path:(.+?)\#(.+?)>`)
-var indivPlaceholderSyntax, _ = regexp.Compile(`(?mU)path:(.+?)\#(.+?)`)
+var specificPathPlaceholder, _ = regexp.Compile(`(?mU)<path:(.+)\#(.+)>`)
+var indivPlaceholderSyntax, _ = regexp.Compile(`(?mU)path:(.+)\#(.+)`)
 var modifier, _ = regexp.Compile(`\|(.*)`)
 
 // replaceInner recurses through the given map and replaces the placeholders by calling `replacerFunc`
