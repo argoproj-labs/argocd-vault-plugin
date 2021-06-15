@@ -201,10 +201,11 @@ initContainers:
   image: alpine:3.8
   command: [sh, -c]
   args:
-    - wget -O argocd-vault-plugin
-      https://github.com/IBM/argocd-vault-plugin/releases/download/v1.1.0/argocd-vault-plugin_1.1.0_linux_amd64
-
-      chmod +x argocd-vault-plugin && mv argocd-vault-plugin /custom-tools/
+    - >-
+      wget -O argocd-vault-plugin
+      https://github.com/IBM/argocd-vault-plugin/releases/download/v1.1.0/argocd-vault-plugin_1.1.0_linux_amd64 &&
+      chmod +x argocd-vault-plugin &&
+      mv argocd-vault-plugin /custom-tools/
   volumeMounts:
     - mountPath: /custom-tools
       name: custom-tools
