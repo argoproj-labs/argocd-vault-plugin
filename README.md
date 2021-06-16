@@ -424,11 +424,12 @@ AVP_IBM_API_KEY: Your IBM Cloud API Key
 ### AWS Secrets Manager
 
 ##### AWS Authentication
-These are the required parameters parameters for AWS:
+Refer to the [AWS go SDK README](https://github.com/aws/aws-sdk-go#configuring-credentials) for supplying AWS credentials.
+Supported credentials and the order in which they are loaded are described [here](https://github.com/aws/aws-sdk-go/blob/v1.38.62/aws/session/doc.go#L22).
+
+These are the parameters for AWS:
 ```
 AVP_TYPE: awssecretsmanager
-AWS_ACCESS_KEY_ID: Your AWS Access Key ID
-AWS_SECRET_ACCESS_KEY: Your AWS Secret Access Key
 AWS_REGION: Your AWS Region (Optional: defaults to us-east-2)
 ```
 
@@ -487,8 +488,6 @@ We support all Vault Environment Variables listed [here](https://www.vaultprojec
 | AVP_K8S_ROLE       | Kuberentes Auth Role      | Required with `AUTH_TYPE` of `k8s` |
 | AVP_K8S_TOKEN_PATH | Path to JWT for Kubernetes Auth  | Optional for `AUTH_TYPE` of `k8s` defaults to `/var/run/secrets/kubernetes.io/serviceaccount/token` |
 | AVP_IBM_API_KEY    | IBM Cloud IAM API Key      | Required with `TYPE` of `ibmsecretsmanager` and `AUTH_TYPE` of `iam` |
-| AWS_ACCESS_KEY_ID    | AWS Access Key ID      | Required with `TYPE` of `awssecretsmanager` |
-| AWS_SECRET_ACCESS_KEY | AWS Secret Access Key      | Required with `TYPE` of `awssecretsmanager` |
 | AWS_REGION    | AWS Secrets Manager Region      | Only valid with `TYPE` `awssecretsmanager` |
 
 ### Full List of Supported Annotation
