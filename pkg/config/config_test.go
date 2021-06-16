@@ -162,13 +162,6 @@ func TestNewConfigMissingParameter(t *testing.T) {
 			},
 			"*backends.IBMSecretsManager",
 		},
-		{
-			map[string]interface{}{
-				"AVP_TYPE":          "awssecretsmanager",
-				"AWS_ACCESS_KEY_ID": "id",
-			},
-			"*backends.AWSSecretsManager",
-		},
 	}
 	for _, tc := range testCases {
 		for k, v := range tc.environment {

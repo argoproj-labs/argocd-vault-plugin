@@ -109,13 +109,6 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 		}
 	case types.AWSSecretsManagerbackend:
 		{
-			if !v.IsSet(types.EnvAWSAccessKey) || !v.IsSet(types.EnvAWSSecretAccessKey) {
-				return nil, fmt.Errorf("Must provide %s and %s for backend type %s",
-					types.EnvAWSAccessKey,
-					types.EnvAWSSecretAccessKey,
-					types.AWSSecretsManagerbackend,
-				)
-			}
 			s := session.Must(session.NewSession(&aws.Config{
 				Region: aws.String(v.GetString(types.EnvAWSRegion)),
 			}))
