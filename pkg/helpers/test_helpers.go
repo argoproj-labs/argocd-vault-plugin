@@ -155,14 +155,15 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 	}
 
 	_, err = client.Logical().Write("secret/testing", map[string]interface{}{
-		"name":             "test-name",
-		"namespace":        "test-namespace",
-		"version":          "1.0",
-		"replicas":         "2",
-		"tag":              "1.0",
-		"secret-var-value": "dGVzdC1wYXNzd29yZA==",
-		"secret-num":       "MQ==",
-		"secret-var-clear": "test-password",
+		"name":              "test-name",
+		"namespace":         "test-namespace",
+		"version":           "1.0",
+		"replicas":          "2",
+		"tag":               "1.0",
+		"secret-var-value":  "dGVzdC1wYXNzd29yZA==",
+		"secret-var-value2": "dGVzdC1wYXNzd29yZDI=",
+		"secret-num":        "MQ==",
+		"secret-var-clear":  "test-password",
 	})
 	if err != nil {
 		t.Fatal(err)
