@@ -1,3 +1,13 @@
+<a name="v1.1.1"></a>
+## [v1.1.1](https://github.com/IBM/argocd-vault-plugin/compare/v1.1.0...v1.1.1) (2021-06-16)
+
+### Fix
+
+* update placeholder regex to match multiple occurences in same st… ([#146](https://github.com/IBM/argocd-vault-plugin/issues/146))
+* corrected init containter ref ([#147](https://github.com/IBM/argocd-vault-plugin/issues/147))
+* update broken command arg ([#145](https://github.com/IBM/argocd-vault-plugin/issues/145))
+
+
 <a name="v1.1.0"></a>
 ## [v1.1.0](https://github.com/IBM/argocd-vault-plugin/compare/v1.0.0...v1.1.0) (2021-06-10)
 
