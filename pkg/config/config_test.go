@@ -67,9 +67,18 @@ func TestNewConfig(t *testing.T) {
 			},
 			"*backends.IBMSecretsManager",
 		},
-		{
+		{ // this test issues a warning for missing AWS_REGION env var
 			map[string]interface{}{
 				"AVP_TYPE":              "awssecretsmanager",
+				"AWS_ACCESS_KEY_ID":     "id",
+				"AWS_SECRET_ACCESS_KEY": "key",
+			},
+			"*backends.AWSSecretsManager",
+		},
+		{ // no warning is issued
+			map[string]interface{}{
+				"AVP_TYPE":              "awssecretsmanager",
+				"AWS_REGION":            "us-west-1",
 				"AWS_ACCESS_KEY_ID":     "id",
 				"AWS_SECRET_ACCESS_KEY": "key",
 			},

@@ -23,6 +23,7 @@ const (
 	ApproleAuth              = "approle"
 	GithubAuth               = "github"
 	IAMAuth                  = "iam"
+	AwsDefaultRegion         = "us-east-2"
 
 	AVPPathAnnotation        = "avp.kubernetes.io/path"
 	AVPIgnoreAnnotation      = "avp.kubernetes.io/ignore"

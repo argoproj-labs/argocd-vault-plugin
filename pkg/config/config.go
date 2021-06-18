@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -36,7 +37,6 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 
 	// Set Defaults
 	v.SetDefault(types.EnvAvpKvVersion, "2")
-	v.SetDefault("AWS_REGION", "us-east-2")
 
 	// Read in config file or kubernetes secret and set as env vars
 	err := readConfigOrSecret(co.SecretName, co.ConfigPath, v)
@@ -109,6 +109,11 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 		}
 	case types.AWSSecretsManagerbackend:
 		{
+			if !v.IsSet(types.EnvAWSRegion) { // issue warning when using default region
+				log.Printf("Warning: %s env var not set, using AWS region %s.\n", types.EnvAWSRegion, types.AwsDefaultRegion)
+				v.Set(types.EnvAWSRegion, types.AwsDefaultRegion)
+			}
+
 			s, err := session.NewSession(&aws.Config{
 				Region: aws.String(v.GetString(types.EnvAWSRegion)),
 			})
