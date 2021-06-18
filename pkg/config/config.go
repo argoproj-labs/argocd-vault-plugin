@@ -109,9 +109,13 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 		}
 	case types.AWSSecretsManagerbackend:
 		{
-			s := session.Must(session.NewSession(&aws.Config{
+			s, err := session.NewSession(&aws.Config{
 				Region: aws.String(v.GetString(types.EnvAWSRegion)),
-			}))
+			})
+			if err != nil {
+				return nil, err
+			}
+
 			client := secretsmanager.New(s)
 			backend = backends.NewAWSSecretsManagerBackend(client)
 		}

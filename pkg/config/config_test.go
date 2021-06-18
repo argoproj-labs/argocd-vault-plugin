@@ -74,6 +74,15 @@ func TestNewConfig(t *testing.T) {
 			},
 			"*backends.AWSSecretsManager",
 		},
+		{ // auth via web identity federation is also possible
+			map[string]interface{}{
+				"AVP_TYPE":                    "awssecretsmanager",
+				"AWS_REGION":                  "us-west-1",
+				"AWS_WEB_IDENTITY_TOKEN_FILE": "/var/run/secrets/eks.amazonaws.com/serviceaccount/token",
+				"AWS_ROLE_ARN":                "arn:aws:iam::111111111:role/argocd-repo-server-secretsmanager-my-cluster",
+			},
+			"*backends.AWSSecretsManager",
+		},
 	}
 	for _, tc := range testCases {
 		for k, v := range tc.environment {
@@ -161,6 +170,14 @@ func TestNewConfigMissingParameter(t *testing.T) {
 				"AVP_IAM_API_KEY": "token",
 			},
 			"*backends.IBMSecretsManager",
+		},
+		{ //  WebIdentityEmptyRoleARNErr will occur if 'AWS_WEB_IDENTITY_TOKEN_FILE' was set but 'AWS_ROLE_ARN' was not set.
+			map[string]interface{}{
+				"AVP_TYPE":                    "awssecretsmanager",
+				"AWS_REGION":                  "us-west-1",
+				"AWS_WEB_IDENTITY_TOKEN_FILE": "/var/run/secrets/eks.amazonaws.com/serviceaccount/token",
+			},
+			"*backends.AWSSecretsManager",
 		},
 	}
 	for _, tc := range testCases {
