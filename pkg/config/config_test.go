@@ -2,6 +2,7 @@ package config_test
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -206,4 +207,50 @@ func TestExternalConfig(t *testing.T) {
 	}
 	os.Unsetenv("AVP_TYPE")
 	os.Unsetenv("VAULT_ADDR")
+}
+
+const avpConfig = `AVP_TYPE: awssecretsmanager
+AWS_ACCESS_KEY_ID: AKIAIOSFODNN7EXAMPLE
+AWS_SECRET_ACCESS_KEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+AWS_REGION: us-west-2`
+
+var expectedEnvVars = map[string]string{
+	"AVP_TYPE":              "", // shouldn't be an env var
+	"AWS_ACCESS_KEY_ID":     "AKIAIOSFODNN7EXAMPLE",
+	"AWS_SECRET_ACCESS_KEY": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+	"AWS_REGION":            "us-west-2",
+}
+
+func TestExternalConfigAWS(t *testing.T) {
+	// Test setting AWS_* env variables from external AVP config, note setting
+	// env vars is necessary to pass AVP config entries to the AWS golang SDK
+	tmpFile, err := ioutil.TempFile("", "avpConfig.*.yaml")
+	if err != nil {
+		t.Errorf("Cannot create temporary file %s", err)
+	}
+
+	defer os.Remove(tmpFile.Name()) // clean up the file afterwards
+
+	if _, err = tmpFile.WriteString(avpConfig); err != nil {
+		t.Errorf("Failed to write to temporary file %s", err)
+	}
+
+	viper := viper.New()
+	if _, err = config.New(viper, &config.Options{ConfigPath: tmpFile.Name()}); err != nil {
+		t.Errorf("config.New returned error: %s", err)
+	}
+
+	if viper.GetString("AVP_TYPE") != "awssecretsmanager" {
+		t.Errorf("expected AVP_TYPE to be set from external config, was instead: %s", viper.GetString("AVP_TYPE"))
+	}
+
+	for envVar, expected := range expectedEnvVars {
+		if actual := os.Getenv(envVar); actual != expected {
+			t.Errorf("expected %s env to be %s, was instead: %s", envVar, expected, actual)
+		}
+	}
+
+	os.Unsetenv("AWS_ACCESS_KEY_ID")
+	os.Unsetenv("AWS_SECRET_ACCESS_KEY")
+	os.Unsetenv("AWS_REGION")
 }
