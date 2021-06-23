@@ -1,8 +1,10 @@
 package config_test
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"testing"
 
@@ -67,15 +69,7 @@ func TestNewConfig(t *testing.T) {
 			},
 			"*backends.IBMSecretsManager",
 		},
-		{ // this test issues a warning for missing AWS_REGION env var
-			map[string]interface{}{
-				"AVP_TYPE":              "awssecretsmanager",
-				"AWS_ACCESS_KEY_ID":     "id",
-				"AWS_SECRET_ACCESS_KEY": "key",
-			},
-			"*backends.AWSSecretsManager",
-		},
-		{ // no warning is issued
+		{
 			map[string]interface{}{
 				"AVP_TYPE":              "awssecretsmanager",
 				"AWS_REGION":            "us-west-1",
@@ -134,6 +128,74 @@ func TestNewConfigNoAuthType(t *testing.T) {
 		t.Errorf("expected error %s to be thrown, got %s", expectedError, err)
 	}
 	os.Unsetenv("AVP_TYPE")
+}
+
+// Helper function that captures log output from a function call into a string
+// Adapted from https://stackoverflow.com/a/26806093/170154
+func captureOutput(f func()) string {
+	var buf bytes.Buffer
+	flags := log.Flags()
+	log.SetOutput(&buf)
+	log.SetFlags(0) // don't include any date or time in the logging messages
+	f()
+	log.SetOutput(os.Stderr)
+	log.SetFlags(flags)
+	return buf.String()
+}
+
+func TestNewConfigAwsRegionWarning(t *testing.T) {
+	testCases := []struct {
+		environment  map[string]interface{}
+		expectedType string
+		expectedLog  string
+	}{
+		{ // this test issues a warning for missing AWS_REGION env var
+			map[string]interface{}{
+				"AVP_TYPE":              "awssecretsmanager",
+				"AWS_ACCESS_KEY_ID":     "id",
+				"AWS_SECRET_ACCESS_KEY": "key",
+			},
+			"*backends.AWSSecretsManager",
+			"Warning: AWS_REGION env var not set, using AWS region us-east-2.\n",
+		},
+		{ // no warning is issued
+			map[string]interface{}{
+				"AVP_TYPE":              "awssecretsmanager",
+				"AWS_REGION":            "us-west-1",
+				"AWS_ACCESS_KEY_ID":     "id",
+				"AWS_SECRET_ACCESS_KEY": "key",
+			},
+			"*backends.AWSSecretsManager",
+			"",
+		},
+	}
+
+	for _, tc := range testCases {
+		for k, v := range tc.environment {
+			os.Setenv(k, v.(string))
+		}
+		viper := viper.New()
+
+		output := captureOutput(func() {
+			config, err := config.New(viper, &config.Options{})
+			if err != nil {
+				t.Error(err)
+				t.FailNow()
+			}
+			xType := fmt.Sprintf("%T", config.Backend)
+			if xType != tc.expectedType {
+				t.Errorf("expected: %s, got: %s.", tc.expectedType, xType)
+			}
+		})
+
+		if output != tc.expectedLog {
+			t.Errorf("Unexpected warning issued. Expected: %s, actual: %s", tc.expectedLog, output)
+		}
+
+		for k := range tc.environment {
+			os.Unsetenv(k)
+		}
+	}
 }
 
 func TestNewConfigMissingParameter(t *testing.T) {
