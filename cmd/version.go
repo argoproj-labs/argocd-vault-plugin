@@ -13,7 +13,7 @@ func NewVersionCommand() *cobra.Command {
 		Use:   "version",
 		Short: "Print argocd-vault-plugin version information",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(version.Version)
+			fmt.Fprintf(cmd.OutOrStdout(), "argocd-vault-plugin %s (%s) BuildDate: %s\n", version.Version, version.CommitSHA, version.BuildDate)
 		},
 	}
 
