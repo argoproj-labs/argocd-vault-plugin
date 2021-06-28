@@ -1,0 +1,27 @@
+project_name: "argocd-vault-plugin"
+
+builds:
+  - binary: "argocd-vault-plugin"
+    flags: "-trimpath"
+    ldflags: >-
+      -s -w
+      -X "github.com/IBM/argocd-vault-plugin/version.Version={{.Tag}}"
+      -X "github.com/IBM/argocd-vault-plugin/version.BuildDate={{.Date}}"
+      -X "github.com/IBM/argocd-vault-plugin/version.CommitSHA={{.Commit}}"
+    env:
+      - "CGO_ENABLED=0"
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    tags:
+      - netgo
+      - static_build
+
+archives:
+  - format: binary
+
+changelog:
+  skip: true
