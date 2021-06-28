@@ -1,5 +1,5 @@
 BINARY=argocd-vault-plugin
-VERSION=1.1.1
+VERSION=1.1.2
 OS_ARCH=darwin_amd64
 
 default: build

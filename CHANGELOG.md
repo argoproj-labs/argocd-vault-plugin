@@ -1,3 +1,14 @@
+<a name="v1.1.2"></a>
+## [v1.1.2](https://github.com/IBM/argocd-vault-plugin/compare/v1.1.1...v1.1.2) (2021-06-24)
+
+### Fix
+
+* issue warning when default aws region is used ([#155](https://github.com/IBM/argocd-vault-plugin/issues/155))
+* set AWS_ AVP secret/config entries as env vars (IBM[#148](https://github.com/IBM/argocd-vault-plugin/issues/148))
+* don't panic on aws new session error + new test cases (IBM[#148](https://github.com/IBM/argocd-vault-plugin/issues/148))
+* update README on AWS env variables (IBM[#148](https://github.com/IBM/argocd-vault-plugin/issues/148))
+* remove unnecessary env vars check for AWS credentials (IBM[#148](https://github.com/IBM/argocd-vault-plugin/issues/148))
+
 <a name="v1.1.1"></a>
 ## [v1.1.1](https://github.com/IBM/argocd-vault-plugin/compare/v1.1.0...v1.1.1) (2021-06-16)
 
