@@ -69,7 +69,7 @@ func (t *Template) Replace() error {
 	replaceInner(&t.Resource, &t.TemplateData, replacerFunc)
 	if len(t.replacementErrors) != 0 {
 		errMessages := make([]string, len(t.replacementErrors))
-		for idx, err := range(t.replacementErrors) {
+		for idx, err := range t.replacementErrors {
 			errMessages[idx] = err.Error()
 		}
 		return fmt.Errorf("Replace: could not replace all placeholders in Template:\n%s", strings.Join(errMessages, "\n"))

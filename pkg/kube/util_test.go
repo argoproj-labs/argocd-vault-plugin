@@ -1,6 +1,7 @@
 package kube
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"reflect"
@@ -202,7 +203,7 @@ func TestGenericReplacement_Base64(t *testing.T) {
 
 	expected := Resource{
 		TemplateData: map[string]interface{}{
-			"namespace": []uint8("default"),
+			"namespace": base64.StdEncoding.EncodeToString([]byte("default")),
 			"image":     "foo.io/app:latest",
 		},
 		Data: map[string]interface{}{
@@ -348,7 +349,7 @@ func TestSecretReplacement(t *testing.T) {
 
 	expected := Resource{
 		TemplateData: map[string]interface{}{
-			"namespace": []uint8("default"),
+			"namespace": base64.StdEncoding.EncodeToString([]byte("default")),
 			"image":     "foo.io/app:latest",
 		},
 		Data: map[string]interface{}{
@@ -382,7 +383,7 @@ func TestSecretReplacement_Base64(t *testing.T) {
 
 	expected := Resource{
 		TemplateData: map[string]interface{}{
-			"namespace": "ZGVmYXVsdA==",
+			"namespace": "WkdWbVlYVnNkQT09",
 			"image":     "foo.io/app:latest",
 		},
 		Data: map[string]interface{}{

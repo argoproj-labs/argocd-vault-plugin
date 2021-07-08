@@ -111,8 +111,7 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 			case string:
 				{
 					if base64modifier {
-						nonStringReplacement = []byte(stringify(secretValue))
-						return match
+						return []byte(base64.StdEncoding.EncodeToString([]byte(secretValue.(string))))
 					}
 					return []byte(secretValue.(string))
 				}
@@ -135,6 +134,7 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 	if nonStringReplacement != nil {
 		return nonStringReplacement, err
 	}
+
 	return string(res), err
 }
 
