@@ -1,7 +1,7 @@
 # argocd-vault-plugin
 ![Pipeline](https://github.com/IBM/argocd-vault-plugin/workflows/Pipeline/badge.svg)
 ![Code Scanning](https://github.com/IBM/argocd-vault-plugin/workflows/Code%20Scanning/badge.svg)
-[![Go Report Card](https://goreportcard.com/badge/github.com/IBM/argocd-vault-plugin)](https://goreportcard.com/report/github.com/IBM/argocd-vault-plugin) 
+[![Go Report Card](https://goreportcard.com/badge/github.com/IBM/argocd-vault-plugin)](https://goreportcard.com/report/github.com/IBM/argocd-vault-plugin)
 ![Downloads](https://img.shields.io/github/downloads/IBM/argocd-vault-plugin/total?logo=github)
 [![codecov](https://codecov.io/gh/IBM/argocd-vault-plugin/branch/main/graph/badge.svg?token=p8XJMcip6l)](https://codecov.io/gh/IBM/argocd-vault-plugin)
 
@@ -166,15 +166,19 @@ And the plugin will pull the value from Vault, Base64 encode the value and then 
 ## Installation
 There are multiple ways to download and install argocd-vault-plugin depending on your use case.
 
-#### `curl` command
-Use curl or wget to download the binary from Github and then move the binary to `/usr/local/bin` or another directory that is in you `PATH`
-
+#### On Linux or macOS via Curl
 ```
-curl -L -o argocd-vault-plugin https://github.com/IBM/argocd-vault-plugin/releases/download/{version}/argocd-vault-plugin_{version}_{linux|darwin}_amd64
+curl -Lo argocd-vault-plugin https://github.com/IBM/argocd-vault-plugin/releases/download/{version}/argocd-vault-plugin_{version}_{linux|darwin}_amd64
 
 chmod +x argocd-vault-plugin
 
 mv argocd-vault-plugin /usr/local/bin
+```
+
+#### On macOS via Homebrew
+
+```
+brew install argocd-vault-plugin
 ```
 
 #### Installing in Argo CD
