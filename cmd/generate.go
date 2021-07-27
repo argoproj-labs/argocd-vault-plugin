@@ -2,8 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"strconv"
+
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/config"
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
