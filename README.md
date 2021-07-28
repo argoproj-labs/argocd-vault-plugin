@@ -282,7 +282,6 @@ configManagementPlugins: |
 ```
 Helm args must be defined in the application manifest:
 ```yaml
-...
   source:
     path: your-app
     plugin:
@@ -290,7 +289,6 @@ Helm args must be defined in the application manifest:
       env:
         - name: helm_args
           value: -f values-dev.yaml -f values-dev-tag.yaml
-...
 ``` 
 
 Or if you are using Kustomize:
