@@ -266,7 +266,7 @@ configManagementPlugins: |
       args: ["helm dependency build"]
     generate:
       command: ["sh", "-c"]
-      args: ["helm template . > all.yaml && argocd-vault-plugin generate all.yaml"]
+      args: ["helm template $ARGOCD_APP_NAME . > all.yaml && argocd-vault-plugin generate all.yaml"]
 ```
 
 If you want to use Helm along with argocd-vault-plugin and use additional helm args :
@@ -278,7 +278,7 @@ configManagementPlugins: |
       args: ["helm dependency build"]
     generate:
       command: ["sh", "-c"]
-      args: ["helm template ${helm_args} . > all.yaml && argocd-vault-plugin generate all.yaml"]
+      args: ["helm template $ARGOCD_APP_NAME ${helm_args} . > all.yaml && argocd-vault-plugin generate all.yaml"]
 ```
 Helm args must be defined in the application manifest:
 ```yaml
