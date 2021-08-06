@@ -1,0 +1,21 @@
+site_name: Argo CD Vault Plugin
+repo_url: https://github.com/IBM/argocd-vault-plugin
+
+theme:
+  name: material
+  palette:
+    primary: black
+  font:
+    text: IBM Plex Sans
+    code: IBM Plex Mono
+
+nav:
+  - Overview: index.md
+  - How it Works: howitworks.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - Backends: backends.md
+  - Configuration: config.md
+  - Upgrading:
+     - v0.x to v1.x: 0x-1x.md
+  - Releases ⧉: https://github.com/IBM/argocd-vault-plugin/releases
