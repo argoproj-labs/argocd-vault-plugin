@@ -77,7 +77,7 @@ func (t *Template) Replace() error {
 	return nil
 }
 
-// ToYAML seralizes the completed template into YAML to be consumed by Kubernetes
+// ToYAML serializes the completed template into YAML to be consumed by Kubernetes
 func (t *Template) ToYAML() (string, error) {
 	res, err := yaml.Marshal(&t.TemplateData)
 	if err != nil {

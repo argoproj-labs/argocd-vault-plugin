@@ -27,5 +27,6 @@ const (
 
 	AVPPathAnnotation        = "avp.kubernetes.io/path"
 	AVPIgnoreAnnotation      = "avp.kubernetes.io/ignore"
+	AVPAllowEmptyAnnotation  = "avp.kubernetes.io/allow-empty"
 	VaultKVVersionAnnotation = "avp.kubernetes.io/kv-version"
 )

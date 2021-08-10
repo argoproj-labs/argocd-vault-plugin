@@ -62,3 +62,4 @@ We support several different annotations that can be used inside a kubernetes re
 | avp.kubernetes.io/path | Path to the Vault Secret |
 | avp.kubernetes.io/ignore | Boolean to tell the plugin whether or not to process the file. Invalid values translate to `false` |
 | avp.kubernetes.io/kv-version | Version of the KV Secret Engine |
+| avp.kubernetes.io/allow-empty | Plugin will not throw error when a key is missing from Vault Secret |

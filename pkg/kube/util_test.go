@@ -329,6 +329,48 @@ func TestGenericReplacement_missingValue(t *testing.T) {
 	assertFailedReplacement(&dummyResource, &expected, t)
 }
 
+func TestGenericReplacement_allowEmpty(t *testing.T) {
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": "default",
+			"annotations": map[string]interface{}{
+				"avp.kubernetes.io/allow-empty": "true",
+			},
+			"spec": map[string]interface{}{
+				"replicas": "<replicas>",
+			},
+		},
+		Data: map[string]interface{}{
+			"namespace": "default",
+		},
+		Annotations: map[string]string{
+			"avp.kubernetes.io/allow-empty": "true",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": "default",
+			"annotations": map[string]interface{}{
+				"avp.kubernetes.io/allow-empty": "true",
+			},
+			"spec": map[string]interface{}{
+				"replicas": "<replicas>",
+			},
+		},
+		Data: map[string]interface{}{
+			"namespace": "default",
+		},
+		Annotations: map[string]string{
+			"avp.kubernetes.io/allow-empty": "true",
+		},
+	}
+
+	assertFailedReplacement(&dummyResource, &expected, t)
+}
+
 func TestSecretReplacement(t *testing.T) {
 	dummyResource := Resource{
 		TemplateData: map[string]interface{}{

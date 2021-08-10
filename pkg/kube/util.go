@@ -70,6 +70,7 @@ func replaceInner(
 func genericReplacement(key, value string, resource Resource) (_ interface{}, err []error) {
 	var nonStringReplacement interface{}
 	var placeholderRegex *regexp.Regexp = specificPathPlaceholder
+	allowEmpty, _ := strconv.ParseBool(resource.Annotations[types.AVPAllowEmptyAnnotation])
 
 	// If the Vault path annotation is present, there may be placeholders with/without an explicit path
 	// so we look for those. Only if the annotation is absent do we narrow the search to placeholders with
@@ -122,7 +123,9 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 				}
 			}
 		} else {
-			err = append(err, fmt.Errorf("replaceString: missing Vault value for placeholder %s in string %s: %s", placeholder, key, value))
+			if !allowEmpty {
+				err = append(err, fmt.Errorf("replaceString: missing Vault value for placeholder %s in string %s: %s", placeholder, key, value))
+			}
 		}
 
 		return match
