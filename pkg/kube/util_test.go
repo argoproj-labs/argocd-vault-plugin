@@ -368,7 +368,7 @@ func TestGenericReplacement_allowEmpty(t *testing.T) {
 		},
 	}
 
-	assertFailedReplacement(&dummyResource, &expected, t)
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
 }
 
 func TestSecretReplacement(t *testing.T) {
