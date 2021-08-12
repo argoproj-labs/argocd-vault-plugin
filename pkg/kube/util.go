@@ -14,6 +14,14 @@ import (
 	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
+type missingKeyError struct {
+	s string
+}
+
+func (e *missingKeyError) Error() string {
+	return e.s
+}
+
 var genericPlaceholder, _ = regexp.Compile(`(?mU)<(.*)>`)
 var specificPathPlaceholder, _ = regexp.Compile(`(?mU)<path:(.+)\#(.+)>`)
 var indivPlaceholderSyntax, _ = regexp.Compile(`(?mU)path:(.+?)\#(.+?)`)
@@ -25,6 +33,13 @@ func replaceInner(
 	r *Resource,
 	node *map[string]interface{},
 	replacerFunc func(string, string, Resource) (interface{}, []error)) {
+	removeMissing, _ := strconv.ParseBool(r.Annotations[types.AVPRemoveMissingAnnotation])
+	if removeMissing && (r.Kind != "Secret" && r.Kind != "ConfigMap") {
+		invalidRemoveMissingErr := fmt.Errorf("%s annotation can only be used on Secret or ConfigMap resources", types.AVPRemoveMissingAnnotation)
+		r.replacementErrors = append(r.replacementErrors, invalidRemoveMissingErr)
+		return
+	}
+
 	obj := *node
 	for key, value := range obj {
 		valueType := reflect.ValueOf(value).Kind()
@@ -57,20 +72,38 @@ func replaceInner(
 			}
 		} else if valueType == reflect.String {
 			// Base case, replace templated strings
+
+			removeKey := false
 			replacement, err := replacerFunc(key, value.(string), *r)
 			if len(err) != 0 {
+				if removeMissing {
+					var filteredErr []error
+					for _, e := range err {
+						if _, ok := e.(*missingKeyError); ok {
+							removeKey = true
+						} else {
+							filteredErr = append(filteredErr, e)
+						}
+					}
+
+					err = filteredErr
+				}
+
 				r.replacementErrors = append(r.replacementErrors, err...)
 			}
 
-			obj[key] = replacement
+			if removeKey {
+				delete(obj, key)
+			} else {
+				obj[key] = replacement
+			}
 		}
 	}
 }
 
 func genericReplacement(key, value string, resource Resource) (_ interface{}, err []error) {
 	var nonStringReplacement interface{}
-	var placeholderRegex *regexp.Regexp = specificPathPlaceholder
-	allowEmpty, _ := strconv.ParseBool(resource.Annotations[types.AVPAllowEmptyAnnotation])
+	var placeholderRegex = specificPathPlaceholder
 
 	// If the Vault path annotation is present, there may be placeholders with/without an explicit path
 	// so we look for those. Only if the annotation is absent do we narrow the search to placeholders with
@@ -123,9 +156,10 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 				}
 			}
 		} else {
-			if !allowEmpty {
-				err = append(err, fmt.Errorf("replaceString: missing Vault value for placeholder %s in string %s: %s", placeholder, key, value))
+			missingKeyErr := &missingKeyError{
+				s: fmt.Sprintf("replaceString: missing Vault value for placeholder %s in string %s: %s", placeholder, key, value),
 			}
+			err = append(err, missingKeyErr)
 		}
 
 		return match

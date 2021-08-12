@@ -84,6 +84,112 @@ func TestToYAML_Missing_PlaceholdersSpecificPath(t *testing.T) {
 		t.Fatalf("expected error \n%s but got error \n%s", expectedErr, err.Error())
 	}
 }
+
+func TestToYAML_RemoveMissing(t *testing.T) {
+	mv := helpers.MockVault{}
+
+	d := Template{
+		Resource{
+			Kind: "Secret",
+			Annotations: map[string]string{
+				types.AVPPathAnnotation:          "path/to/secret",
+				types.AVPRemoveMissingAnnotation: "true",
+			},
+			TemplateData: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "Secret",
+				"metadata": map[string]interface{}{
+					"namespace": "default",
+					"name":      "my-app",
+					"annotations": map[string]interface{}{
+						types.AVPPathAnnotation:          "path/to/secret",
+						types.AVPRemoveMissingAnnotation: "true",
+					},
+				},
+				"data": map[string]interface{}{
+					"MY_SECRET_STRING": "<string>",
+					"MY_SECRET_NUM":    "<num>",
+				},
+			},
+			Backend: &mv,
+			Data: map[string]interface{}{
+				"num": "NQ==",
+			},
+		},
+	}
+
+	err := d.Replace()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expectedData, err := ioutil.ReadFile("../../fixtures/output/secret-remove-missing.yaml")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	expected := string(expectedData)
+	actual, err := d.ToYAML()
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if !strings.Contains(actual, expected) {
+		t.Fatalf("expected YAML:\n%s\nbut got:\n%s\n", expected, actual)
+	}
+}
+
+func TestToYAML_RemoveMissingInvalidResource(t *testing.T) {
+	mv := helpers.MockVault{}
+
+	d := Template{
+		Resource{
+			Kind: "Service",
+			Annotations: map[string]string{
+				types.AVPRemoveMissingAnnotation: "true",
+				types.AVPPathAnnotation:          "path/to/secret",
+			},
+			TemplateData: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "Service",
+				"metadata": map[string]interface{}{
+					"namespace": "default",
+					"name":      "<name>",
+					"annotations": map[string]interface{}{
+						types.AVPRemoveMissingAnnotation: "true",
+						types.AVPPathAnnotation:          "path/to/secret",
+					},
+				},
+				"spec": map[string]interface{}{
+					"selector": map[string]interface{}{
+						"app": "<name>",
+					},
+					"ports": []interface{}{
+						map[string]interface{}{
+							"port": "<port>",
+						},
+					},
+				},
+			},
+			Backend: &mv,
+			Data: map[string]interface{}{
+				"name": "my-app",
+			},
+		},
+	}
+
+	expectedErr := "Replace: could not replace all placeholders in Template:\navp.kubernetes.io/remove-missing annotation can only be used on Secret or ConfigMap resources"
+
+	err := d.Replace()
+	if err == nil {
+		t.Fatalf("expected error %s but got success", expectedErr)
+	}
+
+	if expectedErr != err.Error() {
+		t.Fatalf("expected error \n%s but got error \n%s", expectedErr, err.Error())
+	}
+}
+
 func TestNewTemplate(t *testing.T) {
 	t.Run("will GetSecrets for placeholder'd YAML", func(t *testing.T) {
 		mv := helpers.MockVault{}
