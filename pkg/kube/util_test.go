@@ -3,7 +3,7 @@ package kube
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -322,7 +322,9 @@ func TestGenericReplacement_missingValue(t *testing.T) {
 			"namespace": "default",
 		},
 		replacementErrors: []error{
-			errors.New("replaceString: missing Vault value for placeholder replicas in string replicas: <replicas>"),
+			&missingKeyError{
+				s: fmt.Sprint("replaceString: missing Vault value for placeholder replicas in string replicas: <replicas>"),
+			},
 		},
 	}
 

@@ -25,7 +25,8 @@ const (
 	IAMAuth                  = "iam"
 	AwsDefaultRegion         = "us-east-2"
 
-	AVPPathAnnotation        = "avp.kubernetes.io/path"
-	AVPIgnoreAnnotation      = "avp.kubernetes.io/ignore"
-	VaultKVVersionAnnotation = "avp.kubernetes.io/kv-version"
+	AVPPathAnnotation          = "avp.kubernetes.io/path"
+	AVPIgnoreAnnotation        = "avp.kubernetes.io/ignore"
+	AVPRemoveMissingAnnotation = "avp.kubernetes.io/remove-missing"
+	VaultKVVersionAnnotation   = "avp.kubernetes.io/kv-version"
 )

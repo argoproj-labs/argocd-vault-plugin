@@ -164,3 +164,14 @@ metadata:
   namespace: default
 type: Opaque
 ---
+apiVersion: v1
+data:
+  PORT: 80
+kind: Secret
+metadata:
+  annotations:
+    avp.kubernetes.io/path: kv/data/testing
+    avp.kubernetes.io/remove-missing: "true"
+  name: my-app
+  namespace: default
+---
