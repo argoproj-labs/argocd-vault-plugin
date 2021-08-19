@@ -40,9 +40,15 @@ func (a *AWSSecretsManager) GetSecrets(path string, _ map[string]string) (map[st
 	var dat map[string]interface{}
 
 	if result.SecretString != nil {
-		err := json.Unmarshal([]byte(*result.SecretString), &dat)
-		if err != nil {
-			return nil, err
+		if json.Valid([]byte(*result.SecretString)) {
+			err := json.Unmarshal([]byte(*result.SecretString), &dat)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			dat = map[string]interface{}{
+				"plainValue": *result.SecretString,
+			}
 		}
 	} else {
 		return nil, fmt.Errorf("Could not find secret %s", path)
