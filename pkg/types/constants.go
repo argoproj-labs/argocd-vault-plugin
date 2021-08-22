@@ -19,6 +19,7 @@ const (
 	VaultBackend             = "vault"
 	IBMSecretsManagerbackend = "ibmsecretsmanager"
 	AWSSecretsManagerbackend = "awssecretsmanager"
+	GCPSecretManagerbackend  = "gcpsecretmanager"
 	K8sAuth                  = "k8s"
 	ApproleAuth              = "approle"
 	GithubAuth               = "github"

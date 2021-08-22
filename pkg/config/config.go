@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/IBM/argocd-vault-plugin/pkg/auth/ibmsecretsmanager"
 	"github.com/IBM/argocd-vault-plugin/pkg/auth/vault"
 	"github.com/IBM/argocd-vault-plugin/pkg/backends"
@@ -123,6 +125,15 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 
 			client := secretsmanager.New(s)
 			backend = backends.NewAWSSecretsManagerBackend(client)
+		}
+	case types.GCPSecretManagerbackend:
+		{
+			ctx := context.Background()
+			client, err := secretmanager.NewClient(ctx)
+			if err != nil {
+				return nil, err
+			}
+			backend = backends.NewGCPSecretManagerBackend(ctx, client)
 		}
 	default:
 		return nil, errors.New("Must provide a supported Vault Type")

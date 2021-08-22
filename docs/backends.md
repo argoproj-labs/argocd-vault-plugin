@@ -202,3 +202,41 @@ stringData:
   sample-secret: <path:test-aws-secret#test-secret>
 type: Opaque
 ```
+
+### GCP Secret Manager
+
+##### GCP Authentication
+Refer to the [Authentication Overview](https://cloud.google.com/docs/authentication) for Google Cloud APIs.
+
+These are the parameters for GCP:
+```
+AVP_TYPE: gcpsecretmanager
+```
+
+##### Examples
+
+###### Path Annotation
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: projects/12345678987/secrets/test-secret/versions/latest
+type: Opaque
+data:
+  password: <test-secret>
+```
+
+###### Inline Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+type: Opaque
+data:
+  password: <path:projects/12345678987/secrets/test-secret/versions/latest#test-secret>
+```
