@@ -87,6 +87,13 @@ func TestNewConfig(t *testing.T) {
 			},
 			"*backends.AWSSecretsManager",
 		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":                       "gcpsecretmanager",
+				"GOOGLE_APPLICATION_CREDENTIALS": "../../fixtures/input/gac.json",
+			},
+			"*backends.GCPSecretManager",
+		},
 	}
 	for _, tc := range testCases {
 		for k, v := range tc.environment {

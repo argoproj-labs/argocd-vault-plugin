@@ -42,7 +42,7 @@ We support all Vault Environment Variables listed [here](https://www.vaultprojec
 
 | Name            | Description | Notes |
 | --------------- | ----------- | ----- |
-| AVP_TYPE           | The type of Vault backend  | Supported values: `vault`, `ibmsecretsmanager` and `awssecretsmanager` |
+| AVP_TYPE           | The type of Vault backend  | Supported values: `vault`, `ibmsecretsmanager`, `awssecretsmanager` and `gcpsecretmanager` |
 | AVP_KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `avp.kubernetes.io/kv-version` annotation is present in a YAML resource.|
 | AVP_AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github, k8s`   ibmsecretsmanager: `iam` |
 | AVP_GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
