@@ -57,7 +57,7 @@ func TestMain(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		expected := "no YAML files were found in ./fixtures/input/empty/"
+		expected := "no YAML or JSON files were found in ./fixtures/input/empty/"
 		if !strings.Contains(string(out), expected) {
 			t.Fatalf("expected to contain: %s but got %s", expected, out)
 		}

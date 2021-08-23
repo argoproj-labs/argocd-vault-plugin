@@ -12,11 +12,11 @@ import (
 	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
-func listYamlFiles(root string) ([]string, error) {
+func listFiles(root string) ([]string, error) {
 	var files []string
 
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if filepath.Ext(path) == ".yaml" || filepath.Ext(path) == ".yml" {
+		if filepath.Ext(path) == ".yaml" || filepath.Ext(path) == ".yml" || filepath.Ext(path) == ".json" {
 			files = append(files, path)
 		}
 		return nil
@@ -32,11 +32,11 @@ func readFilesAsManifests(paths []string) (result []unstructured.Unstructured, e
 	for _, path := range paths {
 		rawdata, err := ioutil.ReadFile(path)
 		if err != nil {
-			errs = append(errs, fmt.Errorf("could not read YAML: %s from disk: %s", path, err))
+			errs = append(errs, fmt.Errorf("could not read file: %s from disk: %s", path, err))
 		}
 		manifest, err := readManifestData(bytes.NewReader(rawdata))
 		if err != nil {
-			errs = append(errs, fmt.Errorf("could not read YAML: %s from disk: %s", path, err))
+			errs = append(errs, fmt.Errorf("could not read file: %s from disk: %s", path, err))
 		}
 		result = append(result, manifest...)
 	}
@@ -45,7 +45,7 @@ func readFilesAsManifests(paths []string) (result []unstructured.Unstructured, e
 }
 
 func readManifestData(yamlData io.Reader) ([]unstructured.Unstructured, error) {
-	decoder := k8yaml.NewYAMLToJSONDecoder(yamlData)
+	decoder := k8yaml.NewYAMLOrJSONDecoder(yamlData, 1)
 
 	var manifests []unstructured.Unstructured
 	for {
