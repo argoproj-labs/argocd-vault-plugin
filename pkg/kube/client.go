@@ -3,6 +3,8 @@ package kube
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -34,9 +36,26 @@ func NewClient() (*Client, error) {
 // ReadSecret reads the specified Secret from the `argocd` namespace
 // and returns a YAML []byte containing its data, decoded from base64
 func (c *Client) ReadSecret(name string) ([]byte, error) {
-	s, err := c.client.CoreV1().Secrets("argocd").Get(context.TODO(), name, metav1.GetOptions{})
+
+	var namespace, secretname string
+
+	// parse `namespace/secret` or get namespace from the service account.
+	if strings.Contains(name, "/") {
+		split := strings.Split(name, "/")
+		namespace = split[0]
+		secretname = split[1]
+	} else {
+		namespace_bytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+		if err != nil {
+			return nil, fmt.Errorf("could not get namespace for serviceaccount: %s", err)
+		}
+		namespace = strings.TrimSpace(string(namespace_bytes))
+		secretname = name
+	}
+
+	s, err := c.client.CoreV1().Secrets(namespace).Get(context.TODO(), secretname, metav1.GetOptions{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not get Secret %s/%s: %s", namespace, secretname, err)
 	}
 	decoded := make(map[string]string)
 	for key, value := range s.Data {
