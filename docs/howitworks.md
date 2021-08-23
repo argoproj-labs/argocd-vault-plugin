@@ -1,9 +1,10 @@
-The argocd-vault-plugin works by taking a directory of yaml files that have been templated out using the pattern of `<placeholder>` where you would want a value from Vault to go. The inside of the `<>` would be the actual key in Vault.
+The argocd-vault-plugin works by taking a directory of YAML or JSON files that have been templated out using the pattern of `<placeholder>` where you would want a value from Vault to go. The inside of the `<>` would be the actual key in Vault.
 
 An annotation can be used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp.kubernetes.io/path: "path/to/secret"`.
 
-For example, if you have a secret with the key `password-vault-key` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/secret/password-vault-key` and inject it into the secret yaml.
+For example, if you have a secret with the key `password-vault-key` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/secret/password-vault-key` and inject it into the Secret.
 
+As YAML:
 ```yaml
 kind: Secret
 apiVersion: v1
@@ -16,7 +17,25 @@ data:
   password: <password-vault-key>
 ```
 
-And then once the plugin is done doing the substitutions, it outputs the yaml to standard out to then be applied by Argo CD. The resulting yaml would look like:
+As JSON:
+```json
+{
+  "kind": "Secret",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "example-secret",
+    "annotations": {
+      "avp.kubernetes.io/path": "path/to/secret"
+    }
+  },
+  "type": "Opaque",
+  "data": {
+    "password": "<password-vault-key>"
+  }
+}
+```
+
+And then once the plugin is done doing the substitutions, it outputs the manifest as YAML to standard out to then be applied by Argo CD. The resulting YAML would look like:
 ```yaml
 kind: Secret
 apiVersion: v1
@@ -41,7 +60,7 @@ data:
   password: <path:path/to/secret#password-vault-key>
 ```
 
-The plugin tries to be helpful and will ignore strings in the format `<string>` if the `avp.kubernetes.io/path` annotation is missing, and only consider strings in the format `<path:/path/to/secret#key>` as placeholders. This can be very useful when using AVP with YAML that uses `<string>`'s for other purposes, for example in CRD's with usage information:
+The plugin tries to be helpful and will ignore strings in the format `<string>` if the `avp.kubernetes.io/path` annotation is missing, and only consider strings in the format `<path:/path/to/secret#key>` as placeholders. This can be very useful when using AVP with YAML/JSON that uses `<string>`'s for other purposes, for example in CRD's with usage information:
 
 ```yaml
 kind: CustomResourceDefinition
@@ -80,7 +99,7 @@ data:
   POSTGRES_URL: cG9zdGdyZXM6Ly88dXNlcm5hbWU+OjxwYXNzd29yZD5APGhvc3Q+Ojxwb3J0Pi88ZGF0YWJhc2U+P3NzbG1vZGU9cmVxdWlyZQ==
 ```
 
-Finally, the plugin will ignore any given YAML file outright with the `avp.kubernetes.io/ignore` annotation set to `"true"`:
+Finally, the plugin will ignore any given YAML/JSON file outright with the `avp.kubernetes.io/ignore` annotation set to `"true"`:
 
 ```yaml
 kind: CustomResourceDefinition

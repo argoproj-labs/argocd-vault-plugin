@@ -126,13 +126,24 @@ Helm args must be defined in the application manifest:
           value: -f values-dev.yaml -f values-dev-tag.yaml
 ```
 
-Or if you are using Kustomize:
+If you are using Kustomize add:
 ```yaml
 configManagementPlugins: |
   - name: argocd-vault-plugin-kustomize
     generate:
       command: ["sh", "-c"]
       args: ["kustomize build . > all.yaml && argocd-vault-plugin generate all.yaml"]
+```
+
+to the `argocd-cm` configMap.
+
+Or if you are using Jsonnet add:
+```yaml
+configManagementPlugins: |
+  - name: argocd-vault-plugin-jsonnet
+    generate:
+      command: ["sh", "-c"]
+      args: ["jsonnet . | argocd-vault-plugin generate -"]
 ```
 
 to the `argocd-cm` configMap.

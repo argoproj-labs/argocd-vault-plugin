@@ -38,9 +38,9 @@ func NewGenerateCommand() *cobra.Command {
 					return err
 				}
 			} else {
-				files, err := listYamlFiles(path)
+				files, err := listFiles(path)
 				if len(files) < 1 {
-					return fmt.Errorf("no YAML files were found in %s", path)
+					return fmt.Errorf("no YAML or JSON files were found in %s", path)
 				}
 				if err != nil {
 					return err
@@ -50,7 +50,7 @@ func NewGenerateCommand() *cobra.Command {
 				manifests, errs = readFilesAsManifests(files)
 				if len(errs) != 0 {
 					// TODO: handle multiple errors nicely
-					return fmt.Errorf("could not read YAML files: %s", errs)
+					return fmt.Errorf("could not read YAML/JSON files: %s", errs)
 				}
 			}
 
