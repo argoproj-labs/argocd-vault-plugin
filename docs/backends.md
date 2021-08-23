@@ -91,6 +91,36 @@ AVP_K8S_ROLE: Your Kuberetes Auth Role
 AVP_K8S_TOKEN_PATH: Path to JWT (optional)
 ```
 
+##### Examples
+
+###### Path Annotation
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: vault-exmaple
+  annotations:
+    avp.kubernetes.io/path: "secret/data/database"
+type: Opaque
+data:
+  username: <username>
+  password: <password>
+```
+
+###### Inline Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: vault-exmaple
+type: Opaque
+data:
+  username: <path:secret/data/database#username>
+  password: <path:secret/data/database#password>
+```
+
 ### IBM Cloud Secrets Manager
 For IBM Cloud Secret Manager we only support using IAM authentication at this time.
 
@@ -103,6 +133,36 @@ AVP_AUTH_TYPE: iam
 AVP_IBM_API_KEY: Your IBM Cloud API Key
 ```
 
+##### Examples
+
+###### Path Annotation
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: ibm-exmaple
+  annotations:
+    avp.kubernetes.io/path: "ibmcloud/arbitrary/secrets/groups/123" # 123 represents your Secret Group ID
+type: Opaque
+data:
+  username: <username>
+  password: <password>
+```
+
+###### Inline Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: ibm-exmaple
+type: Opaque
+data:
+  username: <path:ibmcloud/arbitrary/secrets/groups/123#username>
+  password: <path:ibmcloud/arbitrary/secrets/groups/123#password>
+```
+
 ### AWS Secrets Manager
 
 ##### AWS Authentication
@@ -113,4 +173,32 @@ These are the parameters for AWS:
 ```
 AVP_TYPE: awssecretsmanager
 AWS_REGION: Your AWS Region (Optional: defaults to us-east-2)
+```
+
+##### Examples
+
+###### Path Annotation
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-example
+  annotations:
+    avp.kubernetes.io/path: "test-aws-secret" # The name of your AWS Secret
+stringData:
+  sample-secret: <test-secret>
+type: Opaque
+```
+
+###### Inline Path
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-example
+stringData:
+  sample-secret: <path:test-aws-secret#test-secret>
+type: Opaque
 ```
