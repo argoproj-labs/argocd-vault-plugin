@@ -29,7 +29,6 @@ func (g *GithubAuth) Authenticate(vaultClient *api.Client) error {
 	if err != nil {
 		return err
 	}
-
 	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
 	err = utils.SetToken(vaultClient, data.Auth.ClientToken)
 	if err != nil {

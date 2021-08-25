@@ -1,4 +1,4 @@
-This is a plugin to replace <wildcards\> with Vault secrets
+This is a plugin to replace <placeholder\>'s with Vault secrets
 
 ```
 argocd-vault-plugin [flags]

@@ -228,6 +228,56 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 	return cluster, roleID, secretID
 }
 
+// CreateTestGithubVault initializes a new test vault with AppRole and Kv v2
+func CreateTestAuthVault(t *testing.T) *vault.TestCluster {
+	t.Helper()
+
+	coreConfig := &vault.CoreConfig{
+		CredentialBackends: map[string]logical.Factory{
+			"github":     Factory,
+			"kubernetes": Factory,
+			"ibmcloud":   Factory,
+		},
+	}
+
+	cluster := vault.NewTestCluster(t, coreConfig, &vault.TestClusterOptions{
+		HandlerFunc: http.Handler,
+	})
+
+	cluster.Start()
+
+	vault.TestWaitActive(t, cluster.Cores[0].Core)
+
+	client := cluster.Cores[0].Client
+
+	client.Sys().Mount("kv", &api.MountInput{
+		Type: "kv",
+		Options: map[string]string{
+			"version": "2",
+		},
+	})
+
+	if err := client.Sys().EnableAuthWithOptions("github", &api.EnableAuthOptions{
+		Type: "github",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := client.Sys().EnableAuthWithOptions("kubernetes", &api.EnableAuthOptions{
+		Type: "kubernetes",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := client.Sys().EnableAuthWithOptions("ibmcloud", &api.EnableAuthOptions{
+		Type: "ibmcloud",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	return cluster
+}
+
 type MockVault struct {
 	GetSecretsCalled bool
 	Data             map[string]interface{}
