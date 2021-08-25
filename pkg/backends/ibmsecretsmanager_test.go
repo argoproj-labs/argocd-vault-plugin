@@ -2,21 +2,29 @@ package backends_test
 
 import (
 	"fmt"
+	"net/http"
 	"reflect"
 	"testing"
 
+	"github.com/IBM/argocd-vault-plugin/pkg/auth/ibmsecretsmanager"
 	"github.com/IBM/argocd-vault-plugin/pkg/backends"
 	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
 )
+
+// MockClient is the mock client
+type MockClient struct{}
+
+// Do is the mock client's `Do` func
+func (m *MockClient) Do(req *http.Request) (*http.Response, error) {
+	return &http.Response{}, nil
+}
 
 func TestSecretsManagerGetSecrets(t *testing.T) {
 	ln, client, _ := helpers.CreateTestVault(t)
 	defer ln.Close()
 
-	sm := backends.IBMSecretsManager{
-		IBMCloudAPIKey: "token",
-		VaultClient:    client,
-	}
+	iamAuth := ibmsecretsmanager.NewIAMAuth("token", &MockClient{})
+	sm := backends.NewIBMSecretsManagerBackend(iamAuth, client)
 
 	expected := map[string]interface{}{
 		"secret":  "value",
@@ -37,10 +45,8 @@ func TestSecretsmanagerGetSecretsFail(t *testing.T) {
 	ln, client, _ := helpers.CreateTestVault(t)
 	defer ln.Close()
 
-	sm := backends.IBMSecretsManager{
-		IBMCloudAPIKey: "token",
-		VaultClient:    client,
-	}
+	iamAuth := ibmsecretsmanager.NewIAMAuth("token", &MockClient{})
+	sm := backends.NewIBMSecretsManagerBackend(iamAuth, client)
 
 	_, err := sm.GetSecrets("secret/ibm/arbitrary/groups/3", map[string]string{})
 
