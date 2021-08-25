@@ -16,6 +16,10 @@ nav:
   - Usage: usage.md
   - Backends: backends.md
   - Configuration: config.md
+  - CLI Reference:
+    - argocd-vault-plugin: cmd/avp.md
+    - argocd-vault-plugin generate: cmd/generate.md
+    - argocd-vault-plugin version: cmd/version.md
   - Upgrading:
      - v0.x to v1.x: 0x-1x.md
   - Releases ⧉: https://github.com/IBM/argocd-vault-plugin/releases
