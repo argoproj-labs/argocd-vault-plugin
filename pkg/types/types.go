@@ -1,6 +1,8 @@
 package types
 
 import (
+	"net/http"
+
 	"github.com/hashicorp/vault/api"
 )
 
@@ -13,4 +15,9 @@ type Backend interface {
 // AuthType is and interface for the supported authentication methods
 type AuthType interface {
 	Authenticate(*api.Client) error
+}
+
+// HTTPClient interface
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/IBM/argocd-vault-plugin/pkg/backends"
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
 	"github.com/IBM/argocd-vault-plugin/pkg/types"
+	"github.com/IBM/argocd-vault-plugin/pkg/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
@@ -100,7 +101,7 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 			switch authType {
 			case types.IAMAuth:
 				if v.IsSet(types.EnvAvpIBMAPIKey) {
-					auth = ibmsecretsmanager.NewIAMAuth(v.GetString(types.EnvAvpIBMAPIKey))
+					auth = ibmsecretsmanager.NewIAMAuth(v.GetString(types.EnvAvpIBMAPIKey), utils.DefaultHttpClient())
 				} else {
 					return nil, fmt.Errorf("%s for iam authentication cannot be empty", types.EnvAvpIBMAPIKey)
 				}

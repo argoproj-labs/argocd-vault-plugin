@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
+	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	"github.com/IBM/argocd-vault-plugin/pkg/utils"
 	"github.com/hashicorp/vault/api"
 )
@@ -16,12 +16,14 @@ import (
 // IAMAuth is a struct for working with SecretManager that uses IAM
 type IAMAuth struct {
 	APIKey string
+	Client types.HTTPClient
 }
 
 // NewIAMAuth initializes a new IAMAuth with api key
-func NewIAMAuth(apikey string) *IAMAuth {
+func NewIAMAuth(apikey string, client types.HTTPClient) *IAMAuth {
 	iamAuth := &IAMAuth{
 		APIKey: apikey,
+		Client: client,
 	}
 
 	return iamAuth
@@ -29,7 +31,7 @@ func NewIAMAuth(apikey string) *IAMAuth {
 
 // Authenticate authenticates with Vault using App Role and returns a token
 func (i *IAMAuth) Authenticate(vaultClient *api.Client) error {
-	accessToken, err := getAccessToken(i.APIKey)
+	accessToken, err := getAccessToken(i.APIKey, i.Client)
 	if err != nil {
 		return err
 	}
@@ -52,7 +54,7 @@ func (i *IAMAuth) Authenticate(vaultClient *api.Client) error {
 	return nil
 }
 
-func getAccessToken(apikey string) (string, error) {
+func getAccessToken(apikey string, client types.HTTPClient) (string, error) {
 	// Set url values to be added to the request
 	urlValues := url.Values{}
 	urlValues.Set("grant_type", "urn:ibm:params:oauth:grant-type:apikey")
@@ -66,12 +68,8 @@ func getAccessToken(apikey string) (string, error) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Accept", "application/json")
 
-	var httpClient = &http.Client{
-		Timeout: 10 * time.Second,
-	}
-
 	// Perform http request
-	res, err := httpClient.Do(req)
+	res, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}

@@ -8,7 +8,7 @@ import (
 func NewRootCommand() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "argocd-vault-plugin",
-		Short: "This is a plugin to replace <wildcards> with Vault secrets",
+		Short: "This is a plugin to replace <placeholders> with Vault secrets",
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.HelpFunc()(cmd, args)
 		},
