@@ -10,16 +10,16 @@ import (
 	"strconv"
 	"strings"
 
-	secretmanager "cloud.google.com/go/secretmanager/apiv1"
-	"github.com/IBM/argocd-vault-plugin/pkg/auth/ibmsecretsmanager"
+	gcpsm "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/IBM/argocd-vault-plugin/pkg/auth/vault"
 	"github.com/IBM/argocd-vault-plugin/pkg/backends"
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
 	"github.com/IBM/argocd-vault-plugin/pkg/types"
-	"github.com/IBM/argocd-vault-plugin/pkg/utils"
+	"github.com/IBM/go-sdk-core/v5/core"
+	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv1"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	awssm "github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/hashicorp/vault/api"
 	"github.com/spf13/viper"
 )
@@ -93,22 +93,14 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 		}
 	case types.IBMSecretsManagerbackend:
 		{
-			apiClient, err := api.NewClient(api.DefaultConfig())
+			client, err := ibmsm.NewSecretsManagerV1(&ibmsm.SecretsManagerV1Options{
+				Authenticator: &core.IamAuthenticator{ApiKey: v.GetString(types.EnvAvpIBMAPIKey)},
+				URL:           v.GetString(types.EnvAvpIBMInstanceURL),
+			})
 			if err != nil {
 				return nil, err
 			}
-
-			switch authType {
-			case types.IAMAuth:
-				if v.IsSet(types.EnvAvpIBMAPIKey) {
-					auth = ibmsecretsmanager.NewIAMAuth(v.GetString(types.EnvAvpIBMAPIKey), utils.DefaultHttpClient())
-				} else {
-					return nil, fmt.Errorf("%s for iam authentication cannot be empty", types.EnvAvpIBMAPIKey)
-				}
-			default:
-				return nil, errors.New("Must provide a supported Authentication Type")
-			}
-			backend = backends.NewIBMSecretsManagerBackend(auth, apiClient)
+			backend = backends.NewIBMSecretsManagerBackend(client)
 		}
 	case types.AWSSecretsManagerbackend:
 		{
@@ -124,13 +116,13 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				return nil, err
 			}
 
-			client := secretsmanager.New(s)
+			client := awssm.New(s)
 			backend = backends.NewAWSSecretsManagerBackend(client)
 		}
 	case types.GCPSecretManagerbackend:
 		{
 			ctx := context.Background()
-			client, err := secretmanager.NewClient(ctx)
+			client, err := gcpsm.NewClient(ctx)
 			if err != nil {
 				return nil, err
 			}
