@@ -4,8 +4,11 @@ go 1.16
 
 require (
 	cloud.google.com/go v0.81.0
+	github.com/IBM/go-sdk-core/v5 v5.5.0
+	github.com/IBM/secrets-manager-go-sdk v1.0.24
 	github.com/aws/aws-sdk-go v1.40.9
 	github.com/googleapis/gax-go/v2 v2.0.5
+	github.com/hashicorp/go-hclog v0.16.1
 	github.com/hashicorp/vault v1.7.3
 	github.com/hashicorp/vault/api v1.1.1
 	github.com/hashicorp/vault/sdk v0.2.1
