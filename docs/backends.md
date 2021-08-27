@@ -308,3 +308,61 @@ data:
   current-password-again: <path:projects/12345678987/secrets/test-secret#password#latest>
   password-old: <path:projects/12345678987/secrets/test-secret#password#another-version-id>
 ```
+
+### AZURE Key Vault
+
+##### Azure Authentication
+Refer to the [Use environment-based authentication](https://docs.microsoft.com/en-us/azure/developer/go/azure-sdk-authorization#use-environment-based-authentication) in the Azure SDK for Go.
+
+Any secrets that are disabled in the key vault will be skipped if found.
+
+For Azure, `path` is the unique name of your key vault.
+
+**Note**: Versioning is only supported for inline paths.
+
+These are the parameters for Azure:
+```
+AVP_TYPE: azurekeyvault
+```
+
+##### Examples
+
+###### Path Annotation
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: "keyvault"
+type: Opaque
+data:
+  password: <test-secret>
+```
+
+###### Inline Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+type: Opaque
+data:
+  password: <path:keyvault#test-secret>
+```
+
+###### Versioned secrets
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+type: Opaque
+data:
+  current-password: <path:keyvault#password>
+  current-password-again: <path:keyvault#password#8f8da2e06c8240808ee439ff093803b5>
+  password-old: <path:keyvault#password#33740fc26214497f8904d93f20f7db6d>
+```
