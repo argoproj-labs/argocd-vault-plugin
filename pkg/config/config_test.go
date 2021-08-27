@@ -110,6 +110,15 @@ func TestNewConfig(t *testing.T) {
 			},
 			"*backends.GCPSecretManager",
 		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":            "azurekeyvault",
+				"AZURE_TENANT_ID":     "test",
+				"AZURE_CLIENT_ID":     "test",
+				"AZURE_CLIENT_SECRET": "test",
+			},
+			"*backends.AzureKeyVault",
+		},
 	}
 	for _, tc := range testCases {
 		for k, v := range tc.environment {
@@ -278,6 +287,14 @@ func TestNewConfigMissingParameter(t *testing.T) {
 				"AWS_WEB_IDENTITY_TOKEN_FILE": "/var/run/secrets/eks.amazonaws.com/serviceaccount/token",
 			},
 			"*backends.AWSSecretsManager",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":            "azurekeyvault",
+				"AZURE_TENANT_ID":     "test",
+				"AZURE_CLIENT_ID":     "test",
+			},
+			"*backends.AzureKeyVault",
 		},
 	}
 	for _, tc := range testCases {

@@ -11,6 +11,8 @@ import (
 	"strings"
 
 	gcpsm "cloud.google.com/go/secretmanager/apiv1"
+	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/keyvault"
+	kvauth "github.com/Azure/azure-sdk-for-go/services/keyvault/auth"
 	"github.com/IBM/argocd-vault-plugin/pkg/auth/vault"
 	"github.com/IBM/argocd-vault-plugin/pkg/backends"
 	"github.com/IBM/argocd-vault-plugin/pkg/kube"
@@ -142,6 +144,17 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				return nil, err
 			}
 			backend = backends.NewGCPSecretManagerBackend(ctx, client)
+		}
+	case types.AzureKeyVaultbackend:
+		{
+			authorizer, err := kvauth.NewAuthorizerFromEnvironment()
+			if err != nil {
+				return nil, err
+			}
+
+			basicClient := keyvault.New()
+			basicClient.Authorizer = authorizer
+			backend = backends.NewAzureKeyVaultBackend(basicClient)
 		}
 	default:
 		return nil, errors.New("Must provide a supported Vault Type")
