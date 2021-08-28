@@ -147,6 +147,7 @@ type: Opaque
 apiVersion: v1
 data:
   SECRET_VAR: dGVzdC1wYXNzd29yZA==
+  SECRET_VAR_VERSIONED: dGVzdC1wYXNzd29yZA==
 kind: Secret
 metadata:
   annotations:
@@ -187,4 +188,19 @@ metadata:
     avp.kubernetes.io/remove-missing: "true"
   name: my-app
   namespace: default
+---
+apiVersion: v1
+data:
+  SECRET_VAR: version1
+  SECRET_VAR_CURRENT: version2
+  SECRET_VAR_V2: version2
+kind: Secret
+metadata:
+  annotations:
+    avp.kubernetes.io/kv-version: "2"
+    avp.kubernetes.io/path: kv/data/versioned
+    avp.kubernetes.io/secret-version: "1"
+  name: example-secret
+  namespace: default
+type: Opaque
 ---

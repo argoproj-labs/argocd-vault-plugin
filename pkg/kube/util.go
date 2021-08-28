@@ -23,8 +23,8 @@ func (e *missingKeyError) Error() string {
 }
 
 var genericPlaceholder, _ = regexp.Compile(`(?mU)<(.*)>`)
-var specificPathPlaceholder, _ = regexp.Compile(`(?mU)<path:(.+)\#(.+)>`)
-var indivPlaceholderSyntax, _ = regexp.Compile(`(?mU)path:(.+?)\#(.+?)`)
+var specificPathPlaceholder, _ = regexp.Compile(`(?mU)<path:([^#]+)#([^#]+)(?:#([^#]+))?>`)
+var indivPlaceholderSyntax, _ = regexp.Compile(`(?mU)path:(?P<path>[^#]+?)#(?P<key>[^#]+?)(?:#(?P<version>.+?))??`)
 var modifier, _ = regexp.Compile(`\|(.*)`)
 
 // replaceInner recurses through the given map and replaces the placeholders by calling `replacerFunc`
@@ -125,21 +125,26 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 		}
 
 		var secretValue interface{}
-		// Check to see if should call out to get individual secret (specific path in placeholder)
+		// Check to see if should call out to get individual secret (inline-path in placeholder)
+		// This can include an optional version argument - if unspecified, the latest version is retrieved
 		if indivPlaceholderSyntax.Match([]byte(placeholder)) {
-			indivSecretMatches := indivPlaceholderSyntax.FindSubmatch([]byte(placeholder))
-			secrets, secretErr := resource.Backend.GetSecrets(string(indivSecretMatches[1]), resource.Annotations)
+			indivSecretMatches := indivPlaceholderSyntax.FindStringSubmatch(placeholder)
+			path := indivSecretMatches[indivPlaceholderSyntax.SubexpIndex("path")]
+			key := indivSecretMatches[indivPlaceholderSyntax.SubexpIndex("key")]
+			version := indivSecretMatches[indivPlaceholderSyntax.SubexpIndex("version")]
+
+			secrets, secretErr := resource.Backend.GetSecrets(path, version, resource.Annotations)
 			if secretErr != nil {
 				err = append(err, secretErr)
 				return match
 			}
-			secretKey := strings.TrimSpace(string(indivSecretMatches[2]))
+
+			secretKey := strings.TrimSpace(key)
 			secretValue = secrets[secretKey]
 		} else {
-			secretValue = resource.Data[string(placeholder)]
+			secretValue = resource.Data[placeholder]
 		}
 
-		// Check for value in data
 		if secretValue != nil {
 			switch secretValue.(type) {
 			case string:

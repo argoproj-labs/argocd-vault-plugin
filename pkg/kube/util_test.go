@@ -38,6 +38,7 @@ func assertFailedReplacement(actual, expected *Resource, t *testing.T) {
 		t.Fatalf("expected Vault map to look like %s\n but got: %s", expected.Data, actual.Data)
 	}
 }
+
 func TestGenericReplacement_simpleString(t *testing.T) {
 	dummyResource := Resource{
 		TemplateData: map[string]interface{}{
@@ -109,6 +110,54 @@ func TestGenericReplacement_specificPath(t *testing.T) {
 
 	assertSuccessfulReplacement(&dummyResource, &expected, t)
 }
+
+func TestGenericReplacement_specificPathVersioned(t *testing.T) {
+	// Test that the specific-path placeholder syntax with versioning is used to find/replace placeholders
+	mv := helpers.MockVault{}
+	mv.LoadData(map[string]interface{}{
+		"version": "one",
+	})
+	mv.LoadData(map[string]interface{}{
+		"version": "two",
+	})
+	mv.LoadData(map[string]interface{}{
+		"version": "three",
+	})
+
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"first":  "<path:blah/blah#version#1>",
+			"second": "<path:blah/blah#version#2>",
+			"third":  "<path:blah/blah#version#3>",
+			"latest": "<path:blah/blah#version>",
+		},
+		Data:    map[string]interface{}{},
+		Backend: &mv,
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+	if !mv.GetSecretsCalled {
+		t.Fatalf("expected GetSecrets to be called since placeholder contains explicit path so Vault lookup is neeed")
+	}
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"first":  "one",
+			"second": "two",
+			"third":  "three",
+			"latest": "three",
+		},
+		Data:              map[string]interface{}{},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
 func TestGenericReplacement_specificPathNoAnnotation(t *testing.T) {
 	mv := helpers.MockVault{}
 	mv.LoadData(map[string]interface{}{

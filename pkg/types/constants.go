@@ -15,6 +15,7 @@ const (
 	EnvAvpKvVersion      = "AVP_KV_VERSION"
 	EnvAvpPathPrefix     = "AVP_PATH_PREFIX"
 	EnvAWSRegion         = "AWS_REGION"
+	EnvVaultAddress      = "VAULT_ADDR"
 
 	// Backend and Auth Constants
 	VaultBackend             = "vault"
@@ -26,9 +27,13 @@ const (
 	GithubAuth               = "github"
 	IAMAuth                  = "iam"
 	AwsDefaultRegion         = "us-east-2"
+	AWSCurrentSecretVersion  = "AWSCURRENT"
+	GCPCurrentSecretVersion  = "latest"
 
+	// Supported annotations
 	AVPPathAnnotation          = "avp.kubernetes.io/path"
 	AVPIgnoreAnnotation        = "avp.kubernetes.io/ignore"
 	AVPRemoveMissingAnnotation = "avp.kubernetes.io/remove-missing"
+	AVPSecretVersionAnnotation = "avp.kubernetes.io/secret-version"
 	VaultKVVersionAnnotation   = "avp.kubernetes.io/kv-version"
 )

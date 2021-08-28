@@ -3,10 +3,14 @@ package backends
 import (
 	"context"
 	"fmt"
+	"regexp"
+
+	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	"github.com/googleapis/gax-go/v2"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
-	"strings"
 )
+
+var GCPPath, _ = regexp.Compile(`projects/(?P<projectid>.+)/secrets/(?P<secretid>.+)`)
 
 type SecretManagerClient interface {
 	AccessSecretVersion(ctx context.Context, req *secretmanagerpb.AccessSecretVersionRequest, opts ...gax.CallOption) (*secretmanagerpb.AccessSecretVersionResponse, error)
@@ -32,9 +36,18 @@ func (a *GCPSecretManager) Login() error {
 }
 
 // GetSecrets gets secrets from GCP Secret Manager and returns the formatted data
-func (a *GCPSecretManager) GetSecrets(path string, _ map[string]string) (map[string]interface{}, error) {
+// The path is of format `projects/project-id/secrets/secret-id`
+func (a *GCPSecretManager) GetSecrets(path string, version string, annotations map[string]string) (map[string]interface{}, error) {
+	matches := GCPPath.FindStringSubmatch(path)
+	if len(matches) == 0 {
+		return nil, fmt.Errorf("Path is not in the correct format (projects/$PROJECT_ID/secrets/$SECRET_ID) for GCP Secrets Manager: %s", path)
+	}
+
+	if version == "" {
+		version = types.GCPCurrentSecretVersion
+	}
 	req := &secretmanagerpb.AccessSecretVersionRequest{
-		Name: path,
+		Name: fmt.Sprintf("%s/versions/%s", path, version),
 	}
 
 	result, err := a.Client.AccessSecretVersion(a.Context, req)
@@ -44,7 +57,7 @@ func (a *GCPSecretManager) GetSecrets(path string, _ map[string]string) (map[str
 
 	data := make(map[string]interface{})
 
-	secretName := strings.Split(path, "/")[3]
+	secretName := matches[GCPPath.SubexpIndex("secretid")]
 	secretData := result.Payload.Data
 	data[secretName] = secretData
 

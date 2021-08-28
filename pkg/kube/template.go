@@ -28,11 +28,12 @@ type Template struct {
 func NewTemplate(template unstructured.Unstructured, backend types.Backend) (*Template, error) {
 	annotations := template.GetAnnotations()
 	path := annotations[types.AVPPathAnnotation]
+	version := annotations[types.AVPSecretVersionAnnotation]
 
 	var err error
 	var data map[string]interface{}
 	if path != "" {
-		data, err = backend.GetSecrets(path, annotations)
+		data, err = backend.GetSecrets(path, version, annotations)
 		if err != nil {
 			return nil, err
 		}
