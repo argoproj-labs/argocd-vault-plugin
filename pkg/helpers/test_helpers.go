@@ -2,8 +2,11 @@ package helpers
 
 import (
 	"net"
+	"strconv"
 	"testing"
 
+	"github.com/hashicorp/go-hclog"
+	kv "github.com/hashicorp/vault-plugin-secrets-kv"
 	"github.com/hashicorp/vault/api"
 	credAppRole "github.com/hashicorp/vault/builtin/credential/approle"
 	"github.com/hashicorp/vault/http"
@@ -16,7 +19,9 @@ func CreateTestVault(t *testing.T) (net.Listener, *api.Client, string) {
 	t.Helper()
 
 	// Create an in-memory, unsealed core (the "backend", if you will).
-	core, keyShares, rootToken := vault.TestCoreUnsealed(t)
+	core, keyShares, rootToken := vault.TestCoreUnsealedWithConfig(t, &vault.CoreConfig{
+		Logger: hclog.NewNullLogger(),
+	})
 	_ = keyShares
 
 	// Start an HTTP server for the core.
@@ -105,6 +110,9 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 	t.Helper()
 
 	coreConfig := &vault.CoreConfig{
+		LogicalBackends: map[string]logical.Factory{
+			"kv": kv.Factory,
+		},
 		CredentialBackends: map[string]logical.Factory{
 			"approle": credAppRole.Factory,
 		},
@@ -112,6 +120,7 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 
 	cluster := vault.NewTestCluster(t, coreConfig, &vault.TestClusterOptions{
 		HandlerFunc: http.Handler,
+		Logger:      hclog.NewNullLogger(),
 	})
 
 	cluster.Start()
@@ -190,13 +199,6 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 		t.Fatal(err)
 	}
 
-	_, err = client.Logical().Write("secret/foo", map[string]interface{}{
-		"secret": "bar",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	_, err = client.Logical().Write("kv/data/test", map[string]interface{}{
 		"data": map[string]interface{}{
 			"hello": "world",
@@ -206,8 +208,25 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 		t.Fatal(err)
 	}
 
-	_, err = client.Logical().Write("kv/data/bad_test", map[string]interface{}{
+	_, err = client.Logical().Write("secret/bad_test", map[string]interface{}{
 		"hello": "world",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("kv/data/versioned", map[string]interface{}{
+		"data": map[string]interface{}{
+			"secret": "version1",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.Logical().Write("kv/data/versioned", map[string]interface{}{
+		"data": map[string]interface{}{
+			"secret": "version2",
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -242,6 +261,7 @@ func CreateTestAuthVault(t *testing.T) *vault.TestCluster {
 
 	cluster := vault.NewTestCluster(t, coreConfig, &vault.TestClusterOptions{
 		HandlerFunc: http.Handler,
+		Logger:      hclog.NewNullLogger(),
 	})
 
 	cluster.Start()
@@ -278,18 +298,27 @@ func CreateTestAuthVault(t *testing.T) *vault.TestCluster {
 	return cluster
 }
 
+// MockVault is used to mock out a generic SM Backend
+// It's useful for testing replacement behavior
 type MockVault struct {
 	GetSecretsCalled bool
-	Data             map[string]interface{}
+	Data             []map[string]interface{}
 }
 
 func (v *MockVault) Login() error {
 	return nil
 }
 func (v *MockVault) LoadData(data map[string]interface{}) {
-	v.Data = data
+	v.Data = append(v.Data, data)
 }
-func (v *MockVault) GetSecrets(path string, annotations map[string]string) (map[string]interface{}, error) {
+func (v *MockVault) GetSecrets(path string, version string, annotations map[string]string) (map[string]interface{}, error) {
 	v.GetSecretsCalled = true
-	return v.Data, nil
+	if len(v.Data) == 0 {
+		return make(map[string]interface{}), nil
+	}
+	if version == "" {
+		return v.Data[len(v.Data)-1], nil
+	}
+	num, _ := strconv.ParseInt(version, 10, 0)
+	return v.Data[num-1], nil
 }

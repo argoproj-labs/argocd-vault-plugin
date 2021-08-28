@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/backends"
+	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
 )
@@ -18,8 +19,13 @@ func (m *mockSecretsManagerClient) GetSecretValue(input *secretsmanager.GetSecre
 
 	switch *input.SecretId {
 	case "test":
-		string := "{\"test-secret\":\"some-value\"}"
-		data.SecretString = &string
+		if *input.VersionId == types.AWSCurrentSecretVersion {
+			string := "{\"test-secret\":\"current-value\"}"
+			data.SecretString = &string
+		} else {
+			string := "{\"test-secret\":\"previous-value\"}"
+			data.SecretString = &string
+		}
 	}
 
 	return data, nil
@@ -28,24 +34,41 @@ func (m *mockSecretsManagerClient) GetSecretValue(input *secretsmanager.GetSecre
 func TestAWSSecretManagerGetSecrets(t *testing.T) {
 	sm := backends.NewAWSSecretsManagerBackend(&mockSecretsManagerClient{})
 
-	data, err := sm.GetSecrets("test", map[string]string{})
-	if err != nil {
-		t.Fatalf("expected 0 errors but got: %s", err)
-	}
+	t.Run("Get secrets", func(t *testing.T) {
+		data, err := sm.GetSecrets("test", "", map[string]string{})
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
 
-	expected := map[string]interface{}{
-		"test-secret": "some-value",
-	}
+		expected := map[string]interface{}{
+			"test-secret": "current-value",
+		}
 
-	if !reflect.DeepEqual(expected, data) {
-		t.Errorf("expected: %s, got: %s.", expected, data)
-	}
+		if !reflect.DeepEqual(expected, data) {
+			t.Errorf("expected: %s, got: %s.", expected, data)
+		}
+	})
+
+	t.Run("Get secrets at specific version", func(t *testing.T) {
+		data, err := sm.GetSecrets("test", "123", map[string]string{})
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
+
+		expected := map[string]interface{}{
+			"test-secret": "previous-value",
+		}
+
+		if !reflect.DeepEqual(expected, data) {
+			t.Errorf("expected: %s, got: %s.", expected, data)
+		}
+	})
 }
 
 func TestAWSSecretManagerEmptyIfNoSecret(t *testing.T) {
 	sm := backends.NewAWSSecretsManagerBackend(&mockSecretsManagerClient{})
 
-	_, err := sm.GetSecrets("empty", map[string]string{})
+	_, err := sm.GetSecrets("empty", "", map[string]string{})
 	if err == nil {
 		t.Fatalf("expected an error but got nil")
 	}

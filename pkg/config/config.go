@@ -93,9 +93,18 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 		}
 	case types.IBMSecretsManagerbackend:
 		{
+			// Get instance URL from IBM specific env variable or fallback to $VAULT_ADDR
+			url := v.GetString(types.EnvAvpIBMInstanceURL)
+			if !v.IsSet(types.EnvAvpIBMInstanceURL) {
+				if !v.IsSet(types.EnvVaultAddress) {
+					return nil, fmt.Errorf("%s or %s required for IBM Secrets Manager", types.EnvAvpIBMInstanceURL, types.EnvVaultAddress)
+				}
+				url = v.GetString(types.EnvVaultAddress)
+			}
+
 			client, err := ibmsm.NewSecretsManagerV1(&ibmsm.SecretsManagerV1Options{
 				Authenticator: &core.IamAuthenticator{ApiKey: v.GetString(types.EnvAvpIBMAPIKey)},
-				URL:           v.GetString(types.EnvAvpIBMInstanceURL),
+				URL:           url,
 			})
 			if err != nil {
 				return nil, err
