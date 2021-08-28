@@ -6,13 +6,24 @@ import (
 	"golang.org/x/net/context"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 	"reflect"
+	"strings"
 	"testing"
 )
 
 type mockSecretManagerClient struct {
+	AccessSecretRequestName string
 }
 
 func (m *mockSecretManagerClient) AccessSecretVersion(ctx context.Context, req *secretmanagerpb.AccessSecretVersionRequest, opts ...gax.CallOption) (*secretmanagerpb.AccessSecretVersionResponse, error) {
+	m.AccessSecretRequestName = req.Name
+	if strings.Contains(req.Name, "v3") {
+		return &secretmanagerpb.AccessSecretVersionResponse{
+			Name: "projects/project/secrets/test-secret/versions/v3",
+			Payload: &secretmanagerpb.SecretPayload{
+				Data: []byte("v3-value"),
+			},
+		}, nil
+	}
 	return &secretmanagerpb.AccessSecretVersionResponse{
 		Name: "projects/project/secrets/test-secret/versions/2",
 		Payload: &secretmanagerpb.SecretPayload{
@@ -23,18 +34,61 @@ func (m *mockSecretManagerClient) AccessSecretVersion(ctx context.Context, req *
 
 func TestGCPSecretManagerGetSecrets(t *testing.T) {
 	ctx := context.Background()
-	sm := backends.NewGCPSecretManagerBackend(ctx, &mockSecretManagerClient{})
-	data, err := sm.GetSecrets("projects/project/secrets/test-secret/versions/2", map[string]string{})
-	if err != nil {
-		t.Fatalf("expected 0 errors but got: %s", err)
-	}
+	mock := mockSecretManagerClient{}
+	sm := backends.NewGCPSecretManagerBackend(ctx, &mock)
 
-	expected := map[string]interface{}{
-		"test-secret": []byte("some-value"),
-	}
+	t.Run("GCP retrieve secrets", func(t *testing.T) {
+		data, err := sm.GetSecrets("projects/project/secrets/test-secret", "", map[string]string{})
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
 
-	if !reflect.DeepEqual(expected, data) {
-		t.Errorf("expected: %s, got: %s.", expected, data)
-	}
+		// Called correctly
+		expectedCalledWith := "projects/project/secrets/test-secret/versions/latest"
+		if !reflect.DeepEqual(expectedCalledWith, mock.AccessSecretRequestName) {
+			t.Errorf("expected: %s, got: %s.", expectedCalledWith, mock.AccessSecretRequestName)
+		}
 
+		// Data correct
+		expected := map[string]interface{}{
+			"test-secret": []byte("some-value"),
+		}
+
+		if !reflect.DeepEqual(expected, data) {
+			t.Errorf("expected: %s, got: %s.", expected, data)
+		}
+	})
+
+	t.Run("GCP retrieve secrets at version", func(t *testing.T) {
+		data, err := sm.GetSecrets("projects/project/secrets/test-secret", "v3", map[string]string{})
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
+
+		// Called correctly
+		expectedCalledWith := "projects/project/secrets/test-secret/versions/v3"
+		if !reflect.DeepEqual(expectedCalledWith, mock.AccessSecretRequestName) {
+			t.Errorf("expected: %s, got: %s.", expectedCalledWith, mock.AccessSecretRequestName)
+		}
+
+		// Data correct
+		expected := map[string]interface{}{
+			"test-secret": []byte("v3-value"),
+		}
+		if !reflect.DeepEqual(expected, data) {
+			t.Errorf("expected: %s, got: %s.", expected, data)
+		}
+	})
+
+	t.Run("GCP handle malformed path", func(t *testing.T) {
+		_, err := sm.GetSecrets("ibmcloud/arbitrary/secrets/groups/some-group", "", map[string]string{})
+		if err == nil {
+			t.Fatalf("expected error")
+		}
+
+		expectedErr := "Path is not in the correct format"
+		if !strings.Contains(err.Error(), expectedErr) {
+			t.Fatalf("Expected error to have %s but said %s", expectedErr, err)
+		}
+	})
 }

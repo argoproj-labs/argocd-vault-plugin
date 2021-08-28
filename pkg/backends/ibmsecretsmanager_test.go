@@ -113,7 +113,7 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 	})
 
 	t.Run("Handles paths missing secret group and type", func(t *testing.T) {
-		_, err := sm.GetSecretsVersioned("secret/data/my-secret", "", nil)
+		_, err := sm.GetSecrets("secret/data/my-secret", "", nil)
 		if err == nil {
 			t.FailNow()
 		}

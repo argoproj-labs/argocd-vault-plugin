@@ -63,9 +63,17 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
+				"AVP_TYPE":             "ibmsecretsmanager",
+				"AVP_IBM_API_KEY":      "token",
+				"AVP_IBM_INSTANCE_URL": "http://ibm",
+			},
+			"*backends.IBMSecretsManager",
+		},
+		{
+			map[string]interface{}{
 				"AVP_TYPE":        "ibmsecretsmanager",
-				"AVP_AUTH_TYPE":   "iam",
 				"AVP_IBM_API_KEY": "token",
+				"VAULT_ADDR":      "http://ibm",
 			},
 			"*backends.IBMSecretsManager",
 		},
@@ -237,16 +245,14 @@ func TestNewConfigMissingParameter(t *testing.T) {
 		{
 			map[string]interface{}{
 				"AVP_TYPE":        "ibmsecretsmanager",
-				"AVP_AUTH_TYPE":   "iam",
 				"AVP_IAM_API_KEY": "token",
 			},
 			"*backends.IBMSecretsManager",
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":        "ibmsecretsmanager",
-				"AVP_AUTH_TYPE":   "wrong",
-				"AVP_IAM_API_KEY": "token",
+				"AVP_TYPE":   "ibmsecretsmanager",
+				"VAULT_ADDR": "http://vault",
 			},
 			"*backends.IBMSecretsManager",
 		},

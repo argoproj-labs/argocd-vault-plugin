@@ -39,7 +39,7 @@ func TestVaultGetSecrets(t *testing.T) {
 		annotations := map[string]string{
 			types.VaultKVVersionAnnotation: "1",
 		}
-		data, err := backend.GetSecrets("secret/foo", annotations)
+		data, err := backend.GetSecrets("secret/foo", "", annotations)
 		if err != nil {
 			t.Fatalf("expected 0 errors but got: %s", err)
 		}
@@ -57,7 +57,7 @@ func TestVaultGetSecrets(t *testing.T) {
 		annotations := map[string]string{
 			types.VaultKVVersionAnnotation: "2",
 		}
-		data, err := backend.GetSecrets("kv/data/test", annotations)
+		data, err := backend.GetSecrets("kv/data/test", "", annotations)
 		if err != nil {
 			t.Fatalf("expected 0 errors but got: %s", err)
 		}
@@ -71,11 +71,45 @@ func TestVaultGetSecrets(t *testing.T) {
 		}
 	})
 
+	t.Run("will honor version with kv2", func(t *testing.T) {
+		annotations := map[string]string{
+			types.VaultKVVersionAnnotation: "2",
+		}
+
+		// Get version 1 when there are 2 versions
+		data, err := backend.GetSecrets("kv/data/versioned", "1", annotations)
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
+
+		expected := map[string]interface{}{
+			"secret": "version1",
+		}
+
+		if !reflect.DeepEqual(data, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, data)
+		}
+
+		// Get version 2 (latest)
+		data, err = backend.GetSecrets("kv/data/versioned", "", annotations)
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
+
+		expected = map[string]interface{}{
+			"secret": "version2",
+		}
+
+		if !reflect.DeepEqual(data, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, data)
+		}
+	})
+
 	t.Run("will throw an error if cant find secrets", func(t *testing.T) {
 		annotations := map[string]string{
 			types.VaultKVVersionAnnotation: "2",
 		}
-		_, err := backend.GetSecrets("kv/data/no_path", annotations)
+		_, err := backend.GetSecrets("kv/data/no_path", "", annotations)
 		if err == nil {
 			t.Fatalf("expected an error but did not get an error")
 		}
@@ -91,7 +125,7 @@ func TestVaultGetSecrets(t *testing.T) {
 		annotations := map[string]string{
 			types.VaultKVVersionAnnotation: "2",
 		}
-		_, err := backend.GetSecrets("kv/data/bad_test", annotations)
+		_, err := backend.GetSecrets("secret/bad_test", "", annotations)
 		if err == nil {
 			t.Fatalf("expected an error but did not get an error")
 		}
@@ -107,7 +141,7 @@ func TestVaultGetSecrets(t *testing.T) {
 		annotations := map[string]string{
 			types.VaultKVVersionAnnotation: "3",
 		}
-		_, err := backend.GetSecrets("kv/data/test", annotations)
+		_, err := backend.GetSecrets("kv/data/test", "", annotations)
 		if err == nil {
 			t.Fatalf("expected an error but did not get an error")
 		}

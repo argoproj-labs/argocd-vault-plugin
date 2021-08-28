@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/IBM/argocd-vault-plugin/cmd"
@@ -9,7 +8,6 @@ import (
 
 func main() {
 	if err := cmd.NewRootCommand().Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }

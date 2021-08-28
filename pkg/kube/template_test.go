@@ -2,6 +2,7 @@ package kube
 
 import (
 	"io/ioutil"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -191,6 +192,7 @@ func TestToYAML_RemoveMissingInvalidResource(t *testing.T) {
 }
 
 func TestNewTemplate(t *testing.T) {
+
 	t.Run("will GetSecrets for placeholder'd YAML", func(t *testing.T) {
 		mv := helpers.MockVault{}
 
@@ -226,6 +228,7 @@ func TestNewTemplate(t *testing.T) {
 			t.Fatalf("template does contain <placeholders> so GetSecrets should be called")
 		}
 	})
+
 	t.Run("will GetSecrets only for YAMLs w/o avp.kubernetes.io/ignore: True", func(t *testing.T) {
 		mv := helpers.MockVault{}
 		NewTemplate(unstructured.Unstructured{
@@ -253,6 +256,132 @@ func TestNewTemplate(t *testing.T) {
 		}, &mv)
 		if mv.GetSecretsCalled {
 			t.Fatalf("template contains avp.kubernetes.io/ignore:True so GetSecrets should NOT be called")
+		}
+	})
+
+	t.Run("will GetSecrets with version given in avp.kubernetes.io/secret-version", func(t *testing.T) {
+		mv := helpers.MockVault{}
+
+		mv.LoadData(map[string]interface{}{
+			"password": "original-value",
+		})
+		mv.LoadData(map[string]interface{}{
+			"password": "changed-value",
+		})
+
+		template, _ := NewTemplate(unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"kind":       "Secret",
+				"apiVersion": "v1",
+				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						types.AVPSecretVersionAnnotation: "1",
+						types.AVPPathAnnotation:          "path/to/secret",
+					},
+					"namespace": "default",
+					"name":      "my-app",
+				},
+				"data": map[string]interface{}{
+					"new-value": "<path:/path/to/secret#password#2>",
+					"old-value": "<password>",
+				},
+			},
+		}, &mv)
+
+		if template.Resource.Kind != "Secret" {
+			t.Fatalf("template should have Kind of %s, instead it has %s", "Secret", template.Resource.Kind)
+		}
+
+		if !mv.GetSecretsCalled {
+			t.Fatalf("template does contain <placeholders> so GetSecrets should be called")
+		}
+
+		err := template.Replace()
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		expected := map[string]interface{}{
+			"kind":       "Secret",
+			"apiVersion": "v1",
+			"metadata": map[string]interface{}{
+				"annotations": map[string]interface{}{
+					types.AVPSecretVersionAnnotation: "1",
+					types.AVPPathAnnotation:          "path/to/secret",
+				},
+				"namespace": "default",
+				"name":      "my-app",
+			},
+			"data": map[string]interface{}{
+				"new-value": "changed-value",
+				"old-value": "original-value",
+			},
+		}
+
+		if !reflect.DeepEqual(expected, template.TemplateData) {
+			t.Fatalf("expected %s got %s", expected, template.TemplateData)
+		}
+	})
+
+	t.Run("will GetSecrets with latest version by default", func(t *testing.T) {
+		mv := helpers.MockVault{}
+
+		mv.LoadData(map[string]interface{}{
+			"password": "original-value",
+		})
+		mv.LoadData(map[string]interface{}{
+			"password": "changed-value",
+		})
+
+		template, _ := NewTemplate(unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"kind":       "Secret",
+				"apiVersion": "v1",
+				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						types.AVPPathAnnotation: "path/to/secret",
+					},
+					"namespace": "default",
+					"name":      "my-app",
+				},
+				"data": map[string]interface{}{
+					"old-value": "<path:/path/to/secret#password#1>",
+					"new-value": "<password>",
+				},
+			},
+		}, &mv)
+
+		if template.Resource.Kind != "Secret" {
+			t.Fatalf("template should have Kind of %s, instead it has %s", "Secret", template.Resource.Kind)
+		}
+
+		if !mv.GetSecretsCalled {
+			t.Fatalf("template does contain <placeholders> so GetSecrets should be called")
+		}
+
+		err := template.Replace()
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		expected := map[string]interface{}{
+			"kind":       "Secret",
+			"apiVersion": "v1",
+			"metadata": map[string]interface{}{
+				"annotations": map[string]interface{}{
+					types.AVPPathAnnotation: "path/to/secret",
+				},
+				"namespace": "default",
+				"name":      "my-app",
+			},
+			"data": map[string]interface{}{
+				"new-value": "changed-value",
+				"old-value": "original-value",
+			},
+		}
+
+		if !reflect.DeepEqual(expected, template.TemplateData) {
+			t.Fatalf("expected %s got %s", expected, template.TemplateData)
 		}
 	})
 }
