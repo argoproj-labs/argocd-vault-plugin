@@ -44,14 +44,15 @@ We support all Vault Environment Variables listed [here](https://www.vaultprojec
 | --------------- | ----------- | ----- |
 | AVP_TYPE           | The type of Vault backend  | Supported values: `vault`, `ibmsecretsmanager`, `awssecretsmanager` and `gcpsecretmanager` |
 | AVP_KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `avp.kubernetes.io/kv-version` annotation is present in a YAML resource.|
-| AVP_AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github, k8s`   ibmsecretsmanager: `iam` |
+| AVP_AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github, k8s`. Only honored for `AVP_TYPE` of `vault` |
 | AVP_GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
 | AVP_ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
 | AVP_SECRET_ID      | Vault AppRole Secret_ID    | Required with `AUTH_TYPE` of `approle` |
 | AVP_K8S_MOUNT_PATH | Kuberentes Auth Mount PATH | Optional for `AUTH_TYPE` of `k8s` defaults to `auth/kubernetes` |
 | AVP_K8S_ROLE       | Kuberentes Auth Role      | Required with `AUTH_TYPE` of `k8s` |
 | AVP_K8S_TOKEN_PATH | Path to JWT for Kubernetes Auth  | Optional for `AUTH_TYPE` of `k8s` defaults to `/var/run/secrets/kubernetes.io/serviceaccount/token` |
-| AVP_IBM_API_KEY    | IBM Cloud IAM API Key      | Required with `TYPE` of `ibmsecretsmanager` and `AUTH_TYPE` of `iam` |
+| AVP_IBM_API_KEY      | IBM Cloud IAM API Key      | Required with `TYPE` of `ibmsecretsmanager` |
+| AVP_IBM_INSTANCE_URL | Endpoint URL for IBM Cloud Secrets Manager instance | If absent, fall back to `$VAULT_ADDR` |
 | AWS_REGION    | AWS Secrets Manager Region      | Only valid with `TYPE` `awssecretsmanager` |
 
 ### Full List of Supported Annotation
@@ -62,4 +63,5 @@ We support several different annotations that can be used inside a kubernetes re
 | avp.kubernetes.io/path | Path to the Vault Secret |
 | avp.kubernetes.io/ignore | Boolean to tell the plugin whether or not to process the file. Invalid values translate to `false` |
 | avp.kubernetes.io/kv-version | Version of the KV Secret Engine |
+| avp.kubernetes.io/secret-version | Version of the secret to retrieve. Only effective on generic `<placeholder>`s so `avp.kubernetes.io/path` is required when this annotation is used |
 | avp.kubernetes.io/remove-missing | Plugin will not throw error when a key is missing from Vault Secret. Only works on `Secret` or `ConfigMap` resources |

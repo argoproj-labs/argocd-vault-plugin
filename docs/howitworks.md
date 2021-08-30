@@ -2,7 +2,7 @@ The argocd-vault-plugin works by taking a directory of YAML or JSON files that h
 
 An annotation can be used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp.kubernetes.io/path: "path/to/secret"`.
 
-For example, if you have a secret with the key `password-vault-key` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of `path/to/secret/password-vault-key` and inject it into the Secret.
+For example, if you have a secret with the key `password-vault-key` that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of the _latest version_ of the secret at `path/to/secret/password-vault-key` and inject it into the Secret.
 
 As YAML:
 ```yaml
@@ -48,7 +48,7 @@ data:
   password: cGFzc3dvcmQK # The Value from the key password-vault-key in vault
 ```
 
-The plugin also supports putting the path directly within the placeholder. The format must be `<path:path/to/secret#key>`, where `path/to/secret` is the vault path and the Vault key goes after the `#` symbol. Doing this does not require an `avp.kubernetes.io/path` annotation and will override any `avp.kubernetes.io/path` annotation that is set. For example:
+The plugin also supports putting the path directly within the placeholder (inline-path). The format must be `<path:path/to/secret#key>`, where `path/to/secret` is the vault path and the Vault key goes after the `#` symbol. Doing this does not require an `avp.kubernetes.io/path` annotation and will override any `avp.kubernetes.io/path` annotation that is set. For example:
 
 ```yaml
 kind: Secret
@@ -59,6 +59,19 @@ type: Opaque
 data:
   password: <path:path/to/secret#password-vault-key>
 ```
+
+You can also use the inline-path syntax to specify the _version_ of the secret to use. The format is then `<path:path/to/secret#key#version>`, where the path and secret key are the same as before, and the string following the last `#` is the version of the secret to use. For example:
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+type: Opaque
+data:
+  password: <path:path/to/secret#password-vault-key#1>
+```
+There is also an annotation that can be used to specify the version of the secret for all generic placeholders in a manifest, `avp.kubernetes.io/secret-version`.
 
 The plugin tries to be helpful and will ignore strings in the format `<string>` if the `avp.kubernetes.io/path` annotation is missing, and only consider strings in the format `<path:/path/to/secret#key>` as placeholders. This can be very useful when using AVP with YAML/JSON that uses `<string>`'s for other purposes, for example in CRD's with usage information:
 
