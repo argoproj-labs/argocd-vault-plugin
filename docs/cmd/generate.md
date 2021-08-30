@@ -13,4 +13,4 @@ argocd-vault-plugin generate PATH [flags]
 
 ### SEE ALSO
 
-* [argocd-vault-plugin](avp.md) - replace <wildcards\> with Vault secrets
+* [argocd-vault-plugin](avp.md) - replace <placeholder\>'s with Vault secrets

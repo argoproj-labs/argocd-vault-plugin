@@ -99,7 +99,7 @@ AVP_K8S_TOKEN_PATH: Path to JWT (optional)
 kind: Secret
 apiVersion: v1
 metadata:
-  name: vault-exmaple
+  name: vault-example
   annotations:
     avp.kubernetes.io/path: "secret/data/database"
 type: Opaque
@@ -114,22 +114,45 @@ data:
 kind: Secret
 apiVersion: v1
 metadata:
-  name: vault-exmaple
+  name: vault-example
 type: Opaque
 data:
   username: <path:secret/data/database#username>
   password: <path:secret/data/database#password>
 ```
 
+###### Versioned secrets
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: vault-example
+  annotations:
+    avp.kubernetes.io/path: "secret/data/database"
+    avp.kubernetes.io/secret-version: "2" # 2 is the latest revision in this example
+type: Opaque
+data:
+  username: <username>
+  password: <password>
+  username-current: <path:secret/data/database#username#2> # same as <username>
+  password-current: <path:secret/data/database#password#2> # same as <password>
+  username-old: <path:secret/data/database#username#1>
+  password-old: <path:secret/data/database#password#1>
+```
+
+**Note**: Only Vault KV-V2 backends support versioning. Versions specified with a KV-V1 Vault will be ignored and the latest version will be retrieved.
+
 ### IBM Cloud Secrets Manager
-For IBM Cloud Secret Manager we only support using IAM authentication at this time.
+For IBM Cloud Secret Manager we only support using IAM authentication at this time. 
+
+Additionally, we only support secrets of type `arbitrary`, retrieved from a secret group. Since [`arbitrary` secrets are not versioned](https://cloud.ibm.com/apidocs/secrets-manager?code=go#get-secret-version), any version specified in a placeholder is ignored and the latest version is retrieved.
 
 ##### IAM Authentication
 For IAM Authentication, these are the required parameters:
 ```
-VAULT_ADDR: Your IBM Cloud Secret Manager Endpoint
+AVP_IBM_INSTANCE_URL or VAULT_ADDR: Your IBM Cloud Secret Manager Endpoint
 AVP_TYPE: ibmsecretsmanager
-AVP_AUTH_TYPE: iam
 AVP_IBM_API_KEY: Your IBM Cloud API Key
 ```
 
@@ -141,7 +164,7 @@ AVP_IBM_API_KEY: Your IBM Cloud API Key
 kind: Secret
 apiVersion: v1
 metadata:
-  name: ibm-exmaple
+  name: ibm-example
   annotations:
     avp.kubernetes.io/path: "ibmcloud/arbitrary/secrets/groups/123" # 123 represents your Secret Group ID
 type: Opaque
@@ -156,7 +179,7 @@ data:
 kind: Secret
 apiVersion: v1
 metadata:
-  name: ibm-exmaple
+  name: ibm-example
 type: Opaque
 data:
   username: <path:ibmcloud/arbitrary/secrets/groups/123#username>
@@ -203,6 +226,23 @@ stringData:
 type: Opaque
 ```
 
+###### Versioned secrets
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-example
+  annotations:
+    avp.kubernetes.io/path: "some-path/secret"
+    avp.kubernetes.io/secret-version: "AWSCURRENT"
+stringData:
+  sample-secret: <test-secret>
+  sample-secret-again: <path:some-path/secret#test-secret#AWSCURRENT>
+  sample-secret-old: <path:some-path/secret#test-secret#AWSPREVIOUS>
+type: Opaque
+```
+
 ### GCP Secret Manager
 
 ##### GCP Authentication
@@ -223,7 +263,7 @@ apiVersion: v1
 metadata:
   name: test-secret
   annotations:
-    avp.kubernetes.io/path: projects/12345678987/secrets/test-secret/versions/latest
+    avp.kubernetes.io/path: projects/12345678987/secrets/test-secret
 type: Opaque
 data:
   password: <test-secret>
@@ -238,5 +278,22 @@ metadata:
   name: test-secret
 type: Opaque
 data:
-  password: <path:projects/12345678987/secrets/test-secret/versions/latest#test-secret>
+  password: <path:projects/12345678987/secrets/test-secret#test-secret>
+```
+
+###### Versioned secrets
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: "projects/12345678987/secrets/test-secret"
+    avp.kubernetes.io/secret-version: "latest"
+type: Opaque
+data:
+  current-password: <password>
+  current-password-again: <path:projects/12345678987/secrets/test-secret#password#latest>
+  password-old: <path:projects/12345678987/secrets/test-secret#password#another-version-id>
 ```
