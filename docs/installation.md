@@ -92,4 +92,4 @@ data:
         args: ["generate", "./"]
 ```
 
-You can use ArgoCD Vault Plugin along with other Kubernetes configuration tools (Helm, Kustomize, etc). The general method is to have your configuration tool output YAMLs that are ready to apply to a cluster except for containing `<placeholder>`s, and then run the plugin on this output to fill in the secrets. See the [Usage page](./usage) for examples.
+You can use ArgoCD Vault Plugin along with other Kubernetes configuration tools (Helm, Kustomize, etc). The general method is to have your configuration tool output YAMLs that are ready to apply to a cluster except for containing `<placeholder>`s, and then run the plugin on this output to fill in the secrets. See the [Usage page](../usage) for examples.
