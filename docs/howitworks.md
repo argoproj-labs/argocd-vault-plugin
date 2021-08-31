@@ -1,3 +1,5 @@
+### Summary
+
 The argocd-vault-plugin works by taking a directory of YAML or JSON files that have been templated out using the pattern of `<placeholder>` where you would want a value from Vault to go. The inside of the `<>` would be the actual key in Vault.
 
 An annotation can be used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format `avp.kubernetes.io/path: "path/to/secret"`.
@@ -48,33 +50,113 @@ data:
   password: cGFzc3dvcmQK # The Value from the key password-vault-key in vault
 ```
 
-The plugin also supports putting the path directly within the placeholder (inline-path). The format must be `<path:path/to/secret#key>`, where `path/to/secret` is the vault path and the Vault key goes after the `#` symbol. Doing this does not require an `avp.kubernetes.io/path` annotation and will override any `avp.kubernetes.io/path` annotation that is set. For example:
+### Replacement behavior
+By default the plugin does not perform any transformation of the secrets in transit. So if you have plain text secrets in Vault, you will need to use the `stringData` field and if you have a base64 encoded secret in Vault, you will need to use the `data` field according to the [Kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret/).
 
+There are 2 exceptions to this:
+
+- Placeholders that are in base64 format - see [Base64 placeholders](#base64-placeholders) for details
+
+- The `base64encode` modifier - see [base64encode](#base64encode) for details
+
+### Types of placeholders
+
+#### Generic placeholders
+The example in the Summary uses a _generic_ placeholder, which is just the name of the _key_ of the secret in the secrets manager you want to inject. All placeholders have to be keys in the _same_ secret in the secrets manager.
+
+Valid examples:
+
+- `<placeholder>`
+
+##### Specifying the path of a secret
+The only way to specify the path of a secret for generic placeholders is to use the `avp.kubernetes.io/path` annotation like this:
 ```yaml
 kind: Secret
 apiVersion: v1
 metadata:
   name: example-secret
-type: Opaque
-data:
-  password: <path:path/to/secret#password-vault-key>
+  annotations:
+    avp.kubernetes.io/path: "path/to/secret"
 ```
 
-You can also use the inline-path syntax to specify the _version_ of the secret to use. The format is then `<path:path/to/secret#key#version>`, where the path and secret key are the same as before, and the string following the last `#` is the version of the secret to use. For example:
-
+##### Specifying the version of a secret
+The only way to specify the version of a secret for generic placeholders is to use the `avp.kubernetes.io/secret-version` annotation like this:
 ```yaml
 kind: Secret
 apiVersion: v1
 metadata:
   name: example-secret
+  annotations:
+    avp.kubernetes.io/secret-version: "2" # Requires at least 2 revisions to exist to work
+```
+**Note**: This ignored for secret managers that don't allow versioning, meaning the latest version is returned
+
+#### Inline-path placeholders
+An inline-path placeholder allows you to specify the path, key, and optionally, the version to use for a specific placeholder. This means you can inject values from _multiple distinct_ secrets in your secrets manager into the same YAML. 
+
+Valid examples:
+
+- `<path:some/path#secret-key>`
+- `<path:some/path#secret-key#version>`
+
+If the `version` is omitted (first example), the latest version of the secret is retrieved. 
+
+##### Specifying the path of a secret
+The only way to specify the path is in the placeholder itself: the string `path:` followed by the path in your secret manager to the secret. The `avp.kubernetes.io/path` annotation has _no effect_ on these placeholders.
+
+##### Specifying the version of a secret
+The only way to specify the version is in the placeholder itself: the string following the last `#` in the placeholder should be the ID of the version of the secret in your secret manager. The `avp.kubernetes.io/secret-version` annotation has _no effect_ on these placeholders.
+
+**Note**: This ignored for secret managers that don't allow versioning, meaning the latest version is returned
+
+#### Special behavior
+
+##### Base64 placeholders
+Some tools like Kustomize secret generator will create Secrets with `data` fields containing base64 encoded strings from the source files. If you try to use `<placeholder>`s in the source files, they will be output in a base64 format. 
+
+The plugin can handle this case by finding any base64 encoded placeholders (either generic or inline-path), replace them, and re-base64 encode the result. 
+
+For example, given this input:
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/path: "path/to/secret"
 type: Opaque
 data:
-  password: <path:path/to/secret#password-vault-key#1>
+  # The base64 encoding of postgres://<username>:<password>@<host>:<port>/<database>?sslmode=require
+  POSTGRES_URL: cG9zdGdyZXM6Ly88dXNlcm5hbWU+OjxwYXNzd29yZD5APGhvc3Q+Ojxwb3J0Pi88ZGF0YWJhc2U+P3NzbG1vZGU9cmVxdWlyZQ==
 ```
-There is also an annotation that can be used to specify the version of the secret for all generic placeholders in a manifest, `avp.kubernetes.io/secret-version`.
 
-The plugin tries to be helpful and will ignore strings in the format `<string>` if the `avp.kubernetes.io/path` annotation is missing, and only consider strings in the format `<path:/path/to/secret#key>` as placeholders. This can be very useful when using AVP with YAML/JSON that uses `<string>`'s for other purposes, for example in CRD's with usage information:
+and these values for the secrets:
+```
+username: user
+password: pass
+host: host
+port: 9443
+database: my-db
+```
 
+the output is:
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/path: "path/to/secret"
+type: Opaque
+data:
+  # The base64 encoding of postgres://user:pass@host:9443/my-db?sslmode=require
+  POSTGRES_URL: cG9zdGdyZXM6Ly91c2VyOnBhc3NAaG9zdDo5NDQzL215LWRiP3NzbG1vZGU9cmVxdWlyZQ==
+```
+
+##### Automatically ignoring `<placeholder>` strings
+The plugin tries to be helpful and will ignore strings in the format `<string>` if the `avp.kubernetes.io/path` annotation is missing, and only try to replace [inline-path placeholders](#inline-path-placeholders)
+
+This can be very useful when using AVP with YAML/JSON that uses `<string>`'s for other purposes, for example in CRD's with usage information:
 ```yaml
 kind: CustomResourceDefinition
 apiVersion: v1
@@ -98,21 +180,8 @@ fieldRef:
   some-credential: <path:somewhere/in/my/vault#credential>
 ```
 
-In addition to the default behavior, the plugin will attempt to decode base64 encoded strings in Secrets to look for placeholders.  If a placeholder is found, it is replaced and the resulting string is re-base64 encoded.  In most cases it is not necessary to use the `base64encode` modifier in this scenario. In the following example the plugin will decode the `POSTGRES_URL` value, find the template `postgres://<username>:<password>@<host>:<port>/<database>?sslmode=require`, and base64 encode it after replacement.
-
-```yaml
-kind: Secret
-apiVersion: v1
-metadata:
-  name: example-secret
-  annotations:
-    avp.kubernetes.io/path: "path/to/secret"
-type: Opaque
-data:
-  POSTGRES_URL: cG9zdGdyZXM6Ly88dXNlcm5hbWU+OjxwYXNzd29yZD5APGhvc3Q+Ojxwb3J0Pi88ZGF0YWJhc2U+P3NzbG1vZGU9cmVxdWlyZQ==
-```
-
-Finally, the plugin will ignore any given YAML/JSON file outright with the `avp.kubernetes.io/ignore` annotation set to `"true"`:
+##### Ignoring entire YAML/JSON files
+The plugin will ignore any given YAML/JSON file outright with the `avp.kubernetes.io/ignore` annotation set to `"true"`:
 
 ```yaml
 kind: CustomResourceDefinition
@@ -135,21 +204,61 @@ fieldRef:
     status.hostIP, status.podIP, status.podIPs.'
 
   # Neither is this
-  some-credential: <path:somewhere/in/my/vault#credential
+  some-credential: <path:somewhere/in/my/vault#credential>
+
+  # Nor this
+  some-credential: <path:somewhere/in/my/vault#credential#version3>
 ```
 
-#### Modifiers
-By default the plugin does not perform any transformation of the secrets in transit. So if you have plain text secrets in Vault, you will need to use the `stringData` field and if you have a base64 encoded secret in Vault, you will need to use the `data` field according to the [Kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret/).
+##### Removing keys with missing values
+By default, AVP will return an error if there is a `<placeholder>` that has no matching key in the secrets manager. 
 
-However, as of now, we support one modifier. And that is `base64encode`. So if you have a plain text value in Vault and would like to Base64 encode it on the fly to inject into a Kubernetes secret you can do:
+You can override this by using the annotation `avp.kubernetes.io/remove-missing`. This will remove keys whose values are missing from Vault from the entire YAML. 
 
+For example, given this input:
 ```yaml
 kind: Secret
 apiVersion: v1
 metadata:
   name: example-secret
-type: Opaque
-data:
-  password: <path:path/to/secret#password-vault-key | base64encode>
+  annotations:
+    avp.kubernetes.io/remove-missing: true
+stringData:
+  username: <username>
+  password: <pass>
 ```
-And the plugin will pull the value from Vault, Base64 encode the value and then inject it into the placeholder.
+
+And this data in the secrets manager:
+```
+username: user
+```
+
+output is:
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/remove-missing: true
+stringData:
+  username: user
+```
+This only works with _generic_ placeholders.
+
+#### Modifiers
+
+##### `base64encode`
+<!-- By default the plugin does not perform any transformation of the secrets in transit. So if you have plain text secrets in Vault, you will need to use the `stringData` field and if you have a base64 encoded secret in Vault, you will need to use the `data` field according to the [Kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret/). -->
+
+The base64encode modifier allows you to base64 encode a plain-text value retrieved from a secrets manager before injecting it into a Kubernetes secret.
+
+Valid examples:
+
+- `<username | base64encode>`
+
+- `<path:secrets/data/my-db#username | base64encode>`
+
+- `<path:secrets/data/my-db#username#version3 | base64encode>`
+
+This can be used for both generic and inline-path placeholders.
