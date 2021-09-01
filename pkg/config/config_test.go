@@ -27,6 +27,14 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
+				"AVP_TYPE":            "vault",
+				"AVP_AUTH_TYPE":       "token",
+				"AVP_VAULT_TOKEN":     "token",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
 				"AVP_TYPE":      "vault",
 				"AVP_AUTH_TYPE": "approle",
 				"AVP_ROLE_ID":   "role_id",

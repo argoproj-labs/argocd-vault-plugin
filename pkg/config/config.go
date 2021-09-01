@@ -86,6 +86,12 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				} else {
 					return nil, fmt.Errorf("%s cannot be empty when using Kubernetes Auth", types.EnvAvpK8sRole)
 				}
+			case types.TokenAuth:
+				if v.IsSet(types.EnvAvpVaultToken) {
+					auth = vault.NewTokenAuth(v.GetString(types.EnvAvpVaultToken))
+				} else {
+					return nil, fmt.Errorf("%s for token authentication cannot be empty", types.EnvAvpVaultToken)
+				}
 			default:
 				return nil, errors.New("Must provide a supported Authentication Type")
 			}
