@@ -29,7 +29,7 @@ func TestNewConfig(t *testing.T) {
 			map[string]interface{}{
 				"AVP_TYPE":            "vault",
 				"AVP_AUTH_TYPE":       "token",
-				"AVP_VAULT_TOKEN":     "token",
+				"VAULT_TOKEN":         "token",
 			},
 			"*backends.Vault",
 		},
