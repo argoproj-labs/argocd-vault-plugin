@@ -17,6 +17,7 @@ import (
 func NewGenerateCommand() *cobra.Command {
 	const StdIn = "-"
 	var configPath, secretName string
+	var useServiceAccountNamespace bool
 
 	var command = &cobra.Command{
 		Use:   "generate <path>",
@@ -56,8 +57,9 @@ func NewGenerateCommand() *cobra.Command {
 
 			v := viper.New()
 			cmdConfig, err := config.New(v, &config.Options{
-				SecretName: secretName,
-				ConfigPath: configPath,
+				SecretName:                 secretName,
+				UseServiceAccountNamespace: useServiceAccountNamespace,
+				ConfigPath:                 configPath,
 			})
 			if err != nil {
 				return err
@@ -102,5 +104,6 @@ func NewGenerateCommand() *cobra.Command {
 
 	command.Flags().StringVarP(&configPath, "config-path", "c", "", "path to a file containing Vault configuration (YAML, JSON, envfile) to use")
 	command.Flags().StringVarP(&secretName, "secret-name", "s", "", "name of a Kubernetes Secret containing Vault configuration data, use 'namespace/secret-name' to specify the namespace (Only available when used in ArgoCD)")
+	command.Flags().BoolVarP(&useServiceAccountNamespace, "service-account-namespace", "a", false, "when used with -s <secret name>, grab the secret from the namespace of the service account")
 	return command
 }

@@ -16,7 +16,8 @@ metadata:
   namespace: argocd
 type: Opaque
 ```
-You can use it like this: `argocd-vault-plugin generate /some/path -s vault-configuration`.
+You can use it like this: `argocd-vault-plugin generate /some/path -s vault-configuration`. You can also use `-s namespace/vault-configuration` to specify 
+the namespace, or `-s vault-configuration --service-account-namespace` to grab the secret from the service account's namespace.
 <b>Note</b>: this requires the `argocd-repo-server` to have a service account token mounted in the standard location.
 
 ##### Configuration File

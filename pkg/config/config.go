@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -26,8 +27,9 @@ import (
 
 // Options options that can be passed to a Config struct
 type Options struct {
-	SecretName string
-	ConfigPath string
+	SecretName                 string
+	ConfigPath                 string
+	UseServiceAccountNamespace bool
 }
 
 // Config is used to decide the backend and auth type
@@ -42,7 +44,7 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 	v.SetDefault(types.EnvAvpKvVersion, "2")
 
 	// Read in config file or kubernetes secret and set as env vars
-	err := readConfigOrSecret(co.SecretName, co.ConfigPath, v)
+	err := readConfigOrSecret(co.SecretName, co.UseServiceAccountNamespace, co.ConfigPath, v)
 	if err != nil {
 		return nil, err
 	}
@@ -146,14 +148,39 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 	}, nil
 }
 
-func readConfigOrSecret(secretName, configPath string, v *viper.Viper) error {
+func readConfigOrSecret(secretName string, useServiceAccountNamespace bool, configPath string, v *viper.Viper) error {
+
+	var namespace string
+
+	// Don't allow conflicting syntaxes
+	if strings.Contains(secretName, "/") && useServiceAccountNamespace {
+		return fmt.Errorf("Cannot combine %s with --service-account-namespace (ambiguous namespace)", secretName)
+	}
+
+	// Extract the namespace
+	if strings.Contains(secretName, "/") {
+		// parse `namespace/secret.name`
+		split := strings.Split(secretName, "/")
+		namespace = split[0]
+		secretName = split[1]
+	} else if useServiceAccountNamespace {
+		namespace_bytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+		if err != nil {
+			return fmt.Errorf("could not get namespace for serviceaccount: %s", err)
+		}
+		namespace = strings.TrimSpace(string(namespace_bytes))
+	} else {
+		// fallback
+		namespace = "argocd"
+	}
+
 	// If a secret name is passed, pull config from Kubernetes
 	if secretName != "" {
 		localClient, err := kube.NewClient()
 		if err != nil {
 			return err
 		}
-		yaml, err := localClient.ReadSecret(secretName)
+		yaml, err := localClient.ReadSecret(secretName, namespace)
 		if err != nil {
 			return err
 		}
