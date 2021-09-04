@@ -27,9 +27,9 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":            "vault",
-				"AVP_AUTH_TYPE":       "token",
-				"VAULT_TOKEN":         "token",
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "token",
+				"VAULT_TOKEN":   "token",
 			},
 			"*backends.Vault",
 		},
@@ -231,6 +231,14 @@ func TestNewConfigMissingParameter(t *testing.T) {
 				"AVP_TYPE":      "vault",
 				"AVP_AUTH_TYPE": "github",
 				"AVP_GH_TOKEN":  "token",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "token",
+				"VAULT_TOKEN":   "token",
 			},
 			"*backends.Vault",
 		},
