@@ -1,32 +1,14 @@
 package vault
 
 import (
-	"github.com/IBM/argocd-vault-plugin/pkg/utils"
 	"github.com/hashicorp/vault/api"
 )
 
 // Just a plain vault token
-type TokenAuth struct {
-	AccessToken string
-}
+type TokenAuth struct{}
 
-// We just want to pass-through the vault token here
-func NewTokenAuth(token string) *TokenAuth {
-	tokenAuth := &TokenAuth{
-		AccessToken: token,
-	}
-
-	return tokenAuth
-}
-
-// Authenticate authenticates with Vault and returns a token
+// The vault client auto-detect if the VAULT_TOKEN is set, so
+// just leave everything to the vault client
 func (t *TokenAuth) Authenticate(vaultClient *api.Client) error {
-
-	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
-	err := utils.SetToken(vaultClient, t.AccessToken)
-	if err != nil {
-		print(err)
-	}
-
 	return nil
 }

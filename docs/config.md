@@ -43,11 +43,9 @@ We support all Vault Environment Variables listed [here](https://www.vaultprojec
 | Name            | Description | Notes |
 | --------------- | ----------- | ----- |
 | AVP_TYPE           | The type of Vault backend  | Supported values: `vault`, `ibmsecretsmanager`, `awssecretsmanager` and `gcpsecretmanager` |
-| VAULT_ADDR         | The Vault URL              | The Vault address (e.g. `http://0.0.0.0:8200`)                                             |
 | AVP_KV_VERSION    | The vault secret engine  | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `avp.kubernetes.io/kv-version` annotation is present in a YAML resource.|
 | AVP_AUTH_TYPE      | The type of authentication | Supported values: vault: `approle, github, k8s, token`. Only honored for `AVP_TYPE` of `vault` |
 | AVP_GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
-| VAULT_TOKEN        | Vault token                | Required with `AUTH_TYPE` of `token`  |
 | AVP_ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
 | AVP_SECRET_ID      | Vault AppRole Secret_ID    | Required with `AUTH_TYPE` of `approle` |
 | AVP_K8S_MOUNT_PATH | Kuberentes Auth Mount PATH | Optional for `AUTH_TYPE` of `k8s` defaults to `auth/kubernetes` |
