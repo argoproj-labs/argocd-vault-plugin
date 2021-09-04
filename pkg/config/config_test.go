@@ -238,7 +238,6 @@ func TestNewConfigMissingParameter(t *testing.T) {
 			map[string]interface{}{
 				"AVP_TYPE":      "vault",
 				"AVP_AUTH_TYPE": "token",
-				"VAULT_TOKEN":   "token",
 			},
 			"*backends.Vault",
 		},
