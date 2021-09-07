@@ -19,7 +19,7 @@ brew install argocd-vault-plugin
 
 In order to use the plugin in Argo CD you can add it to your Argo CD instance as a volume mount or build your own Argo CD image.
 
-The Argo CD docs provide information on how to get started https://argoproj.github.io/argo-cd/operator-manual/custom_tools/.
+The Argo CD docs provide information on how to get started <https://argoproj.github.io/argo-cd/operator-manual/custom_tools/>.
 
 *Note*: We have provided a Kustomize app that will install Argo CD and configure the plugin [here](https://github.com/IBM/argocd-vault-plugin/blob/main/manifests/).
 
@@ -80,7 +80,7 @@ RUN mv argocd-vault-plugin /usr/local/bin
 # Switch back to non-root user
 USER argocd
 ```
-After making the plugin available, you must then register the plugin, documentation can be found at https://argoproj.github.io/argo-cd/user-guide/config-management-plugins/#plugins on how to do that.
+After making the plugin available, you must then register the plugin, documentation can be found at <https://argoproj.github.io/argo-cd/user-guide/config-management-plugins/#plugins> on how to do that.
 
 For this plugin, you would add this:
 ```yaml
