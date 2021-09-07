@@ -27,7 +27,6 @@ const (
 	GithubAuth               = "github"
 	IAMAuth                  = "iam"
 	AwsDefaultRegion         = "us-east-2"
-	AWSCurrentSecretVersion  = "AWSCURRENT"
 	GCPCurrentSecretVersion  = "latest"
 
 	// Supported annotations
