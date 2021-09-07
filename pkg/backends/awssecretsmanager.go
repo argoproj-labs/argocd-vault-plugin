@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
@@ -30,12 +29,11 @@ func (a *AWSSecretsManager) Login() error {
 // GetSecrets gets secrets from aws secrets manager and returns the formatted data
 func (a *AWSSecretsManager) GetSecrets(path string, version string, annotations map[string]string) (map[string]interface{}, error) {
 	input := &secretsmanager.GetSecretValueInput{
-		SecretId:  aws.String(path),
-		VersionId: aws.String(types.AWSCurrentSecretVersion),
+		SecretId: aws.String(path),
 	}
 
 	if version != "" {
-		input.VersionId = aws.String(version)
+		input.SetVersionId(version)
 	}
 
 	result, err := a.Client.GetSecretValue(input)
