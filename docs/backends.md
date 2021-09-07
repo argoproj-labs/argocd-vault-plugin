@@ -11,6 +11,17 @@ AVP_ROLE_ID: Your AppRole Role ID
 AVP_SECRET_ID: Your AppRole Secret ID
 ```
 
+##### Vault Token Authentication
+For Vault Token Authentication, these are the required parameters:
+```
+VAULT_ADDR: Your HashiCorp Vault Address
+VAULT_TOKEN: Your Vault token
+AVP_TYPE: vault
+AVP_AUTH_TYPE: token
+```
+
+This option may be the easiest to test with locally, depending on your Vault setup.
+
 ##### Github Authentication
 For Github Authentication, these are the required parameters:
 ```

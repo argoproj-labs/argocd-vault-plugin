@@ -25,6 +25,7 @@ const (
 	K8sAuth                  = "k8s"
 	ApproleAuth              = "approle"
 	GithubAuth               = "github"
+	TokenAuth                = "token"
 	IAMAuth                  = "iam"
 	AwsDefaultRegion         = "us-east-2"
 	AWSCurrentSecretVersion  = "AWSCURRENT"
