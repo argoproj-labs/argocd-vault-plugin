@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/IBM/argocd-vault-plugin/pkg/backends"
-	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
 )
@@ -19,7 +18,7 @@ func (m *mockSecretsManagerClient) GetSecretValue(input *secretsmanager.GetSecre
 
 	switch *input.SecretId {
 	case "test":
-		if *input.VersionId == types.AWSCurrentSecretVersion {
+		if input.VersionId == nil {
 			string := "{\"test-secret\":\"current-value\"}"
 			data.SecretString = &string
 		} else {
