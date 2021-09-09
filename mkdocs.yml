@@ -3,11 +3,16 @@ repo_url: https://github.com/IBM/argocd-vault-plugin
 
 theme:
   name: material
+  custom_dir: docs/_overrides
   palette:
     primary: black
   font:
     text: IBM Plex Sans
     code: IBM Plex Mono
+
+extra:
+  version:
+    provider: mike
 
 nav:
   - Overview: index.md
