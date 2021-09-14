@@ -1,0 +1,1101 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.2.2, mkdocs-material-7.2.6">
+    
+    
+      
+        <title>How it Works - Argo CD Vault Plugin</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.802231af.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.3f5d1f46.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#000000">
+        
+      
+    
+    
+    
+      
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=IBM+Plex+Sans:300,400,400i,700%7CIBM+Plex+Mono&display=fallback">
+        <style>:root{--md-text-font-family:"IBM Plex Sans";--md-code-font-family:"IBM Plex Mono"}</style>
+      
+    
+    
+    
+    
+      
+
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="" data-md-color-primary="black" data-md-color-accent="">
+  
+    
+    <script>function __prefix(e){return new URL("..",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#summary" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+        <aside class="md-banner md-announce">
+          <div class="md-banner__inner md-announce__inner md-grid md-typeset">
+            
+  <div id="version-banner">
+  <script>
+
+    // Show banner for people browsing the `main` docs that it is out of date
+    if (window.location.pathname.match("^\/argocd-vault-plugin\/main\/.*") !== null) {
+      const banner = document.createElement("h4");
+      const msg = document.createTextNode("These docs are from the main branch and may reference unreleased features. ");
+      const link = document.createElement("a");
+      link.setAttribute("style", "color: white;text-decoration: underline;");
+      link.setAttribute("href", `${window.location.origin}/argocd-vault-plugin/`)
+
+      link.appendChild(document.createTextNode("Go here for the latest released docs"))
+      banner.appendChild(msg);
+      banner.appendChild(link);
+
+      const currentDiv = document.getElementById("version-banner");
+      currentDiv.appendChild(banner);
+    }
+
+    // Hide the banner entirely otherwise
+    else {
+      document.getElementsByClassName("md-announce")[0].setAttribute("style", "display: none;");
+    }
+  </script>
+  </div>
+
+          </div>
+        </aside>
+      
+    </div>
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Argo CD Vault Plugin" class="md-header__button md-logo" aria-label="Argo CD Vault Plugin" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Argo CD Vault Plugin
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              How it Works
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/IBM/argocd-vault-plugin/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Argo CD Vault Plugin" class="md-nav__button md-logo" aria-label="Argo CD Vault Plugin" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    Argo CD Vault Plugin
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/IBM/argocd-vault-plugin/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        Overview
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          How it Works
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        How it Works
+      </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    Summary
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#replacement-behavior" class="md-nav__link">
+    Replacement behavior
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#types-of-placeholders" class="md-nav__link">
+    Types of placeholders
+  </a>
+  
+    <nav class="md-nav" aria-label="Types of placeholders">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generic-placeholders" class="md-nav__link">
+    Generic placeholders
+  </a>
+  
+    <nav class="md-nav" aria-label="Generic placeholders">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#specifying-the-path-of-a-secret" class="md-nav__link">
+    Specifying the path of a secret
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#specifying-the-version-of-a-secret" class="md-nav__link">
+    Specifying the version of a secret
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inline-path-placeholders" class="md-nav__link">
+    Inline-path placeholders
+  </a>
+  
+    <nav class="md-nav" aria-label="Inline-path placeholders">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#specifying-the-path-of-a-secret_1" class="md-nav__link">
+    Specifying the path of a secret
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#specifying-the-version-of-a-secret_1" class="md-nav__link">
+    Specifying the version of a secret
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#special-behavior" class="md-nav__link">
+    Special behavior
+  </a>
+  
+    <nav class="md-nav" aria-label="Special behavior">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#base64-placeholders" class="md-nav__link">
+    Base64 placeholders
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automatically-ignoring-placeholder-strings" class="md-nav__link">
+    Automatically ignoring &lt;placeholder&gt; strings
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ignoring-entire-yamljson-files" class="md-nav__link">
+    Ignoring entire YAML/JSON files
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removing-keys-with-missing-values" class="md-nav__link">
+    Removing keys with missing values
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modifiers" class="md-nav__link">
+    Modifiers
+  </a>
+  
+    <nav class="md-nav" aria-label="Modifiers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#base64encode" class="md-nav__link">
+    base64encode
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/" class="md-nav__link">
+        Usage
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backends/" class="md-nav__link">
+        Backends
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config/" class="md-nav__link">
+        Configuration
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_7" type="checkbox" id="__nav_7" >
+      
+      <label class="md-nav__link" for="__nav_7">
+        CLI Reference
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="CLI Reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_7">
+          <span class="md-nav__icon md-icon"></span>
+          CLI Reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cmd/avp/" class="md-nav__link">
+        argocd-vault-plugin
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cmd/generate/" class="md-nav__link">
+        argocd-vault-plugin generate
+      </a>
+    </li>
+  
+
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cmd/version/" class="md-nav__link">
+        argocd-vault-plugin version
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_8" type="checkbox" id="__nav_8" >
+      
+      <label class="md-nav__link" for="__nav_8">
+        Upgrading
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+      <nav class="md-nav" aria-label="Upgrading" data-md-level="1">
+        <label class="md-nav__title" for="__nav_8">
+          <span class="md-nav__icon md-icon"></span>
+          Upgrading
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../0x-1x/" class="md-nav__link">
+        v0.x to v1.x
+      </a>
+    </li>
+  
+
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://github.com/IBM/argocd-vault-plugin/releases" class="md-nav__link">
+        Releases ⧉
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    Summary
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#replacement-behavior" class="md-nav__link">
+    Replacement behavior
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#types-of-placeholders" class="md-nav__link">
+    Types of placeholders
+  </a>
+  
+    <nav class="md-nav" aria-label="Types of placeholders">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generic-placeholders" class="md-nav__link">
+    Generic placeholders
+  </a>
+  
+    <nav class="md-nav" aria-label="Generic placeholders">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#specifying-the-path-of-a-secret" class="md-nav__link">
+    Specifying the path of a secret
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#specifying-the-version-of-a-secret" class="md-nav__link">
+    Specifying the version of a secret
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inline-path-placeholders" class="md-nav__link">
+    Inline-path placeholders
+  </a>
+  
+    <nav class="md-nav" aria-label="Inline-path placeholders">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#specifying-the-path-of-a-secret_1" class="md-nav__link">
+    Specifying the path of a secret
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#specifying-the-version-of-a-secret_1" class="md-nav__link">
+    Specifying the version of a secret
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#special-behavior" class="md-nav__link">
+    Special behavior
+  </a>
+  
+    <nav class="md-nav" aria-label="Special behavior">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#base64-placeholders" class="md-nav__link">
+    Base64 placeholders
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automatically-ignoring-placeholder-strings" class="md-nav__link">
+    Automatically ignoring &lt;placeholder&gt; strings
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ignoring-entire-yamljson-files" class="md-nav__link">
+    Ignoring entire YAML/JSON files
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removing-keys-with-missing-values" class="md-nav__link">
+    Removing keys with missing values
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modifiers" class="md-nav__link">
+    Modifiers
+  </a>
+  
+    <nav class="md-nav" aria-label="Modifiers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#base64encode" class="md-nav__link">
+    base64encode
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/IBM/argocd-vault-plugin/edit/master/docs/howitworks.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                  <h1>How it Works</h1>
+                
+                <h3 id="summary">Summary</h3>
+<p>The argocd-vault-plugin works by taking a directory of YAML or JSON files that have been templated out using the pattern of <code>&lt;placeholder&gt;</code> where you would want a value from Vault to go. The inside of the <code>&lt;&gt;</code> would be the actual key in Vault.</p>
+<p>An annotation can be used to specify exactly where the plugin should look for the vault values. The annotation needs to be in the format <code>avp.kubernetes.io/path: "path/to/secret"</code>.</p>
+<p>For example, if you have a secret with the key <code>password-vault-key</code> that you would want to pull from vault, you might have a yaml that looks something like the below code. In this yaml, the plugin will pull the value of the <em>latest version</em> of the secret at <code>path/to/secret/password-vault-key</code> and inject it into the Secret.</p>
+<p>As YAML:</p>
+<pre><code class="language-yaml">kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/path: &quot;path/to/secret&quot;
+type: Opaque
+data:
+  password: &lt;password-vault-key&gt;
+</code></pre>
+<p>As JSON:</p>
+<pre><code class="language-json">{
+  &quot;kind&quot;: &quot;Secret&quot;,
+  &quot;apiVersion&quot;: &quot;v1&quot;,
+  &quot;metadata&quot;: {
+    &quot;name&quot;: &quot;example-secret&quot;,
+    &quot;annotations&quot;: {
+      &quot;avp.kubernetes.io/path&quot;: &quot;path/to/secret&quot;
+    }
+  },
+  &quot;type&quot;: &quot;Opaque&quot;,
+  &quot;data&quot;: {
+    &quot;password&quot;: &quot;&lt;password-vault-key&gt;&quot;
+  }
+}
+</code></pre>
+<p>And then once the plugin is done doing the substitutions, it outputs the manifest as YAML to standard out to then be applied by Argo CD. The resulting YAML would look like:</p>
+<pre><code class="language-yaml">kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/path: &quot;path/to/secret&quot;
+type: Opaque
+data:
+  password: cGFzc3dvcmQK # The Value from the key password-vault-key in vault
+</code></pre>
+<h3 id="replacement-behavior">Replacement behavior</h3>
+<p>By default the plugin does not perform any transformation of the secrets in transit. So if you have plain text secrets in Vault, you will need to use the <code>stringData</code> field and if you have a base64 encoded secret in Vault, you will need to use the <code>data</code> field according to the <a href="https://kubernetes.io/docs/concepts/configuration/secret/">Kubernetes documentation</a>.</p>
+<p>There are 2 exceptions to this:</p>
+<ul>
+<li>
+<p>Placeholders that are in base64 format - see <a href="#base64-placeholders">Base64 placeholders</a> for details</p>
+</li>
+<li>
+<p>The <code>base64encode</code> modifier - see <a href="#base64encode">base64encode</a> for details</p>
+</li>
+</ul>
+<h3 id="types-of-placeholders">Types of placeholders</h3>
+<h4 id="generic-placeholders">Generic placeholders</h4>
+<p>The example in the Summary uses a <em>generic</em> placeholder, which is just the name of the <em>key</em> of the secret in the secrets manager you want to inject. All placeholders have to be keys in the <em>same</em> secret in the secrets manager.</p>
+<p>Valid examples:</p>
+<ul>
+<li><code>&lt;placeholder&gt;</code></li>
+</ul>
+<h5 id="specifying-the-path-of-a-secret">Specifying the path of a secret</h5>
+<p>The only way to specify the path of a secret for generic placeholders is to use the <code>avp.kubernetes.io/path</code> annotation like this:</p>
+<pre><code class="language-yaml">kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/path: &quot;path/to/secret&quot;
+</code></pre>
+<h5 id="specifying-the-version-of-a-secret">Specifying the version of a secret</h5>
+<p>The only way to specify the version of a secret for generic placeholders is to use the <code>avp.kubernetes.io/secret-version</code> annotation like this:</p>
+<pre><code class="language-yaml">kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/secret-version: &quot;2&quot; # Requires at least 2 revisions to exist to work
+</code></pre>
+<p><strong>Note</strong>: This ignored for secret managers that don't allow versioning, meaning the latest version is returned</p>
+<h4 id="inline-path-placeholders">Inline-path placeholders</h4>
+<p>An inline-path placeholder allows you to specify the path, key, and optionally, the version to use for a specific placeholder. This means you can inject values from <em>multiple distinct</em> secrets in your secrets manager into the same YAML. </p>
+<p>Valid examples:</p>
+<ul>
+<li><code>&lt;path:some/path#secret-key&gt;</code></li>
+<li><code>&lt;path:some/path#secret-key#version&gt;</code></li>
+</ul>
+<p>If the <code>version</code> is omitted (first example), the latest version of the secret is retrieved. </p>
+<h5 id="specifying-the-path-of-a-secret_1">Specifying the path of a secret</h5>
+<p>The only way to specify the path is in the placeholder itself: the string <code>path:</code> followed by the path in your secret manager to the secret. The <code>avp.kubernetes.io/path</code> annotation has <em>no effect</em> on these placeholders.</p>
+<h5 id="specifying-the-version-of-a-secret_1">Specifying the version of a secret</h5>
+<p>The only way to specify the version is in the placeholder itself: the string following the last <code>#</code> in the placeholder should be the ID of the version of the secret in your secret manager. The <code>avp.kubernetes.io/secret-version</code> annotation has <em>no effect</em> on these placeholders.</p>
+<p><strong>Note</strong>: This ignored for secret managers that don't allow versioning, meaning the latest version is returned</p>
+<h4 id="special-behavior">Special behavior</h4>
+<h5 id="base64-placeholders">Base64 placeholders</h5>
+<p>Some tools like Kustomize secret generator will create Secrets with <code>data</code> fields containing base64 encoded strings from the source files. If you try to use <code>&lt;placeholder&gt;</code>s in the source files, they will be output in a base64 format. </p>
+<p>The plugin can handle this case by finding any base64 encoded placeholders (either generic or inline-path), replace them, and re-base64 encode the result. </p>
+<p>For example, given this input:</p>
+<pre><code class="language-yaml">kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/path: &quot;path/to/secret&quot;
+type: Opaque
+data:
+  # The base64 encoding of postgres://&lt;username&gt;:&lt;password&gt;@&lt;host&gt;:&lt;port&gt;/&lt;database&gt;?sslmode=require
+  POSTGRES_URL: cG9zdGdyZXM6Ly88dXNlcm5hbWU+OjxwYXNzd29yZD5APGhvc3Q+Ojxwb3J0Pi88ZGF0YWJhc2U+P3NzbG1vZGU9cmVxdWlyZQ==
+</code></pre>
+<p>and these values for the secrets:</p>
+<pre><code>username: user
+password: pass
+host: host
+port: 9443
+database: my-db
+</code></pre>
+<p>the output is:</p>
+<pre><code class="language-yaml">kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/path: &quot;path/to/secret&quot;
+type: Opaque
+data:
+  # The base64 encoding of postgres://user:pass@host:9443/my-db?sslmode=require
+  POSTGRES_URL: cG9zdGdyZXM6Ly91c2VyOnBhc3NAaG9zdDo5NDQzL215LWRiP3NzbG1vZGU9cmVxdWlyZQ==
+</code></pre>
+<h5 id="automatically-ignoring-placeholder-strings">Automatically ignoring <code>&lt;placeholder&gt;</code> strings</h5>
+<p>The plugin tries to be helpful and will ignore strings in the format <code>&lt;string&gt;</code> if the <code>avp.kubernetes.io/path</code> annotation is missing, and only try to replace <a href="#inline-path-placeholders">inline-path placeholders</a></p>
+<p>This can be very useful when using AVP with YAML/JSON that uses <code>&lt;string&gt;</code>'s for other purposes, for example in CRD's with usage information:</p>
+<pre><code class="language-yaml">kind: CustomResourceDefinition
+apiVersion: v1
+metadata:
+  name: some-crd
+
+  # Notice, no `avp.kuberenetes.io/path` annotation here
+  annotations: {}
+type: Opaque
+fieldRef:
+
+  # So, &lt;KEY&gt; is NOT a placeholder
+  description: 'Selects a field of
+    the pod: supports metadata.name,
+    metadata.namespace, `metadata.labels[''&lt;KEY&gt;'']`,
+    `metadata.annotations[''&lt;KEY&gt;'']`,
+    spec.nodeName, spec.serviceAccountName,
+    status.hostIP, status.podIP, status.podIPs.'
+
+  # But, THIS is still a placeholder
+  some-credential: &lt;path:somewhere/in/my/vault#credential&gt;
+</code></pre>
+<h5 id="ignoring-entire-yamljson-files">Ignoring entire YAML/JSON files</h5>
+<p>The plugin will ignore any given YAML/JSON file outright with the <code>avp.kubernetes.io/ignore</code> annotation set to <code>"true"</code>:</p>
+<pre><code class="language-yaml">kind: CustomResourceDefinition
+apiVersion: v1
+metadata:
+  name: some-crd
+
+  # Notice, `avp.kuberenetes.io/ignore` annotation is set
+  annotations:
+    avp.kuberenetes.io/ignore: &quot;true&quot;
+type: Opaque
+fieldRef:
+
+  # So, &lt;KEY&gt; is NOT a placeholder
+  description: 'Selects a field of
+    the pod: supports metadata.name,
+    metadata.namespace, `metadata.labels[''&lt;KEY&gt;'']`,
+    `metadata.annotations[''&lt;KEY&gt;'']`,
+    spec.nodeName, spec.serviceAccountName,
+    status.hostIP, status.podIP, status.podIPs.'
+
+  # Neither is this
+  some-credential: &lt;path:somewhere/in/my/vault#credential&gt;
+
+  # Nor this
+  some-credential: &lt;path:somewhere/in/my/vault#credential#version3&gt;
+</code></pre>
+<h5 id="removing-keys-with-missing-values">Removing keys with missing values</h5>
+<p>By default, AVP will return an error if there is a <code>&lt;placeholder&gt;</code> that has no matching key in the secrets manager. </p>
+<p>You can override this by using the annotation <code>avp.kubernetes.io/remove-missing</code>. This will remove keys whose values are missing from Vault from the entire YAML. </p>
+<p>For example, given this input:</p>
+<pre><code class="language-yaml">kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/remove-missing: true
+stringData:
+  username: &lt;username&gt;
+  password: &lt;pass&gt;
+</code></pre>
+<p>And this data in the secrets manager:</p>
+<pre><code>username: user
+</code></pre>
+<p>output is:</p>
+<pre><code class="language-yaml">kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/remove-missing: true
+stringData:
+  username: user
+</code></pre>
+<p>This only works with <em>generic</em> placeholders.</p>
+<h4 id="modifiers">Modifiers</h4>
+<h5 id="base64encode"><code>base64encode</code></h5>
+<!-- By default the plugin does not perform any transformation of the secrets in transit. So if you have plain text secrets in Vault, you will need to use the `stringData` field and if you have a base64 encoded secret in Vault, you will need to use the `data` field according to the [Kubernetes documentation](https://kubernetes.io/docs/concepts/configuration/secret/). -->
+
+<p>The base64encode modifier allows you to base64 encode a plain-text value retrieved from a secrets manager before injecting it into a Kubernetes secret.</p>
+<p>Valid examples:</p>
+<ul>
+<li>
+<p><code>&lt;username | base64encode&gt;</code></p>
+</li>
+<li>
+<p><code>&lt;path:secrets/data/my-db#username | base64encode&gt;</code></p>
+</li>
+<li>
+<p><code>&lt;path:secrets/data/my-db#username#version3 | base64encode&gt;</code></p>
+</li>
+</ul>
+<p>This can be used for both generic and inline-path placeholders.</p>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+        
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href=".." class="md-footer__link md-footer__link--prev" aria-label="Previous: Overview" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Overview
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../installation/" class="md-footer__link md-footer__link--next" aria-label="Next: Installation" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Installation
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+        
+      </div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.409db549.min.js", "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.756773cc.min.js"></script>
+      
+    
+  </body>
+</html>
