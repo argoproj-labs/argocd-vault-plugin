@@ -4,6 +4,8 @@
 {% block announce %}
   <div id="version-banner">
   <script>
+
+    // Show banner for people browsing the `main` docs that it is out of date
     if (window.location.pathname.match("^\/argocd-vault-plugin\/main\/.*") !== null) {
       const banner = document.createElement("h4");
       const msg = document.createTextNode("These docs are from the main branch and may reference unreleased features. ");
@@ -17,6 +19,11 @@
 
       const currentDiv = document.getElementById("version-banner");
       currentDiv.appendChild(banner);
+    }
+
+    // Hide the banner entirely otherwise
+    else {
+      document.getElementsByClassName("md-announce")[0].setAttribute("style", "display: none;");
     }
   </script>
   </div>
