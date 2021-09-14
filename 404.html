@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Redirecting</title>
+  <noscript>
+    <meta http-equiv="refresh" content="1; url=/argocd-vault-plugin/stable/" />
+  </noscript>
+  <script>
+    const matches = window.location.pathname.match("\/argocd-vault-plugin\/([^\/]*(?:\/)?(?:#.*)?)$");
+
+    // Redirect old documentation links from before versioned-docs to the stable version of that page
+    if (matches !== null) {
+      window.location.replace(`/argocd-vault-plugin/stable/${matches[1]}`);
+    }
+
+    // Actual 404, just go to stable docs
+    else {
+      window.location.replace(`/argocd-vault-plugin/stable/`);
+    }
+  </script>
+</head>
+</html>
