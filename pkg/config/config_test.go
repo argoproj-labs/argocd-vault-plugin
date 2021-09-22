@@ -290,9 +290,9 @@ func TestNewConfigMissingParameter(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":            "azurekeyvault",
-				"AZURE_TENANT_ID":     "test",
-				"AZURE_CLIENT_ID":     "test",
+				"AVP_TYPE":        "azurekeyvault",
+				"AZURE_TENANT_ID": "test",
+				"AZURE_CLIENT_ID": "test",
 			},
 			"*backends.AzureKeyVault",
 		},

@@ -30,6 +30,9 @@ const (
 	IAMAuth                  = "iam"
 	AwsDefaultRegion         = "us-east-2"
 	GCPCurrentSecretVersion  = "latest"
+	IBMMaxRetries            = 3
+	IBMRetryIntervalSeconds  = 20
+	IBMMaxPerPage            = 200
 
 	// Supported annotations
 	AVPPathAnnotation          = "avp.kubernetes.io/path"
