@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	gcpsm "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/keyvault"
@@ -117,6 +118,9 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 			if err != nil {
 				return nil, err
 			}
+
+			client.EnableRetries(types.IBMMaxRetries, time.Duration(types.IBMRetryIntervalSeconds)*time.Second)
+
 			backend = backends.NewIBMSecretsManagerBackend(client)
 		}
 	case types.AWSSecretsManagerbackend:
