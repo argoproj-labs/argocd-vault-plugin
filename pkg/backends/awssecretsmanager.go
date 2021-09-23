@@ -54,3 +54,14 @@ func (a *AWSSecretsManager) GetSecrets(path string, version string, annotations 
 
 	return dat, nil
 }
+
+// GetIndividualSecret will get the specific secret (placeholder) from the SM backend
+// For AWS, we only support placeholders replaced from the k/v pairs of a secret which cannot be individually addressed
+// So, we use GetSecrets and extract the specific placeholder we want
+func (a *AWSSecretsManager) GetIndividualSecret(kvpath, secret, version string, annotations map[string]string) (interface{}, error) {
+	data, err := a.GetSecrets(kvpath, version, annotations)
+	if err != nil {
+		return nil, err
+	}
+	return data[secret], nil
+}

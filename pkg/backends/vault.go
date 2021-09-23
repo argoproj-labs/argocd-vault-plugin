@@ -82,3 +82,14 @@ func (v *Vault) GetSecrets(path string, version string, annotations map[string]s
 
 	return nil, errors.New("Unsupported kvVersion specified")
 }
+
+// GetIndividualSecret will get the specific secret (placeholder) from the SM backend
+// For Vault, we only support placeholders replaced from the k/v pairs of a secret which cannot be individually addressed
+// So, we use GetSecrets and extract the specific placeholder we want
+func (v *Vault) GetIndividualSecret(kvpath, secret, version string, annotations map[string]string) (interface{}, error) {
+	data, err := v.GetSecrets(kvpath, version, annotations)
+	if err != nil {
+		return nil, err
+	}
+	return data[secret], nil
+}
