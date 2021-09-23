@@ -301,8 +301,9 @@ func CreateTestAuthVault(t *testing.T) *vault.TestCluster {
 // MockVault is used to mock out a generic SM Backend
 // It's useful for testing replacement behavior
 type MockVault struct {
-	GetSecretsCalled bool
-	Data             []map[string]interface{}
+	GetSecretsCalled          bool
+	GetIndividualSecretCalled bool
+	Data                      []map[string]interface{}
 }
 
 func (v *MockVault) Login() error {
@@ -321,4 +322,15 @@ func (v *MockVault) GetSecrets(path string, version string, annotations map[stri
 	}
 	num, _ := strconv.ParseInt(version, 10, 0)
 	return v.Data[num-1], nil
+}
+func (v *MockVault) GetIndividualSecret(path, secret, version string, annotations map[string]string) (interface{}, error) {
+	v.GetIndividualSecretCalled = true
+	if len(v.Data) == 0 {
+		return nil, nil
+	}
+	if version == "" {
+		return v.Data[len(v.Data)-1][secret], nil
+	}
+	num, _ := strconv.ParseInt(version, 10, 0)
+	return v.Data[num-1][secret], nil
 }

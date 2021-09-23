@@ -92,7 +92,7 @@ func TestGenericReplacement_specificPath(t *testing.T) {
 
 	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
 
-	if !mv.GetSecretsCalled {
+	if !mv.GetIndividualSecretCalled {
 		t.Fatalf("expected GetSecrets to be called since placeholder contains explicit path so Vault lookup is neeed")
 	}
 
@@ -140,7 +140,7 @@ func TestGenericReplacement_specificPathVersioned(t *testing.T) {
 
 	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
 
-	if !mv.GetSecretsCalled {
+	if !mv.GetIndividualSecretCalled {
 		t.Fatalf("expected GetSecrets to be called since placeholder contains explicit path so Vault lookup is neeed")
 	}
 
@@ -180,7 +180,7 @@ func TestGenericReplacement_specificPathNoAnnotation(t *testing.T) {
 
 	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
 
-	if !mv.GetSecretsCalled {
+	if !mv.GetIndividualSecretCalled {
 		t.Fatalf("expected GetSecrets to be called since placeholder contains explicit path, was not")
 	}
 
