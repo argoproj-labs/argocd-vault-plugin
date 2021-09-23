@@ -159,3 +159,14 @@ func (i *IBMSecretsManager) GetSecrets(path string, version string, annotations 
 
 	return secrets, nil
 }
+
+// GetIndividualSecret will get the specific secret (placeholder) from the SM backend
+// For IBM, we only support placeholders replaced from arbitrary secrets in a group, which cannot be individually addressed by placeholder
+// So, we use GetSecrets and extract the specific placeholder we want
+func (i *IBMSecretsManager) GetIndividualSecret(kvpath, secret, version string, annotations map[string]string) (interface{}, error) {
+	data, err := i.GetSecrets(kvpath, version, annotations)
+	if err != nil {
+		return nil, err
+	}
+	return data[secret], nil
+}

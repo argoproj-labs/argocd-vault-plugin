@@ -38,6 +38,12 @@ type Config struct {
 	Backend types.Backend
 }
 
+var backendPrefixes []string = []string{
+	"vault",
+	"aws",
+	"azure",
+}
+
 // New returns a new Config struct
 func New(v *viper.Viper, co *Options) (*Config, error) {
 
@@ -194,15 +200,17 @@ func readConfigOrSecret(secretName, configPath string, v *viper.Viper) error {
 	}
 
 	for k, viperValue := range v.AllSettings() {
-		if strings.HasPrefix(k, "vault") || strings.HasPrefix(k, "aws") {
-			var value string
-			switch viperValue.(type) {
-			case bool:
-				value = strconv.FormatBool(viperValue.(bool))
-			default:
-				value = viperValue.(string)
+		for _, prefix := range backendPrefixes {
+			if strings.HasPrefix(k, prefix) {
+				var value string
+				switch viperValue.(type) {
+				case bool:
+					value = strconv.FormatBool(viperValue.(bool))
+				default:
+					value = viperValue.(string)
+				}
+				os.Setenv(strings.ToUpper(k), value)
 			}
-			os.Setenv(strings.ToUpper(k), value)
 		}
 	}
 

@@ -63,3 +63,14 @@ func (a *GCPSecretManager) GetSecrets(path string, version string, annotations m
 
 	return data, nil
 }
+
+// GetIndividualSecret will get the specific secret (placeholder) from the SM backend
+// For GCP, the path is specific to the secret
+// So, we just forward the value from the k/v result of GetSecrets
+func (a *GCPSecretManager) GetIndividualSecret(kvpath, secret, version string, annotations map[string]string) (interface{}, error) {
+	data, err := a.GetSecrets(kvpath, version, annotations)
+	if err != nil {
+		return nil, err
+	}
+	return data[secret], nil
+}

@@ -125,6 +125,7 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 		}
 
 		var secretValue interface{}
+		var secretErr error
 		// Check to see if should call out to get individual secret (inline-path in placeholder)
 		// This can include an optional version argument - if unspecified, the latest version is retrieved
 		if indivPlaceholderSyntax.Match([]byte(placeholder)) {
@@ -133,14 +134,11 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 			key := indivSecretMatches[indivPlaceholderSyntax.SubexpIndex("key")]
 			version := indivSecretMatches[indivPlaceholderSyntax.SubexpIndex("version")]
 
-			secrets, secretErr := resource.Backend.GetSecrets(path, version, resource.Annotations)
+			secretValue, secretErr = resource.Backend.GetIndividualSecret(path, strings.TrimSpace(key), version, resource.Annotations)
 			if secretErr != nil {
 				err = append(err, secretErr)
 				return match
 			}
-
-			secretKey := strings.TrimSpace(key)
-			secretValue = secrets[secretKey]
 		} else {
 			secretValue = resource.Data[placeholder]
 		}

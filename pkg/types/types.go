@@ -12,6 +12,9 @@ type Backend interface {
 
 	// GetSecrets retrieves the secret at `path` with specified `version` based on configuation given in `annotations`
 	GetSecrets(path string, version string, annotations map[string]string) (map[string]interface{}, error)
+
+	// GetIndividualSecret retrieves the specific secret from `path` with specified `version` based on configuation given in `annotations`
+	GetIndividualSecret(path, secret, version string, annotations map[string]string) (interface{}, error)
 }
 
 // AuthType is and interface for the supported authentication methods
