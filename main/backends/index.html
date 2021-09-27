@@ -1346,6 +1346,8 @@ data:
 <p>Any secrets that are disabled in the key vault will be skipped if found.</p>
 <p>For Azure, <code>path</code> is the unique name of your key vault.</p>
 <p><strong>Note</strong>: Versioning is only supported for inline paths.</p>
+<p><strong>Note</strong>: Due to the way the Azure backend works, templates that use <em>inline-path placeholders are more efficient</em>
+(fewer HTTP calls and therefore lower chance of hitting rate limit) than generic placeholders.</p>
 <p>These are the parameters for Azure:</p>
 <pre><code>AVP_TYPE: azurekeyvault
 </code></pre>
