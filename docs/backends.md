@@ -320,6 +320,9 @@ For Azure, `path` is the unique name of your key vault.
 
 **Note**: Versioning is only supported for inline paths.
 
+**Note**: Due to the way the Azure backend works, templates that use _inline-path placeholders are more efficient_
+(fewer HTTP calls and therefore lower chance of hitting rate limit) than generic placeholders.
+
 These are the parameters for Azure:
 ```
 AVP_TYPE: azurekeyvault
