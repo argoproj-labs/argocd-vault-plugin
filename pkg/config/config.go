@@ -42,6 +42,7 @@ var backendPrefixes []string = []string{
 	"vault",
 	"aws",
 	"azure",
+	"google",
 }
 
 // New returns a new Config struct
