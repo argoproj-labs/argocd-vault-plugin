@@ -194,6 +194,22 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 		}
 	})
 
+	t.Run("IBM SM GetIndividualSecret", func(t *testing.T) {
+		mock := MockIBMSMClient{}
+		sm := backends.NewIBMSecretsManagerBackend(&mock)
+
+		secret, err := sm.GetIndividualSecret("ibmcloud/arbitrary/secrets/groups/small-group", "my-secret", "", map[string]string{})
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
+
+		expected := "password"
+
+		if !reflect.DeepEqual(expected, secret) {
+			t.Errorf("expected: %s, got: %s", expected, secret)
+		}
+	})
+
 	t.Run("Handles paths missing secret group and type", func(t *testing.T) {
 		mock := MockIBMSMClient{}
 		sm := backends.NewIBMSecretsManagerBackend(&mock)

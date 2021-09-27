@@ -71,6 +71,21 @@ func TestVaultGetSecrets(t *testing.T) {
 		}
 	})
 
+	t.Run("Vault GetIndividualSecret", func(t *testing.T) {
+		secret, err := backend.GetIndividualSecret("kv/data/test", "hello", "", map[string]string{
+			types.VaultKVVersionAnnotation: "2",
+		})
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
+
+		expected := "world"
+
+		if !reflect.DeepEqual(expected, secret) {
+			t.Errorf("expected: %s, got: %s", expected, secret)
+		}
+	})
+
 	t.Run("will honor version with kv2", func(t *testing.T) {
 		annotations := map[string]string{
 			types.VaultKVVersionAnnotation: "2",
