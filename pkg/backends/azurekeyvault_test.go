@@ -255,6 +255,19 @@ func TestAzureKeyVault_GetSecrets(t *testing.T) {
 
 	})
 
+	t.Run("Azure GetIndividualSecret", func(t *testing.T) {
+		secret, err := kv.GetIndividualSecret("test", "bar", "33740fc26214497f8904d93f20f7db6c", map[string]string{})
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
+
+		expected := "baz-version"
+
+		if !reflect.DeepEqual(expected, secret) {
+			t.Errorf("expected: %s, got: %s.", expected, secret)
+		}
+	})
+
 	t.Run("Azure retrieve secrets with version disabled", func(t *testing.T) {
 
 		// test disabled secret

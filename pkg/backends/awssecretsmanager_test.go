@@ -48,6 +48,19 @@ func TestAWSSecretManagerGetSecrets(t *testing.T) {
 		}
 	})
 
+	t.Run("AWS GetIndividualSecret", func(t *testing.T) {
+		secret, err := sm.GetIndividualSecret("test", "test-secret", "previous", map[string]string{})
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
+
+		expected := "previous-value"
+
+		if !reflect.DeepEqual(expected, secret) {
+			t.Errorf("expected: %s, got: %s.", expected, secret)
+		}
+	})
+
 	t.Run("Get secrets at specific version", func(t *testing.T) {
 		data, err := sm.GetSecrets("test", "123", map[string]string{})
 		if err != nil {
