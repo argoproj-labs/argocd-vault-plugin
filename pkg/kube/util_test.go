@@ -266,6 +266,91 @@ func TestGenericReplacement_Base64(t *testing.T) {
 	assertSuccessfulReplacement(&dummyResource, &expected, t)
 }
 
+func TestGenericReplacement_JsonPath(t *testing.T) {
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"username": "<data | jsonPath .credentials.user>",
+			"password": "<data | jsonPath .credentials.pass>",
+			"image":    "<data | jsonPath .image>",
+		},
+		Data: map[string]interface{}{
+			"data": map[string]interface{}{
+				"credentials": map[string]interface{}{
+					"user": "app",
+					"pass": "mypw",
+				},
+				"image": map[string]interface{}{
+					"repository": "docker.io/dummy",
+					"tag":        "latest",
+				},
+			},
+		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"username": "app",
+			"password": "mypw",
+			"image": map[string]interface{}{
+				"repository": "docker.io/dummy",
+				"tag":        "latest",
+			},
+		},
+		Data: map[string]interface{}{
+			"data": map[string]interface{}{
+				"credentials": map[string]interface{}{
+					"user": "app",
+					"pass": "mypw",
+				},
+				"image": map[string]interface{}{
+					"repository": "docker.io/dummy",
+					"tag":        "latest",
+				},
+			},
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
+func TestGenericReplacement_JsonPath_missingKey(t *testing.T) {
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"image": "<data | jsonPath .invalidPath>",
+		},
+		Data: map[string]interface{}{
+			"data": map[string]interface{}{},
+		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"image": "<data | jsonPath .invalidPath>",
+		},
+		Data: map[string]interface{}{
+			"data": map[string]interface{}{},
+		},
+		replacementErrors: []error{
+			&missingKeyError{
+				s: fmt.Sprint("jsonPath: invalidPath is not found for string \"image: <data | jsonPath .invalidPath>\""),
+			},
+		},
+	}
+
+	assertFailedReplacement(&dummyResource, &expected, t)
+}
+
 func TestGenericReplacement_nestedString(t *testing.T) {
 	dummyResource := Resource{
 		TemplateData: map[string]interface{}{

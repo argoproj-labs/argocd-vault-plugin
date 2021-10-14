@@ -12,6 +12,7 @@ import (
 
 	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
+	k8jsonpath "k8s.io/client-go/util/jsonpath"
 )
 
 type missingKeyError struct {
@@ -118,9 +119,14 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 
 		// Check for base64 modifier
 		var base64modifier bool
+		var jsonPathModifier string
 		if modifier.MatchString(placeholder) {
 			modifierMatches := modifier.FindStringSubmatch(placeholder)
 			base64modifier = strings.TrimSpace(string(modifierMatches[1])) == "base64encode"
+			jsonPathSplit := strings.SplitAfter(string(modifierMatches[1]), "jsonPath")
+			if len(jsonPathSplit) > 1 {
+				jsonPathModifier = jsonPathSplit[1]
+			}
 			placeholder = strings.TrimSpace(strings.Split(placeholder, "|")[0])
 		}
 
@@ -144,6 +150,26 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 		}
 
 		if secretValue != nil {
+			// Process jsonPath modifier
+			if len(jsonPathModifier) > 0 {
+				jp := k8jsonpath.New("AVPJsonPath")
+				jpErr := jp.Parse(fmt.Sprintf("{%s}", jsonPathModifier))
+				if jpErr != nil {
+					err = append(err, jpErr)
+					return match
+				}
+				res, jpErr := jp.FindResults(secretValue)
+				if jpErr != nil {
+					err = append(err, &missingKeyError{
+						s: fmt.Sprintf("jsonPath: %s for string \"%s: %s\"", jpErr.Error(), key, value),
+					})
+					return match
+				}
+				if len(res) > 0 && len(res[0]) > 0 {
+					secretValue = res[0][0].Interface()
+				}
+			}
+
 			switch secretValue.(type) {
 			case string:
 				{
