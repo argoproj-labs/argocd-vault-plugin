@@ -1,13 +1,14 @@
 package backends_test
 
 import (
+	"reflect"
+	"strings"
+	"testing"
+
 	"github.com/IBM/argocd-vault-plugin/pkg/backends"
 	"github.com/googleapis/gax-go/v2"
 	"golang.org/x/net/context"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
-	"reflect"
-	"strings"
-	"testing"
 )
 
 type mockSecretManagerClient struct {
@@ -51,7 +52,7 @@ func TestGCPSecretManagerGetSecrets(t *testing.T) {
 
 		// Data correct
 		expected := map[string]interface{}{
-			"test-secret": []byte("some-value"),
+			"test-secret": "some-value",
 		}
 
 		if !reflect.DeepEqual(expected, data) {
@@ -65,7 +66,7 @@ func TestGCPSecretManagerGetSecrets(t *testing.T) {
 			t.Fatalf("expected 0 errors but got: %s", err)
 		}
 
-		expected := []byte("some-value")
+		expected := "some-value"
 
 		if !reflect.DeepEqual(expected, secret) {
 			t.Errorf("expected: %s, got: %s", expected, secret)
@@ -86,7 +87,7 @@ func TestGCPSecretManagerGetSecrets(t *testing.T) {
 
 		// Data correct
 		expected := map[string]interface{}{
-			"test-secret": []byte("v3-value"),
+			"test-secret": "v3-value",
 		}
 		if !reflect.DeepEqual(expected, data) {
 			t.Errorf("expected: %s, got: %s.", expected, data)
