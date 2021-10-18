@@ -12,7 +12,6 @@ import (
 
 	"github.com/IBM/argocd-vault-plugin/pkg/types"
 	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
-	k8jsonpath "k8s.io/client-go/util/jsonpath"
 )
 
 type missingKeyError struct {
@@ -26,7 +25,6 @@ func (e *missingKeyError) Error() string {
 var genericPlaceholder, _ = regexp.Compile(`(?mU)<(.*)>`)
 var specificPathPlaceholder, _ = regexp.Compile(`(?mU)<path:([^#]+)#([^#]+)(?:#([^#]+))?>`)
 var indivPlaceholderSyntax, _ = regexp.Compile(`(?mU)path:(?P<path>[^#]+?)#(?P<key>[^#]+?)(?:#(?P<version>.+?))??`)
-var modifier, _ = regexp.Compile(`\|(.*)`)
 
 // replaceInner recurses through the given map and replaces the placeholders by calling `replacerFunc`
 // with the key, value, and map of keys to replacement values
@@ -117,18 +115,9 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 	res := placeholderRegex.ReplaceAllFunc([]byte(value), func(match []byte) []byte {
 		placeholder := strings.Trim(string(match), "<>")
 
-		// Check for base64 modifier
-		var base64modifier bool
-		var jsonPathModifier string
-		if modifier.MatchString(placeholder) {
-			modifierMatches := modifier.FindStringSubmatch(placeholder)
-			base64modifier = strings.TrimSpace(string(modifierMatches[1])) == "base64encode"
-			jsonPathSplit := strings.SplitAfter(string(modifierMatches[1]), "jsonPath")
-			if len(jsonPathSplit) > 1 {
-				jsonPathModifier = jsonPathSplit[1]
-			}
-			placeholder = strings.TrimSpace(strings.Split(placeholder, "|")[0])
-		}
+		// Split modifiers from placeholder
+		pipelineFields := strings.Split(placeholder, "|")
+		placeholder = strings.Trim(pipelineFields[0], " ")
 
 		var secretValue interface{}
 		var secretErr error
@@ -150,32 +139,21 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 		}
 
 		if secretValue != nil {
-			// Process jsonPath modifier
-			if len(jsonPathModifier) > 0 {
-				jp := k8jsonpath.New("AVPJsonPath")
-				jpErr := jp.Parse(fmt.Sprintf("{%s}", jsonPathModifier))
-				if jpErr != nil {
-					err = append(err, jpErr)
+			// Process modifiers
+			for _, stmt := range pipelineFields[1:] {
+				fields := strings.Fields(stmt)
+				functionName := strings.Trim(fields[0], " ")
+				modErr := modifiers[functionName](fields[1:], &secretValue)
+				if modErr != nil {
+					e := fmt.Errorf("%s: %s for placeholder %s in string %s: %s", functionName, modErr.Error(), placeholder, key, value)
+					err = append(err, e)
 					return match
-				}
-				res, jpErr := jp.FindResults(secretValue)
-				if jpErr != nil {
-					err = append(err, &missingKeyError{
-						s: fmt.Sprintf("jsonPath: %s for string \"%s: %s\"", jpErr.Error(), key, value),
-					})
-					return match
-				}
-				if len(res) > 0 && len(res[0]) > 0 {
-					secretValue = res[0][0].Interface()
 				}
 			}
 
 			switch secretValue.(type) {
 			case string:
 				{
-					if base64modifier {
-						return []byte(base64.StdEncoding.EncodeToString([]byte(secretValue.(string))))
-					}
 					return []byte(secretValue.(string))
 				}
 			default:
