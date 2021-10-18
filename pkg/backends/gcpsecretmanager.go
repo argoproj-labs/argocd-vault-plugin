@@ -59,7 +59,7 @@ func (a *GCPSecretManager) GetSecrets(path string, version string, annotations m
 
 	secretName := matches[GCPPath.SubexpIndex("secretid")]
 	secretData := result.Payload.Data
-	data[secretName] = secretData
+	data[secretName] = string(secretData)
 
 	return data, nil
 }
