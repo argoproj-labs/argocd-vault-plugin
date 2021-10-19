@@ -57,7 +57,7 @@ There are 2 exceptions to this:
 
 - Placeholders that are in base64 format - see [Base64 placeholders](#base64-placeholders) for details
 
-- The `base64encode` modifier - see [base64encode](#base64encode) for details
+- Modifiers - see [Modifiers](#Modifiers) for details
 
 ### Types of placeholders
 
@@ -262,3 +262,17 @@ Valid examples:
 - `<path:secrets/data/my-db#username#version3 | base64encode>`
 
 This can be used for both generic and inline-path placeholders.
+
+##### `jsonPath`
+
+The jsonPath modifier allows you use json path to post-process objects retrieved from a secrets manager before injecting into a Kubernetes secret.
+
+See the jsonPath documentation for more information: https://goessner.net/articles/JsonPath/
+
+Valid examples:
+
+- `<credentials | jsonPath .username>`
+
+- `<path:secrets/data/my-db#credentials | jsonPath .username>`
+
+- `<path:secrets/data/my-db#credentials#version3 | jsonPath .username | base64encode>`
