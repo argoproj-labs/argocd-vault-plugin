@@ -28,7 +28,6 @@ func base64encode(params []string, input interface{}) error {
 	default:
 		return fmt.Errorf("invalid datatype %v", reflect.TypeOf(input))
 	}
-	return nil
 }
 
 func jsonPath(params []string, input interface{}) error {
@@ -44,7 +43,7 @@ func jsonPath(params []string, input interface{}) error {
 	if err != nil {
 		return err
 	}
-	if len(res) > 0 && len(res[0]) > 0 {
+	if len(res) > 0 && len(res[0]) > 0 && !res[0][0].IsNil() {
 		// set input to jsonPath output
 		ref := reflect.ValueOf(input).Elem()
 		ref.Set(reflect.ValueOf(res[0][0].Interface()))
