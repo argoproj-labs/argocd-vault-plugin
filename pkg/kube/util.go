@@ -143,6 +143,11 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 			for _, stmt := range pipelineFields[1:] {
 				fields := strings.Fields(stmt)
 				functionName := strings.Trim(fields[0], " ")
+				if _, ok := modifiers[functionName]; !ok {
+					e := fmt.Errorf("invalid modifier: %s for placeholder %s in string %s: %s", functionName, placeholder, key, value)
+					err = append(err, e)
+					return match
+				}
 				modErr := modifiers[functionName](fields[1:], &secretValue)
 				if modErr != nil {
 					e := fmt.Errorf("%s: %s for placeholder %s in string %s: %s", functionName, modErr.Error(), placeholder, key, value)
