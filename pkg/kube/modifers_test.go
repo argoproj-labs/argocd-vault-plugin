@@ -14,7 +14,7 @@ func assertErrorEqual(t *testing.T, expected error, actual error) {
 
 func assertResultEqual(t *testing.T, expected interface{}, actual interface{}) {
 	if !reflect.DeepEqual(expected, actual) {
-		t.Fatalf("expected error [%v], got [%v]", expected, actual)
+		t.Fatalf("expected result [%v], got [%v]", expected, actual)
 	}
 }
 
