@@ -269,9 +269,9 @@ func TestGenericReplacement_Base64(t *testing.T) {
 func TestGenericReplacement_JsonPath(t *testing.T) {
 	dummyResource := Resource{
 		TemplateData: map[string]interface{}{
-			"username": "<data | jsonPath .credentials.user>",
-			"password": "<data | jsonPath .credentials.pass | base64encode>",
-			"image":    "<data | jsonPath .image>",
+			"username": "<data | jsonPath {.credentials.user}>",
+			"password": "<data | jsonPath {.credentials.pass} | base64encode>",
+			"image":    "<data | jsonPath {.image} | jsonParse>",
 		},
 		Data: map[string]interface{}{
 			"data": map[string]interface{}{
@@ -322,7 +322,7 @@ func TestGenericReplacement_JsonPath(t *testing.T) {
 func TestGenericReplacement_Modifier_Error(t *testing.T) {
 	dummyResource := Resource{
 		TemplateData: map[string]interface{}{
-			"image": "<data | jsonPath .missingPath>",
+			"image": "<data | jsonPath {.missingPath}>",
 		},
 		Data: map[string]interface{}{
 			"data": map[string]interface{}{},
@@ -336,13 +336,13 @@ func TestGenericReplacement_Modifier_Error(t *testing.T) {
 
 	expected := Resource{
 		TemplateData: map[string]interface{}{
-			"image": "<data | jsonPath .missingPath>",
+			"image": "<data | jsonPath {.missingPath}>",
 		},
 		Data: map[string]interface{}{
 			"data": map[string]interface{}{},
 		},
 		replacementErrors: []error{
-			fmt.Errorf("jsonPath: missingPath is not found for placeholder data in string image: <data | jsonPath .missingPath>"),
+			fmt.Errorf("jsonPath: missingPath is not found for placeholder data in string image: <data | jsonPath {.missingPath}>"),
 		},
 	}
 

@@ -1,7 +1,9 @@
 package kube
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"reflect"
 	"testing"
 )
@@ -25,7 +27,7 @@ func TestJsonPath_invalidParams(t *testing.T) {
 		},
 	}
 	expectedErr := fmt.Errorf("invalid parameters")
-	err := jsonPath([]string{}, &data)
+	_, err := jsonPath([]string{}, data)
 	assertErrorEqual(t, expectedErr, err)
 }
 
@@ -35,8 +37,10 @@ func TestJsonPath_missingPath(t *testing.T) {
 			"subkey": "secret",
 		},
 	}
-	expectedErr := fmt.Errorf("missing is not found")
-	err := jsonPath([]string{".data.missing"}, &data)
+	expectedErr := fmt.Errorf("missingPath is not found")
+	v, err := jsonPath([]string{"{.missingPath}"}, data)
+	fmt.Fprintf(os.Stderr, "data: %v\n", data)
+	fmt.Fprintf(os.Stderr, "v: %v\n", v)
 	assertErrorEqual(t, expectedErr, err)
 }
 
@@ -47,18 +51,7 @@ func TestJsonPath_invalidPath(t *testing.T) {
 		},
 	}
 	expectedErr := fmt.Errorf("unrecognized character in action: U+0021 '!'")
-	err := jsonPath([]string{"!invalidPath"}, &data)
-	assertErrorEqual(t, expectedErr, err)
-}
-
-func TestJsonPath_emptyPath(t *testing.T) {
-	var data interface{} = map[string]interface{}{
-		"data": map[string]interface{}{
-			"subkey": nil,
-		},
-	}
-	expectedErr := fmt.Errorf("empty results")
-	err := jsonPath([]string{".data.subkey"}, &data)
+	_, err := jsonPath([]string{"{!invalidPath}"}, data)
 	assertErrorEqual(t, expectedErr, err)
 }
 
@@ -69,15 +62,15 @@ func TestJsonPath_succcess(t *testing.T) {
 		},
 	}
 	var expected interface{} = "secret"
-	err := jsonPath([]string{".data.subkey"}, &data)
+	res, err := jsonPath([]string{"{.data.subkey}"}, data)
 	assertErrorEqual(t, nil, err)
-	assertResultEqual(t, expected, data)
+	assertResultEqual(t, expected, res)
 }
 
 func TestBase64Encode_invalidParams(t *testing.T) {
 	var data interface{} = "mysecret"
 	expectedErr := fmt.Errorf("invalid parameters")
-	err := base64encode([]string{"astring"}, &data)
+	_, err := base64encode([]string{"astring"}, data)
 	assertErrorEqual(t, expectedErr, err)
 }
 
@@ -87,15 +80,53 @@ func TestBase64Encode_invalidDataType(t *testing.T) {
 			"subkey": "secret",
 		},
 	}
-	expectedErr := fmt.Errorf("invalid datatype *interface {}")
-	err := base64encode([]string{}, &data)
+	expectedErr := fmt.Errorf("invalid datatype map[string]interface {}")
+	_, err := base64encode([]string{}, data)
 	assertErrorEqual(t, expectedErr, err)
 }
 
 func TestBase64Encode_success(t *testing.T) {
 	var data interface{} = "mysecret"
 	var expected interface{} = "bXlzZWNyZXQ="
-	err := base64encode([]string{}, &data)
+	res, err := base64encode([]string{}, data)
 	assertErrorEqual(t, nil, err)
-	assertResultEqual(t, expected, data)
+	assertResultEqual(t, expected, res)
+}
+
+func TestJsonParse_invalidParams(t *testing.T) {
+	var data interface{} = "mysecret"
+	expectedErr := fmt.Errorf("invalid parameters")
+	_, err := jsonParse([]string{"astring"}, data)
+	assertErrorEqual(t, expectedErr, err)
+}
+
+func TestJsonParse_invalidDataType(t *testing.T) {
+	var data interface{} = map[string]interface{}{
+		"data": map[string]interface{}{
+			"subkey": "secret",
+		},
+	}
+	expectedErr := fmt.Errorf("invalid datatype map[string]interface {}")
+	_, err := jsonParse([]string{}, data)
+	assertErrorEqual(t, expectedErr, err)
+}
+
+func TestJsonParse_invalidJSON(t *testing.T) {
+	var data interface{} = "hello"
+	_, err := jsonParse([]string{}, data)
+	if _, ok := err.(*json.SyntaxError); !ok {
+		t.Fatalf("expected error [%s], got [%T]", "json.SyntaxError", err)
+	}
+}
+
+func TestJsonParse_success(t *testing.T) {
+	var data interface{} = "{\"data\": {\"subkey\": \"secret\"}}"
+	var expected interface{} = map[string]interface{}{
+		"data": map[string]interface{}{
+			"subkey": "secret",
+		},
+	}
+	res, err := jsonParse([]string{}, data)
+	assertErrorEqual(t, nil, err)
+	assertResultEqual(t, expected, res)
 }

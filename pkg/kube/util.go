@@ -148,7 +148,8 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 					err = append(err, e)
 					return match
 				}
-				modErr := modifiers[functionName](fields[1:], &secretValue)
+				var modErr error
+				secretValue, modErr = modifiers[functionName](fields[1:], secretValue)
 				if modErr != nil {
 					e := fmt.Errorf("%s: %s for placeholder %s in string %s: %s", functionName, modErr.Error(), placeholder, key, value)
 					err = append(err, e)
