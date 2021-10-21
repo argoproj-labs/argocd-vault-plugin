@@ -265,14 +265,28 @@ This can be used for both generic and inline-path placeholders.
 
 ##### `jsonPath`
 
-The jsonPath modifier allows you use json path to post-process objects retrieved from a secrets manager before injecting into a Kubernetes secret.
+The jsonPath modifier allows you use json path to post-process objects retrieved from a secrets manager before injecting into a Kubernetes secret.  The output is always a string.
 
-See the jsonPath documentation for more information: https://goessner.net/articles/JsonPath/
+See the Kubernetes jsonPath documentation for more detail: [https://kubernetes.io/docs/reference/kubectl/jsonpath/](https://kubernetes.io/docs/reference/kubectl/jsonpath/)
 
 Valid examples:
 
-- `<credentials | jsonPath .username>`
+- `<credentials | jsonPath {.username}>`
 
-- `<path:secrets/data/my-db#credentials | jsonPath .username>`
+- `<path:secrets/data/my-db#credentials | jsonPath {.username}{':'}{.password}>`
 
-- `<path:secrets/data/my-db#credentials#version3 | jsonPath .username | base64encode>`
+- `<path:secrets/data/my-db#credentials#version3 | jsonPath {.username} | base64encode>`
+
+##### `jsonParse`
+
+The jsonParse modifier parses json strings into objects.
+
+See the Kubernetes jsonPath documentation for more detail: [https://kubernetes.io/docs/reference/kubectl/jsonpath/](https://kubernetes.io/docs/reference/kubectl/jsonpath/)
+
+Valid examples:
+
+- `<credentialsJson | jsonParse>`
+
+- `<path:secrets/data/my-db#credentialsJson | jsonParse>`
+
+- `<path:secrets/data/my-db#credentialsJson#version3 | jsonParse>`
