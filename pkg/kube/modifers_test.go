@@ -55,6 +55,22 @@ func TestJsonPath_invalidPath(t *testing.T) {
 	assertErrorEqual(t, expectedErr, err)
 }
 
+func TestJsonPath_unmarshal_error(t *testing.T) {
+	var data interface{} = "hi, how are you"
+	_, err := jsonPath([]string{"{.data.subkey}"}, data)
+	if _, ok := err.(*json.SyntaxError); !ok {
+		t.Fatalf("expected error [%s], got [%T]", "json.SyntaxError", err)
+	}
+}
+
+func TestJsonPath_unmarshal_succcess(t *testing.T) {
+	var data interface{} = "{\"data\": {\"subkey\": \"secret\"}}"
+	var expected interface{} = "secret"
+	res, err := jsonPath([]string{"{.data.subkey}"}, data)
+	assertErrorEqual(t, nil, err)
+	assertResultEqual(t, expected, res)
+}
+
 func TestJsonPath_succcess(t *testing.T) {
 	var data interface{} = map[string]interface{}{
 		"data": map[string]interface{}{
