@@ -60,11 +60,24 @@ func (i *IBMSecretsManager) getSecret(secret *ibmsm.SecretResource, response cha
 		result["err"] = fmt.Errorf("Could not retrieve secret %s after %d retries, statuscode %d", *secret.ID, types.IBMMaxRetries, httpResponse.GetStatusCode())
 	} else {
 		secretResource := secretRes.Resources[0].(*ibmsm.SecretResource)
-		secretData := secretResource.SecretData.(map[string]interface{})
-		if secretData["payload"] == nil {
-			result["err"] = fmt.Errorf("No `payload` key present for secret with id %s: Is this an `arbitrary` type secret?", *secret.ID)
+
+		// IAM credentials do not come back in the `secretData`
+		if *secretResource.SecretType == types.IBMIAMCredentialsType {
+			result["payload"] = map[string]interface{}{
+				"api_key": *secretResource.APIKey,
+			}
 		} else {
-			result["payload"] = secretData["payload"]
+			secretData := secretResource.SecretData.(map[string]interface{})
+
+			// Copy whatever keys this non-arbitrary secret has into a map for use with `jsonParse`
+			if secretData["payload"] == nil {
+				result["payload"] = make(map[string]interface{})
+				for k, v := range secretData {
+					(result["payload"].(map[string]interface{}))[k] = v
+				}
+			} else {
+				result["payload"] = secretData["payload"]
+			}
 		}
 	}
 
@@ -121,15 +134,19 @@ func (i *IBMSecretsManager) GetSecrets(path string, version string, annotations 
 	secrets := make(map[string]interface{})
 	var wg sync.WaitGroup
 	MAX_GOROUTINES := 20
+	launchedRoutines := 0
 
-	for k, resource := range result {
+	for _, resource := range result {
 		if secret, ok := resource.(*ibmsm.SecretResource); ok {
+
+			// This check is required since secrets are only unique by name, group, _and_ type
 			if *secret.SecretType == matches[IBMPath.SubexpIndex("type")] {
 
 				// There is space for more goroutines, so spawn immediately and continue
-				if k < MAX_GOROUTINES {
+				if launchedRoutines < MAX_GOROUTINES {
 					go i.getSecret(secret, secretResult, &wg)
 					wg.Add(1)
+					launchedRoutines += 1
 					continue
 				}
 
@@ -141,6 +158,7 @@ func (i *IBMSecretsManager) GetSecrets(path string, version string, annotations 
 
 				go i.getSecret(secret, secretResult, &wg)
 				wg.Add(1)
+				launchedRoutines += 1
 			}
 		}
 	}
