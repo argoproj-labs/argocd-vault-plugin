@@ -33,6 +33,7 @@ const (
 	IBMMaxRetries            = 3
 	IBMRetryIntervalSeconds  = 20
 	IBMMaxPerPage            = 200
+	IBMIAMCredentialsType    = "iam_credentials"
 
 	// Supported annotations
 	AVPPathAnnotation          = "avp.kubernetes.io/path"

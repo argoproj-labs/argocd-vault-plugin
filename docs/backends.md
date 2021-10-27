@@ -157,7 +157,11 @@ data:
 ### IBM Cloud Secrets Manager
 For IBM Cloud Secret Manager we only support using IAM authentication at this time. 
 
-Additionally, we only support secrets of type `arbitrary`, retrieved from a secret group. Since [`arbitrary` secrets are not versioned](https://cloud.ibm.com/apidocs/secrets-manager?code=go#get-secret-version), any version specified in a placeholder is ignored and the latest version is retrieved.
+We support all types of secrets that can be retrieved from IBM Cloud Secret Manager. Please note:
+
+- [Only certain types of secrets](https://cloud.ibm.com/apidocs/secrets-manager#get-secret-version-request) support versioning. If a version is specified for a type that doesn't support it (e.g, `arbitrary`), the version is ignored
+
+- Secrets that are JSON data (i.e, non `arbitrary` secrets or an `arbitrary` secret with JSON `payload`) can have the desired key (i.e, the `username` in a `username_password` type secret) interpolated with the [jsonPath](./howitworks.md#jsonPath) modifier. Refer to the [IBM Cloud Secret Manager API docs](https://cloud.ibm.com/apidocs/secrets-manager#get-secret) for more details
 
 ##### IAM Authentication
 For IAM Authentication, these are the required parameters:
@@ -195,6 +199,25 @@ type: Opaque
 data:
   username: <path:ibmcloud/arbitrary/secrets/groups/123#username>
   password: <path:ibmcloud/arbitrary/secrets/groups/123#password>
+```
+
+###### Non-arbitrary secret
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: ibm-example
+  annotations:
+    avp.kubernetes.io/path: "ibmcloud/imported_cert/secrets/groups/123" # 123 represents your Secret Group ID
+type: Opaque
+stringData:
+  PUBLIC_CRT: |
+    <my-cert-secret | jsonPath {.certificate}>
+  PUBLIC_CRT_PREVIOUS: |
+    <path:ibmcloud/imported_cert/secrets/groups/123#my-cert-secret#previous | jsonPath {.certificate}>
+  PRIVATE_KEY: |
+    <my-cert-secret | jsonPath {.private_key}>
 ```
 
 ### AWS Secrets Manager
