@@ -37,15 +37,6 @@ func jsonPath(params []string, input interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("invalid parameters")
 	}
 
-	// Auto-unmarshal strings
-	if _, ok := input.(string); ok {
-		var err error
-		input, err = jsonParse([]string{}, input)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	jp := k8jsonpath.New("AVPJsonPath")
 	jp.AllowMissingKeys(false)
 	err := jp.Parse(strings.Join(params, " "))
@@ -53,8 +44,17 @@ func jsonPath(params []string, input interface{}) (interface{}, error) {
 		return nil, err
 	}
 
+	// Auto-unmarshal strings
+	obj := input
+	if reflect.ValueOf(input).Kind() == reflect.String {
+		err := json.Unmarshal([]byte(input.(string)), &obj)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	var buf bytes.Buffer
-	err = jp.Execute(&buf, input)
+	err = jp.Execute(&buf, obj)
 	if err != nil {
 		return nil, err
 	}
