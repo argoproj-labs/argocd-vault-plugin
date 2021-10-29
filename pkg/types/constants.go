@@ -34,6 +34,8 @@ const (
 	IBMRetryIntervalSeconds  = 20
 	IBMMaxPerPage            = 200
 	IBMIAMCredentialsType    = "iam_credentials"
+	IBMImportedCertType      = "imported_cert"
+	IBMPublicCertType        = "public_cert"
 
 	// Supported annotations
 	AVPPathAnnotation          = "avp.kubernetes.io/path"
