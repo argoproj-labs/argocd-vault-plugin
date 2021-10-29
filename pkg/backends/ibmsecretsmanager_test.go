@@ -15,6 +15,7 @@ import (
 type MockIBMSMClient struct {
 	ListAllSecretsOptionCalledWith []*ibmsm.ListAllSecretsOptions
 	GetSecretCalledWith            *ibmsm.GetSecretOptions
+	GetSecretVersionCalledWith     *ibmsm.GetSecretVersionOptions
 }
 
 var BIG_GROUP_LEN int = types.IBMMaxPerPage + 1
@@ -48,6 +49,8 @@ func (m *MockIBMSMClient) ListAllSecrets(listAllSecretsOptions *ibmsm.ListAllSec
 	name := "my-secret"
 	id := "123"
 	otype := "username_password"
+	ctype := "public_cert"
+	itype := "iam_credentials"
 	smallGroupSecrets := []ibmsm.SecretResourceIntf{
 		&ibmsm.SecretResource{
 			Name:       &name,
@@ -57,6 +60,16 @@ func (m *MockIBMSMClient) ListAllSecrets(listAllSecretsOptions *ibmsm.ListAllSec
 		&ibmsm.SecretResource{
 			Name:       &name,
 			SecretType: &otype,
+			ID:         &id,
+		},
+		&ibmsm.SecretResource{
+			Name:       &name,
+			SecretType: &ctype,
+			ID:         &id,
+		},
+		&ibmsm.SecretResource{
+			Name:       &name,
+			SecretType: &itype,
 			ID:         &id,
 		},
 	}
@@ -98,6 +111,19 @@ func (m *MockIBMSMClient) GetSecret(getSecretOptions *ibmsm.GetSecretOptions) (r
 				},
 			},
 		}, nil, nil
+	} else if *getSecretOptions.SecretType == "iam_credentials" {
+		name := "my-secret"
+		id := "123"
+		payload := "password"
+		return &ibmsm.GetSecret{
+			Resources: []ibmsm.SecretResourceIntf{
+				&ibmsm.SecretResource{
+					Name:   &name,
+					ID:     &id,
+					APIKey: &payload,
+				},
+			},
+		}, nil, nil
 	} else {
 		name := "my-secret"
 		id := "123"
@@ -114,6 +140,22 @@ func (m *MockIBMSMClient) GetSecret(getSecretOptions *ibmsm.GetSecretOptions) (r
 			},
 		}, nil, nil
 	}
+}
+
+func (m *MockIBMSMClient) GetSecretVersion(getSecretOptions *ibmsm.GetSecretVersionOptions) (result *ibmsm.GetSecretVersion, response *core.DetailedResponse, err error) {
+	m.GetSecretVersionCalledWith = getSecretOptions
+	data := "dummy"
+	id := "123"
+	return &ibmsm.GetSecretVersion{
+		Resources: []ibmsm.SecretVersionIntf{
+			&ibmsm.SecretVersion{
+				ID: &id,
+				SecretData: &ibmsm.CertificateSecretData{
+					Certificate: &data,
+				},
+			},
+		},
+	}, nil, nil
 }
 
 func TestIBMSecretsManagerGetSecrets(t *testing.T) {
@@ -224,13 +266,13 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 		}
 	})
 
-	t.Run("Helpful message for secrets that are not `arbitrary` type", func(t *testing.T) {
+	t.Run("Retrieves payload of non-arbitrary, not-versioned secrets", func(t *testing.T) {
 		mock := MockIBMSMClient{}
 		sm := backends.NewIBMSecretsManagerBackend(&mock)
 
-		m, err := sm.GetSecrets("ibmcloud/username_password/secrets/groups/test-group-id", "", nil)
-		if err == nil {
-			t.Fatalf("%s", m)
+		res, err := sm.GetSecrets("ibmcloud/username_password/secrets/groups/test-group-id", "", nil)
+		if err != nil {
+			t.Fatalf("%s", err)
 		}
 
 		// Properly calls ListSecrets
@@ -257,10 +299,105 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 			t.Errorf("Retrieved ID and SecretType do not match expected")
 		}
 
-		// Errors bc the secret type is not `arbitrary` and therefore has no `payload`
-		expectedErr := "No `payload` key present for secret"
-		if !strings.Contains(err.Error(), expectedErr) {
-			t.Fatalf("Expected error to have %s but said %s", expectedErr, err)
+		// Correct data
+		expected := map[string]interface{}{
+			"my-secret": map[string]interface{}{
+				"username": "user",
+				"password": "pass",
+			},
+		}
+		if !reflect.DeepEqual(res, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, res)
+		}
+	})
+
+	t.Run("Retrieves payload of IAM credential secrets", func(t *testing.T) {
+		mock := MockIBMSMClient{}
+		sm := backends.NewIBMSecretsManagerBackend(&mock)
+
+		res, err := sm.GetSecrets("ibmcloud/iam_credentials/secrets/groups/test-group-id", "", nil)
+		if err != nil {
+			t.Fatalf("%s", err)
+		}
+
+		// Properly calls ListSecrets
+		var offset int64 = 0
+		expectedListArgs := &ibmsm.ListAllSecretsOptions{
+			Groups: []string{"test-group-id"},
+			Offset: &offset,
+		}
+		if !reflect.DeepEqual(mock.ListAllSecretsOptionCalledWith[0], expectedListArgs) {
+			t.Errorf("expectedListArgs: %s, got: %s.", expectedListArgs.Groups, mock.ListAllSecretsOptionCalledWith[0].Groups)
+		}
+		if len(mock.ListAllSecretsOptionCalledWith) > 1 {
+			t.Errorf("ListAllSecrets should be called %d times got %d", 1, len(mock.ListAllSecretsOptionCalledWith))
+		}
+
+		// Properly calls GetSecret
+		id := "123"
+		stype := "iam_credentials"
+		expectedGetArgs := &ibmsm.GetSecretOptions{
+			ID:         &id,
+			SecretType: &stype,
+		}
+		if !reflect.DeepEqual(mock.GetSecretCalledWith, expectedGetArgs) {
+			t.Errorf("Retrieved ID and SecretType do not match expected")
+		}
+
+		// Correct data
+		expected := map[string]interface{}{
+			"my-secret": map[string]interface{}{
+				"api_key": "password",
+			},
+		}
+		if !reflect.DeepEqual(res, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, res)
+		}
+	})
+
+	t.Run("Properly retrieves versioned secrets", func(t *testing.T) {
+		mock := MockIBMSMClient{}
+		sm := backends.NewIBMSecretsManagerBackend(&mock)
+
+		res, err := sm.GetSecrets("ibmcloud/public_cert/secrets/groups/test-group-id", "321", nil)
+		if err != nil {
+			t.Fatalf("%s", err)
+		}
+
+		// Properly calls ListSecrets
+		var offset int64 = 0
+		expectedListArgs := &ibmsm.ListAllSecretsOptions{
+			Groups: []string{"test-group-id"},
+			Offset: &offset,
+		}
+		if !reflect.DeepEqual(mock.ListAllSecretsOptionCalledWith[0], expectedListArgs) {
+			t.Errorf("expectedListArgs: %s, got: %s.", expectedListArgs.Groups, mock.ListAllSecretsOptionCalledWith[0].Groups)
+		}
+		if len(mock.ListAllSecretsOptionCalledWith) > 1 {
+			t.Errorf("ListAllSecrets should be called %d times got %d", 1, len(mock.ListAllSecretsOptionCalledWith))
+		}
+
+		// Properly calls GetSecretVersion
+		id := "123"
+		stype := "public_cert"
+		version := "321"
+		expectedGetArgs := &ibmsm.GetSecretVersionOptions{
+			ID:         &id,
+			SecretType: &stype,
+			VersionID:  &version,
+		}
+		if !reflect.DeepEqual(mock.GetSecretVersionCalledWith, expectedGetArgs) {
+			t.Errorf("Retrieved ID and SecretType do not match expected")
+		}
+
+		// Correct data
+		expected := map[string]interface{}{
+			"my-secret": map[string]interface{}{
+				"certificate": "dummy",
+			},
+		}
+		if !reflect.DeepEqual(res, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, res)
 		}
 	})
 }

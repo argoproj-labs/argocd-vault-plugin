@@ -1,6 +1,7 @@
 package backends
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"sync"
@@ -17,6 +18,7 @@ var IBMPath, _ = regexp.Compile(`ibmcloud/(?P<type>.+)/secrets/groups/(?P<groupi
 type IBMSecretsManagerClient interface {
 	ListAllSecrets(listAllSecretsOptions *ibmsm.ListAllSecretsOptions) (result *ibmsm.ListSecrets, response *core.DetailedResponse, err error)
 	GetSecret(getSecretOptions *ibmsm.GetSecretOptions) (result *ibmsm.GetSecret, response *core.DetailedResponse, err error)
+	GetSecretVersion(getSecretOptions *ibmsm.GetSecretVersionOptions) (result *ibmsm.GetSecretVersion, response *core.DetailedResponse, err error)
 }
 
 // IBMSecretsManager is a struct for working with IBM Secret Manager
@@ -37,47 +39,81 @@ func (i *IBMSecretsManager) Login() error {
 	return nil
 }
 
+// getSecretVersionedOrNot will ultimately return the payload of a secret from IBM SM:
+// - `secret_data` map for arbitrary secrets
+// - `api_key` k/v pair for IAM credential secrets
+// - `certificate`, `private_key`, etc. k/v pairs for versioned certificate secrets
+// API calls and their responses depend on the whether the secret "can be" versioned or not
+func (i *IBMSecretsManager) getSecretVersionedOrNot(secret *ibmsm.SecretResource, version string) (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+
+	// Only certificate secrets are versioned in IBM SM
+	if version != "" && (*secret.SecretType == types.IBMImportedCertType || *secret.SecretType == types.IBMPublicCertType) {
+		opts := &ibmsm.GetSecretVersionOptions{
+			SecretType: secret.SecretType,
+			ID:         secret.ID,
+			VersionID:  &version,
+		}
+
+		secretVersion, httpResponse, err := i.Client.GetSecretVersion(opts)
+		if err != nil {
+			return nil, fmt.Errorf("Could not retrieve secret %s: %s", *secret.ID, err)
+		}
+		if secretVersion == nil {
+			return nil, fmt.Errorf("Could not retrieve secret %s after %d retries, statuscode %d", *secret.ID, types.IBMMaxRetries, httpResponse.GetStatusCode())
+		}
+
+		// Versioned certificate secret_data comes back in a special struct and we want a map
+		certData := (secretVersion.Resources[0].(*ibmsm.SecretVersion)).SecretData
+		certJson, _ := json.Marshal(&certData)
+		_ = json.Unmarshal(certJson, &result)
+	} else {
+		secretRes, httpResponse, err := i.Client.GetSecret(&ibmsm.GetSecretOptions{
+			SecretType: secret.SecretType,
+			ID:         secret.ID,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("Could not retrieve secret %s: %s", *secret.ID, err)
+		}
+		if secretRes == nil {
+			return nil, fmt.Errorf("Could not retrieve secret %s after %d retries, statuscode %d", *secret.ID, types.IBMMaxRetries, httpResponse.GetStatusCode())
+		}
+
+		// APIKey secrets don't come from `SecretData`
+		if *secret.SecretType == types.IBMIAMCredentialsType {
+			result = map[string]interface{}{
+				"api_key": *secretRes.Resources[0].(*ibmsm.SecretResource).APIKey,
+			}
+		} else {
+			result = secretRes.Resources[0].(*ibmsm.SecretResource).SecretData.(map[string]interface{})
+		}
+	}
+
+	return result, nil
+}
+
 // getSecret sends the result of getting the `secret` from IBM SM in a map over a channel
 // `name` is the name of the secret and is always set
 // `err` is set if there is an error getting the secret
 // `payload` is the secrets `payload` and is set if successful
 // The goroutine only terminates once IBMMaxRetries or fewer attempts are made
-func (i *IBMSecretsManager) getSecret(secret *ibmsm.SecretResource, response chan map[string]interface{}, wg *sync.WaitGroup) {
+func (i *IBMSecretsManager) getSecret(secret *ibmsm.SecretResource, version string, response chan map[string]interface{}, wg *sync.WaitGroup) {
 	result := make(map[string]interface{})
 	result["name"] = *secret.Name
 
-	// `version` is ignored since IBM SM does not support versioning for `arbitrary` secrets
-	// https://github.com/IBM/argocd-vault-plugin/issues/58#issuecomment-906477921
-	secretRes, httpResponse, err := i.Client.GetSecret(&ibmsm.GetSecretOptions{
-		SecretType: secret.SecretType,
-		ID:         secret.ID,
-	})
+	secretData, err := i.getSecretVersionedOrNot(secret, version)
 	if err != nil {
-		result["err"] = fmt.Errorf("Could not retrieve secret %s: %s", *secret.ID, err)
-	}
-
-	if secretRes == nil {
-		result["err"] = fmt.Errorf("Could not retrieve secret %s after %d retries, statuscode %d", *secret.ID, types.IBMMaxRetries, httpResponse.GetStatusCode())
+		result["err"] = err
 	} else {
-		secretResource := secretRes.Resources[0].(*ibmsm.SecretResource)
 
-		// IAM credentials do not come back in the `secretData`
-		if *secretResource.SecretType == types.IBMIAMCredentialsType {
-			result["payload"] = map[string]interface{}{
-				"api_key": *secretResource.APIKey,
+		// Copy whatever keys this non-arbitrary secret has into a map for use with `jsonParse`
+		if secretData["payload"] == nil {
+			result["payload"] = make(map[string]interface{})
+			for k, v := range secretData {
+				(result["payload"].(map[string]interface{}))[k] = v
 			}
 		} else {
-			secretData := secretResource.SecretData.(map[string]interface{})
-
-			// Copy whatever keys this non-arbitrary secret has into a map for use with `jsonParse`
-			if secretData["payload"] == nil {
-				result["payload"] = make(map[string]interface{})
-				for k, v := range secretData {
-					(result["payload"].(map[string]interface{}))[k] = v
-				}
-			} else {
-				result["payload"] = secretData["payload"]
-			}
+			result["payload"] = secretData["payload"]
 		}
 	}
 
@@ -93,8 +129,7 @@ func storeSecret(secrets *map[string]interface{}, result map[string]interface{})
 	return nil
 }
 
-// GetSecrets returns the data for a secret in IBM Secrets Manager
-// It only works for `arbitrary` secret types
+// GetSecrets returns the data for the secrets of a group in IBM Secrets Manager
 func (i *IBMSecretsManager) GetSecrets(path string, version string, annotations map[string]string) (map[string]interface{}, error) {
 	// IBM SM users pass the path of a secret _group_ which contains a list of secrets
 	// ex: <path:ibmcloud/arbitrary/secrets/groups/123#username>
@@ -144,7 +179,7 @@ func (i *IBMSecretsManager) GetSecrets(path string, version string, annotations 
 
 				// There is space for more goroutines, so spawn immediately and continue
 				if launchedRoutines < MAX_GOROUTINES {
-					go i.getSecret(secret, secretResult, &wg)
+					go i.getSecret(secret, version, secretResult, &wg)
 					wg.Add(1)
 					launchedRoutines += 1
 					continue
@@ -156,7 +191,7 @@ func (i *IBMSecretsManager) GetSecrets(path string, version string, annotations 
 					return nil, err
 				}
 
-				go i.getSecret(secret, secretResult, &wg)
+				go i.getSecret(secret, version, secretResult, &wg)
 				wg.Add(1)
 				launchedRoutines += 1
 			}
@@ -179,7 +214,7 @@ func (i *IBMSecretsManager) GetSecrets(path string, version string, annotations 
 }
 
 // GetIndividualSecret will get the specific secret (placeholder) from the SM backend
-// For IBM, we only support placeholders replaced from arbitrary secrets in a group, which cannot be individually addressed by placeholder
+// For IBM, we only support placeholders replaced from secrets in a group, which cannot be individually addressed by placeholder (secret name)
 // So, we use GetSecrets and extract the specific placeholder we want
 func (i *IBMSecretsManager) GetIndividualSecret(kvpath, secret, version string, annotations map[string]string) (interface{}, error) {
 	data, err := i.GetSecrets(kvpath, version, annotations)
