@@ -9,6 +9,7 @@ Please make sure that your PR fulfills the following requirements:
 - [ ] The commit message follows the [Conventional Commits Guidelines](https://www.conventionalcommits.org/en/v1.0.0/#summary).
 - [ ] Tests for the changes have been updated
 - [ ] Docs have been added / updated
+- [ ] Optional. My organization is added to USERS.md.
 
 ### Type of Change
 <!-- Please check the one that applies to this PR using "x". -->
