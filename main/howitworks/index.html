@@ -10,7 +10,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.3.4">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.3.5">
     
     
       
@@ -18,7 +18,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.db9e7362.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.cdeb8541.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.3f5d1f46.min.css">
@@ -274,6 +274,8 @@
       </a>
       
         
+
+
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
@@ -413,6 +415,20 @@
           <li class="md-nav__item">
   <a href="#base64encode" class="md-nav__link">
     base64encode
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jsonpath" class="md-nav__link">
+    jsonPath
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jsonparse" class="md-nav__link">
+    jsonParse
   </a>
   
 </li>
@@ -646,6 +662,8 @@
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
+
+
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
@@ -789,6 +807,20 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#jsonpath" class="md-nav__link">
+    jsonPath
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#jsonparse" class="md-nav__link">
+    jsonParse
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -868,7 +900,7 @@ data:
 <p>Placeholders that are in base64 format - see <a href="#base64-placeholders">Base64 placeholders</a> for details</p>
 </li>
 <li>
-<p>The <code>base64encode</code> modifier - see <a href="#base64encode">base64encode</a> for details</p>
+<p>Modifiers - see <a href="#Modifiers">Modifiers</a> for details</p>
 </li>
 </ul>
 <h3 id="types-of-placeholders">Types of placeholders</h3>
@@ -1042,6 +1074,38 @@ stringData:
 </li>
 </ul>
 <p>This can be used for both generic and inline-path placeholders.</p>
+<h5 id="jsonpath"><code>jsonPath</code></h5>
+<p>The jsonPath modifier allows you use jsonpath to post-process objects or json, retrieved from a secrets manager, before injecting into a Kubernetes manifest.  The output is a string.  If your desired datatype is not a string, pass the output through jsonParse.</p>
+<p>See the Kubernetes jsonPath documentation for more detail: <a href="https://kubernetes.io/docs/reference/kubectl/jsonpath/">https://kubernetes.io/docs/reference/kubectl/jsonpath/</a></p>
+<p>Valid examples:</p>
+<ul>
+<li>
+<p><code>&lt;credentials | jsonPath {.username}&gt;</code></p>
+</li>
+<li>
+<p><code>&lt;path:secrets/data/my-db#credentials | jsonPath {.username}{':'}{.password}&gt;</code></p>
+</li>
+<li>
+<p><code>&lt;path:secrets/data/my-db#credentials#version3 | jsonPath {.username} | base64encode&gt;</code></p>
+</li>
+<li>
+<p><code>&lt;path:secrets/data/my-db#config | jsonPath {.replicas} | jsonParse&gt;</code></p>
+</li>
+</ul>
+<h5 id="jsonparse"><code>jsonParse</code></h5>
+<p>The jsonParse modifier parses json strings into objects.</p>
+<p>Valid examples:</p>
+<ul>
+<li>
+<p><code>&lt;credentialsJson | jsonParse&gt;</code></p>
+</li>
+<li>
+<p><code>&lt;path:secrets/data/my-db#credentialsJson | jsonParse&gt;</code></p>
+</li>
+<li>
+<p><code>&lt;path:secrets/data/my-db#credentialsJson#version3 | jsonParse&gt;</code></p>
+</li>
+</ul>
                 
               
               
