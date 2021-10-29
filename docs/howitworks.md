@@ -57,7 +57,7 @@ There are 2 exceptions to this:
 
 - Placeholders that are in base64 format - see [Base64 placeholders](#base64-placeholders) for details
 
-- The `base64encode` modifier - see [base64encode](#base64encode) for details
+- Modifiers - see [Modifiers](#Modifiers) for details
 
 ### Types of placeholders
 
@@ -262,3 +262,31 @@ Valid examples:
 - `<path:secrets/data/my-db#username#version3 | base64encode>`
 
 This can be used for both generic and inline-path placeholders.
+
+##### `jsonPath`
+
+The jsonPath modifier allows you use jsonpath to post-process objects or json, retrieved from a secrets manager, before injecting into a Kubernetes manifest.  The output is a string.  If your desired datatype is not a string, pass the output through jsonParse.
+
+See the Kubernetes jsonPath documentation for more detail: [https://kubernetes.io/docs/reference/kubectl/jsonpath/](https://kubernetes.io/docs/reference/kubectl/jsonpath/)
+
+Valid examples:
+
+- `<credentials | jsonPath {.username}>`
+
+- `<path:secrets/data/my-db#credentials | jsonPath {.username}{':'}{.password}>`
+
+- `<path:secrets/data/my-db#credentials#version3 | jsonPath {.username} | base64encode>`
+
+- `<path:secrets/data/my-db#config | jsonPath {.replicas} | jsonParse>`
+
+##### `jsonParse`
+
+The jsonParse modifier parses json strings into objects.
+
+Valid examples:
+
+- `<credentialsJson | jsonParse>`
+
+- `<path:secrets/data/my-db#credentialsJson | jsonParse>`
+
+- `<path:secrets/data/my-db#credentialsJson#version3 | jsonParse>`

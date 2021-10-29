@@ -25,7 +25,6 @@ func (e *missingKeyError) Error() string {
 var genericPlaceholder, _ = regexp.Compile(`(?mU)<(.*)>`)
 var specificPathPlaceholder, _ = regexp.Compile(`(?mU)<path:([^#]+)#([^#]+)(?:#([^#]+))?>`)
 var indivPlaceholderSyntax, _ = regexp.Compile(`(?mU)path:(?P<path>[^#]+?)#(?P<key>[^#]+?)(?:#(?P<version>.+?))??`)
-var modifier, _ = regexp.Compile(`\|(.*)`)
 
 // replaceInner recurses through the given map and replaces the placeholders by calling `replacerFunc`
 // with the key, value, and map of keys to replacement values
@@ -116,13 +115,9 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 	res := placeholderRegex.ReplaceAllFunc([]byte(value), func(match []byte) []byte {
 		placeholder := strings.Trim(string(match), "<>")
 
-		// Check for base64 modifier
-		var base64modifier bool
-		if modifier.MatchString(placeholder) {
-			modifierMatches := modifier.FindStringSubmatch(placeholder)
-			base64modifier = strings.TrimSpace(string(modifierMatches[1])) == "base64encode"
-			placeholder = strings.TrimSpace(strings.Split(placeholder, "|")[0])
-		}
+		// Split modifiers from placeholder
+		pipelineFields := strings.Split(placeholder, "|")
+		placeholder = strings.Trim(pipelineFields[0], " ")
 
 		var secretValue interface{}
 		var secretErr error
@@ -144,12 +139,27 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 		}
 
 		if secretValue != nil {
+			// Process modifiers
+			for _, stmt := range pipelineFields[1:] {
+				fields := strings.Fields(stmt)
+				functionName := strings.Trim(fields[0], " ")
+				if _, ok := modifiers[functionName]; !ok {
+					e := fmt.Errorf("invalid modifier: %s for placeholder %s in string %s: %s", functionName, placeholder, key, value)
+					err = append(err, e)
+					return match
+				}
+				var modErr error
+				secretValue, modErr = modifiers[functionName](fields[1:], secretValue)
+				if modErr != nil {
+					e := fmt.Errorf("%s: %s for placeholder %s in string %s: %s", functionName, modErr.Error(), placeholder, key, value)
+					err = append(err, e)
+					return match
+				}
+			}
+
 			switch secretValue.(type) {
 			case string:
 				{
-					if base64modifier {
-						return []byte(base64.StdEncoding.EncodeToString([]byte(secretValue.(string))))
-					}
 					return []byte(secretValue.(string))
 				}
 			default:

@@ -65,13 +65,13 @@ func CreateTestVault(t *testing.T) (net.Listener, *api.Client, string) {
 	// Setup required secrets, policies, etc.
 	_, err = client.Logical().Write("secret/ibm/arbitrary/groups/1", map[string]interface{}{
 		"secrets": []map[string]interface{}{
-			map[string]interface{}{
+			{
 				"id": "1",
 			},
-			map[string]interface{}{
+			{
 				"id": "2",
 			},
-			map[string]interface{}{
+			{
 				"id": "3",
 			},
 		},
@@ -194,6 +194,32 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 
 	_, err = client.Logical().Write("secret/foo", map[string]interface{}{
 		"secret": "bar",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/json", map[string]interface{}{
+		"data": map[string]interface{}{
+			"service": map[string]interface{}{
+				"enableTLS": true,
+				"ports":     []int{80, 8080},
+			},
+			"deployment": map[string]interface{}{
+				"replicas": 2,
+				"image": map[string]interface{}{
+					"name": "json-test",
+					"tag":  "latest",
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/jsonstring", map[string]interface{}{
+		"secret": "{\"credentials\":{\"user\":\"test-user\",\"pass\":\"test-password\"}}",
 	})
 	if err != nil {
 		t.Fatal(err)
