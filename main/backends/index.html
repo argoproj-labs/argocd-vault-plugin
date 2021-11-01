@@ -10,7 +10,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.3.5">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-7.3.6">
     
     
       
@@ -18,7 +18,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.cdeb8541.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.a57b2b03.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.3f5d1f46.min.css">
@@ -440,6 +440,13 @@
           <li class="md-nav__item">
   <a href="#inline-path_1" class="md-nav__link">
     Inline Path
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#non-arbitrary-secret" class="md-nav__link">
+    Non-arbitrary secret
   </a>
   
 </li>
@@ -915,6 +922,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#non-arbitrary-secret" class="md-nav__link">
+    Non-arbitrary secret
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1230,7 +1244,15 @@ data:
 <p><strong>Note</strong>: Only Vault KV-V2 backends support versioning. Versions specified with a KV-V1 Vault will be ignored and the latest version will be retrieved.</p>
 <h3 id="ibm-cloud-secrets-manager">IBM Cloud Secrets Manager</h3>
 <p>For IBM Cloud Secret Manager we only support using IAM authentication at this time. </p>
-<p>Additionally, we only support secrets of type <code>arbitrary</code>, retrieved from a secret group. Since <a href="https://cloud.ibm.com/apidocs/secrets-manager?code=go#get-secret-version"><code>arbitrary</code> secrets are not versioned</a>, any version specified in a placeholder is ignored and the latest version is retrieved.</p>
+<p>We support all types of secrets that can be retrieved from IBM Cloud Secret Manager. Please note:</p>
+<ul>
+<li>
+<p><a href="https://cloud.ibm.com/apidocs/secrets-manager#get-secret-version-request">Only certain types of secrets</a> support versioning. If a version is specified for a type that doesn't support it (e.g, <code>arbitrary</code>), the version is ignored</p>
+</li>
+<li>
+<p>Secrets that are JSON data (i.e, non <code>arbitrary</code> secrets or an <code>arbitrary</code> secret with JSON <code>payload</code>) can have the desired key (i.e, the <code>username</code> in a <code>username_password</code> type secret) interpolated with the <a href="../howitworks/#jsonPath">jsonPath</a> modifier. Refer to the <a href="https://cloud.ibm.com/apidocs/secrets-manager#get-secret">IBM Cloud Secret Manager API docs</a> for more details</p>
+</li>
+</ul>
 <h5 id="iam-authentication">IAM Authentication</h5>
 <p>For IAM Authentication, these are the required parameters:</p>
 <pre><code>AVP_IBM_INSTANCE_URL or VAULT_ADDR: Your IBM Cloud Secret Manager Endpoint
@@ -1259,6 +1281,22 @@ type: Opaque
 data:
   username: &lt;path:ibmcloud/arbitrary/secrets/groups/123#username&gt;
   password: &lt;path:ibmcloud/arbitrary/secrets/groups/123#password&gt;
+</code></pre>
+<h6 id="non-arbitrary-secret">Non-arbitrary secret</h6>
+<pre><code class="language-yaml">kind: Secret
+apiVersion: v1
+metadata:
+  name: ibm-example
+  annotations:
+    avp.kubernetes.io/path: &quot;ibmcloud/imported_cert/secrets/groups/123&quot; # 123 represents your Secret Group ID
+type: Opaque
+stringData:
+  PUBLIC_CRT: |
+    &lt;my-cert-secret | jsonPath {.certificate}&gt;
+  PUBLIC_CRT_PREVIOUS: |
+    &lt;path:ibmcloud/imported_cert/secrets/groups/123#my-cert-secret#previous | jsonPath {.certificate}&gt;
+  PRIVATE_KEY: |
+    &lt;my-cert-secret | jsonPath {.private_key}&gt;
 </code></pre>
 <h3 id="aws-secrets-manager">AWS Secrets Manager</h3>
 <h5 id="aws-authentication">AWS Authentication</h5>
@@ -1459,10 +1497,10 @@ data:
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.8397ff9e.min.js", "version": {"provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.fcfe8b6d.min.js", "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.1e84347e.min.js"></script>
+      <script src="../assets/javascripts/bundle.b1047164.min.js"></script>
       
     
   </body>
