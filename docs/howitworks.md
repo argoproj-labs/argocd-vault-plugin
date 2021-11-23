@@ -263,6 +263,18 @@ Valid examples:
 
 This can be used for both generic and inline-path placeholders.
 
+##### `base64decode`
+
+The base64decode modifier decodes base64 encoded values into plain-text.
+
+Valid examples:
+
+- `<b64_username | base64decode>`
+
+- `<path:secrets/data/my-db#b64_username | base64encode>`
+
+- `<path:secrets/data/my-db#b64_username#version3 | base64encode>`
+
 ##### `jsonPath`
 
 The jsonPath modifier allows you use jsonpath to post-process objects or json, retrieved from a secrets manager, before injecting into a Kubernetes manifest.  The output is a string.  If your desired datatype is not a string, pass the output through jsonParse.
