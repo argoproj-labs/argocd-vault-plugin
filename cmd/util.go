@@ -57,7 +57,11 @@ func readManifestData(yamlData io.Reader) ([]unstructured.Unstructured, error) {
 			}
 			return nil, err
 		}
-		manifests = append(manifests, nxtManifest)
+
+		// Skip empty manifests
+		if len(nxtManifest.Object) > 0 {
+			manifests = append(manifests, nxtManifest)
+		}
 	}
 
 	return manifests, nil

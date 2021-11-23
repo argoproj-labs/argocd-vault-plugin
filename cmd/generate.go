@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -49,8 +50,11 @@ func NewGenerateCommand() *cobra.Command {
 				var errs []error
 				manifests, errs = readFilesAsManifests(files)
 				if len(errs) != 0 {
-					// TODO: handle multiple errors nicely
-					return fmt.Errorf("could not read YAML/JSON files: %s", errs)
+					errMessages := make([]string, len(errs))
+					for idx, err := range errs {
+						errMessages[idx] = err.Error()
+					}
+					return fmt.Errorf("could not read YAML/JSON files:\n%s", strings.Join(errMessages, "\n"))
 				}
 			}
 
@@ -68,11 +72,11 @@ func NewGenerateCommand() *cobra.Command {
 				return err
 			}
 
-			for _, manifest := range manifests {
+			if len(manifests) == 0 {
+				return fmt.Errorf("No manifests")
+			}
 
-				if len(manifest.Object) == 0 {
-					continue
-				}
+			for _, manifest := range manifests {
 
 				template, err := kube.NewTemplate(manifest, cmdConfig.Backend)
 				if err != nil {
