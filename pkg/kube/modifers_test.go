@@ -109,6 +109,31 @@ func TestBase64Encode_success(t *testing.T) {
 	assertResultEqual(t, expected, res)
 }
 
+func TestBase64Decode_invalidParams(t *testing.T) {
+	var data interface{} = "bXlzZWNyZXQ="
+	expectedErr := fmt.Errorf("invalid parameters")
+	_, err := base64decode([]string{"astring"}, data)
+	assertErrorEqual(t, expectedErr, err)
+}
+
+func TestBase64Decode_invalidDataType(t *testing.T) {
+	var data interface{} = map[string]interface{}{
+		"data": map[string]interface{}{
+			"subkey": "secret",
+		},
+	}
+	expectedErr := fmt.Errorf("invalid datatype map[string]interface {}")
+	_, err := base64decode([]string{}, data)
+	assertErrorEqual(t, expectedErr, err)
+}
+
+func TestBase64Decode_success(t *testing.T) {
+	var data interface{} = "bXlzZWNyZXQ="
+	var expected interface{} = "mysecret"
+	res, err := base64decode([]string{}, data)
+	assertErrorEqual(t, nil, err)
+	assertResultEqual(t, expected, res)
+}
 func TestJsonParse_invalidParams(t *testing.T) {
 	var data interface{} = "mysecret"
 	expectedErr := fmt.Errorf("invalid parameters")

@@ -13,6 +13,7 @@ import (
 
 var modifiers = map[string]func([]string, interface{}) (interface{}, error){
 	"base64encode": base64encode,
+	"base64decode": base64decode,
 	"jsonPath":     jsonPath,
 	"jsonParse":    jsonParse,
 }
@@ -26,6 +27,21 @@ func base64encode(params []string, input interface{}) (interface{}, error) {
 		{
 			s := base64.StdEncoding.EncodeToString([]byte(input.(string)))
 			return s, nil
+		}
+	default:
+		return nil, fmt.Errorf("invalid datatype %v", reflect.TypeOf(input))
+	}
+}
+
+func base64decode(params []string, input interface{}) (interface{}, error) {
+	if len(params) > 0 {
+		return nil, fmt.Errorf("invalid parameters")
+	}
+	switch input.(type) {
+	case string:
+		{
+			s, _ := base64.StdEncoding.DecodeString(input.(string))
+			return string(s), nil
 		}
 	default:
 		return nil, fmt.Errorf("invalid datatype %v", reflect.TypeOf(input))

@@ -151,6 +151,7 @@ apiVersion: v1
 data:
   PASSWORD: dGVzdC1wYXNzd29yZA==
   USER: dGVzdC11c2Vy
+  ESECRET: c2VjcmV0Mgo=
 kind: Secret
 metadata:
   annotations:
