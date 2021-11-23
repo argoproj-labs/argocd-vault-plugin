@@ -149,9 +149,9 @@ spec:
 ---
 apiVersion: v1
 data:
+  ESECRET: c2VjcmV0Mg==
   PASSWORD: dGVzdC1wYXNzd29yZA==
   USER: dGVzdC11c2Vy
-  ESECRET: c2VjcmV0Mg==
 kind: Secret
 metadata:
   annotations:
