@@ -271,9 +271,9 @@ Valid examples:
 
 - `<b64_username | base64decode>`
 
-- `<path:secrets/data/my-db#b64_username | base64encode>`
+- `<path:secrets/data/my-db#b64_username | base64decode>`
 
-- `<path:secrets/data/my-db#b64_username#version3 | base64encode>`
+- `<path:secrets/data/my-db#b64_username#version3 | base64decode>`
 
 ##### `jsonPath`
 
