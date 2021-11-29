@@ -266,7 +266,7 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 	}
 
 	_, err = client.Logical().Write("secret/yaml", map[string]interface{}{
-		"secret": "---\nkey1:secret1\nkey2:secret2\nkey3:secret3",
+		"secret": "---\nkey1: secret1\nkey2: secret2\nkey3: secret3",
 	})
 	if err != nil {
 		t.Fatal(err)
