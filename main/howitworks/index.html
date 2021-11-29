@@ -421,6 +421,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#base64decode" class="md-nav__link">
+    base64decode
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#jsonpath" class="md-nav__link">
     jsonPath
   </a>
@@ -823,6 +830,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#base64decode" class="md-nav__link">
+    base64decode
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#jsonpath" class="md-nav__link">
     jsonPath
   </a>
@@ -1089,6 +1103,20 @@ stringData:
 </li>
 </ul>
 <p>This can be used for both generic and inline-path placeholders.</p>
+<h5 id="base64decode"><code>base64decode</code></h5>
+<p>The base64decode modifier decodes base64 encoded values into plain-text.</p>
+<p>Valid examples:</p>
+<ul>
+<li>
+<p><code>&lt;b64_username | base64decode&gt;</code></p>
+</li>
+<li>
+<p><code>&lt;path:secrets/data/my-db#b64_username | base64decode&gt;</code></p>
+</li>
+<li>
+<p><code>&lt;path:secrets/data/my-db#b64_username#version3 | base64decode&gt;</code></p>
+</li>
+</ul>
 <h5 id="jsonpath"><code>jsonPath</code></h5>
 <p>The jsonPath modifier allows you use jsonpath to post-process objects or json, retrieved from a secrets manager, before injecting into a Kubernetes manifest.  The output is a string.  If your desired datatype is not a string, pass the output through jsonParse.</p>
 <p>See the Kubernetes jsonPath documentation for more detail: <a href="https://kubernetes.io/docs/reference/kubectl/jsonpath/">https://kubernetes.io/docs/reference/kubectl/jsonpath/</a></p>
