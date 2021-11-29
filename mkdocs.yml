@@ -27,4 +27,5 @@ nav:
     - argocd-vault-plugin version: cmd/version.md
   - Upgrading:
      - v0.x to v1.x: 0x-1x.md
+  - Compatibility: compatibility.md
   - Releases ⧉: https://github.com/IBM/argocd-vault-plugin/releases

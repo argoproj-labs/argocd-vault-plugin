@@ -109,6 +109,31 @@ func TestBase64Encode_success(t *testing.T) {
 	assertResultEqual(t, expected, res)
 }
 
+func TestBase64Decode_invalidParams(t *testing.T) {
+	var data interface{} = "bXlzZWNyZXQ="
+	expectedErr := fmt.Errorf("invalid parameters")
+	_, err := base64decode([]string{"astring"}, data)
+	assertErrorEqual(t, expectedErr, err)
+}
+
+func TestBase64Decode_invalidDataType(t *testing.T) {
+	var data interface{} = map[string]interface{}{
+		"data": map[string]interface{}{
+			"subkey": "secret",
+		},
+	}
+	expectedErr := fmt.Errorf("invalid datatype map[string]interface {}")
+	_, err := base64decode([]string{}, data)
+	assertErrorEqual(t, expectedErr, err)
+}
+
+func TestBase64Decode_success(t *testing.T) {
+	var data interface{} = "bXlzZWNyZXQ="
+	var expected interface{} = "mysecret"
+	res, err := base64decode([]string{}, data)
+	assertErrorEqual(t, nil, err)
+	assertResultEqual(t, expected, res)
+}
 func TestJsonParse_invalidParams(t *testing.T) {
 	var data interface{} = "mysecret"
 	expectedErr := fmt.Errorf("invalid parameters")
@@ -144,5 +169,23 @@ func TestJsonParse_success(t *testing.T) {
 	}
 	res, err := jsonParse([]string{}, data)
 	assertErrorEqual(t, nil, err)
+	assertResultEqual(t, expected, res)
+}
+
+func TestYAMLToJSON_success(t *testing.T) {
+	var data interface{} = "data: secret"
+	var expected interface{} = "{\"data\":\"secret\"}"
+	res, err := yamltojson([]string{}, data)
+	assertErrorEqual(t, nil, err)
+	assertResultEqual(t, expected, res)
+}
+
+func TestYamlJsonPath_unmarshal_succcess(t *testing.T) {
+	var data interface{} = "---\nkey1: secret1\nkey2: secret2\nkey3: secret3"
+	var expected interface{} = "secret2"
+	jsonData, err1 := yamltojson([]string{}, data)
+	res, err2 := jsonPath([]string{"{.key2}"}, jsonData)
+	assertErrorEqual(t, nil, err1)
+	assertErrorEqual(t, nil, err2)
 	assertResultEqual(t, expected, res)
 }

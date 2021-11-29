@@ -9,12 +9,15 @@ import (
 	"strings"
 
 	k8jsonpath "k8s.io/client-go/util/jsonpath"
+	k8yaml "sigs.k8s.io/yaml"
 )
 
 var modifiers = map[string]func([]string, interface{}) (interface{}, error){
 	"base64encode": base64encode,
+	"base64decode": base64decode,
 	"jsonPath":     jsonPath,
 	"jsonParse":    jsonParse,
+	"yamltojson":   yamltojson,
 }
 
 func base64encode(params []string, input interface{}) (interface{}, error) {
@@ -26,6 +29,21 @@ func base64encode(params []string, input interface{}) (interface{}, error) {
 		{
 			s := base64.StdEncoding.EncodeToString([]byte(input.(string)))
 			return s, nil
+		}
+	default:
+		return nil, fmt.Errorf("invalid datatype %v", reflect.TypeOf(input))
+	}
+}
+
+func base64decode(params []string, input interface{}) (interface{}, error) {
+	if len(params) > 0 {
+		return nil, fmt.Errorf("invalid parameters")
+	}
+	switch input.(type) {
+	case string:
+		{
+			s, _ := base64.StdEncoding.DecodeString(input.(string))
+			return string(s), nil
 		}
 	default:
 		return nil, fmt.Errorf("invalid datatype %v", reflect.TypeOf(input))
@@ -74,6 +92,24 @@ func jsonParse(params []string, input interface{}) (interface{}, error) {
 				return nil, err
 			}
 			return obj, nil
+		}
+	default:
+		return nil, fmt.Errorf("invalid datatype %v", reflect.TypeOf(input))
+	}
+}
+
+func yamltojson(params []string, input interface{}) (interface{}, error) {
+	if len(params) > 0 {
+		return nil, fmt.Errorf("invalid parameters")
+	}
+	switch input.(type) {
+	case string:
+		{
+			j2, err := k8yaml.YAMLToJSON([]byte(input.(string)))
+			if err != nil {
+				return nil, err
+			}
+			return string(j2), nil
 		}
 	default:
 		return nil, fmt.Errorf("invalid datatype %v", reflect.TypeOf(input))
