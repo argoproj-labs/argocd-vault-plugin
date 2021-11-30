@@ -105,11 +105,12 @@ func yamltojson(params []string, input interface{}) (interface{}, error) {
 	switch input.(type) {
 	case string:
 		{
-			j2, err := k8yaml.YAMLToJSON([]byte(input.(string)))
+			var obj interface{}
+			err := k8yaml.Unmarshal([]byte(input.(string)), &obj)
 			if err != nil {
 				return nil, err
 			}
-			return string(j2), nil
+			return obj, nil
 		}
 	default:
 		return nil, fmt.Errorf("invalid datatype %v", reflect.TypeOf(input))

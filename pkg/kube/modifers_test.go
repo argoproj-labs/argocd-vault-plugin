@@ -174,7 +174,9 @@ func TestJsonParse_success(t *testing.T) {
 
 func TestYAMLToJSON_success(t *testing.T) {
 	var data interface{} = "data: secret"
-	var expected interface{} = "{\"data\":\"secret\"}"
+	var expected interface{} = map[string]interface{}{
+		"data": "secret",
+	}
 	res, err := yamltojson([]string{}, data)
 	assertErrorEqual(t, nil, err)
 	assertResultEqual(t, expected, res)
