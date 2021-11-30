@@ -6,13 +6,15 @@ theme:
   custom_dir: docs/_overrides
   palette:
     primary: black
+  favicon: assets/favicon.png
   font:
-    text: IBM Plex Sans
-    code: IBM Plex Mono
+    text: Work Sans
+  logo: assets/logo.png
 
-extra:
-  version:
-    provider: mike
+extra_javascript:
+- assets/versions.js
+extra_css:
+- assets/versions.css
 
 nav:
   - Overview: index.md
