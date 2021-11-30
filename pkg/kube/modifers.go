@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	k8jsonpath "k8s.io/client-go/util/jsonpath"
+	k8yaml "sigs.k8s.io/yaml"
 )
 
 var modifiers = map[string]func([]string, interface{}) (interface{}, error){
@@ -16,6 +17,7 @@ var modifiers = map[string]func([]string, interface{}) (interface{}, error){
 	"base64decode": base64decode,
 	"jsonPath":     jsonPath,
 	"jsonParse":    jsonParse,
+	"yamlParse":    yamlParse,
 }
 
 func base64encode(params []string, input interface{}) (interface{}, error) {
@@ -86,6 +88,25 @@ func jsonParse(params []string, input interface{}) (interface{}, error) {
 		{
 			var obj interface{}
 			err := json.Unmarshal([]byte(input.(string)), &obj)
+			if err != nil {
+				return nil, err
+			}
+			return obj, nil
+		}
+	default:
+		return nil, fmt.Errorf("invalid datatype %v", reflect.TypeOf(input))
+	}
+}
+
+func yamlParse(params []string, input interface{}) (interface{}, error) {
+	if len(params) > 0 {
+		return nil, fmt.Errorf("invalid parameters")
+	}
+	switch input.(type) {
+	case string:
+		{
+			var obj interface{}
+			err := k8yaml.Unmarshal([]byte(input.(string)), &obj)
 			if err != nil {
 				return nil, err
 			}

@@ -302,3 +302,15 @@ Valid examples:
 - `<path:secrets/data/my-db#credentialsJson | jsonParse>`
 
 - `<path:secrets/data/my-db#credentialsJson#version3 | jsonParse>`
+
+##### `yamlParse`
+
+The yamlParse modifier converts YAML data into JSON.
+
+Valid examples:
+
+- `<credentials_yaml | yamlParse | jsonPath {.username}>`
+
+- `<path:secrets/data/db_yaml#yaml | yamlParse | jsonPath {.username}{':'}{.password}>`
+
+- `<path:secrets/data/db_yaml#yaml#version2 | yamlParse | jsonPath {.username} | base64encode>`
