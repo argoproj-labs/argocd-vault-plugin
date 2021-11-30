@@ -17,7 +17,7 @@ var modifiers = map[string]func([]string, interface{}) (interface{}, error){
 	"base64decode": base64decode,
 	"jsonPath":     jsonPath,
 	"jsonParse":    jsonParse,
-	"yamltojson":   yamltojson,
+	"yamlParse":    yamlParse,
 }
 
 func base64encode(params []string, input interface{}) (interface{}, error) {
@@ -98,7 +98,7 @@ func jsonParse(params []string, input interface{}) (interface{}, error) {
 	}
 }
 
-func yamltojson(params []string, input interface{}) (interface{}, error) {
+func yamlParse(params []string, input interface{}) (interface{}, error) {
 	if len(params) > 0 {
 		return nil, fmt.Errorf("invalid parameters")
 	}

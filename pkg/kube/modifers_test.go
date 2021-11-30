@@ -177,7 +177,7 @@ func TestYAMLToJSON_success(t *testing.T) {
 	var expected interface{} = map[string]interface{}{
 		"data": "secret",
 	}
-	res, err := yamltojson([]string{}, data)
+	res, err := yamlParse([]string{}, data)
 	assertErrorEqual(t, nil, err)
 	assertResultEqual(t, expected, res)
 }
@@ -185,7 +185,7 @@ func TestYAMLToJSON_success(t *testing.T) {
 func TestYamlJsonPath_unmarshal_succcess(t *testing.T) {
 	var data interface{} = "---\nkey1: secret1\nkey2: secret2\nkey3: secret3"
 	var expected interface{} = "secret2"
-	jsonData, err1 := yamltojson([]string{}, data)
+	jsonData, err1 := yamlParse([]string{}, data)
 	res, err2 := jsonPath([]string{"{.key2}"}, jsonData)
 	assertErrorEqual(t, nil, err1)
 	assertErrorEqual(t, nil, err2)

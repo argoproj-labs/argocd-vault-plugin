@@ -303,14 +303,14 @@ Valid examples:
 
 - `<path:secrets/data/my-db#credentialsJson#version3 | jsonParse>`
 
-##### `yamltojson`
+##### `yamlParse`
 
-The yamltojson modifier converts YAML data into JSON.
+The yamlParse modifier converts YAML data into JSON.
 
 Valid examples:
 
-- `<credentials_yaml | yamltojson | jsonPath {.username}>`
+- `<credentials_yaml | yamlParse | jsonPath {.username}>`
 
-- `<path:secrets/data/db_yaml#yaml | yamltojson | jsonPath {.username}{':'}{.password}>`
+- `<path:secrets/data/db_yaml#yaml | yamlParse | jsonPath {.username}{':'}{.password}>`
 
-- `<path:secrets/data/db_yaml#yaml#version2 | yamltojson | jsonPath {.username} | base64encode>`
+- `<path:secrets/data/db_yaml#yaml#version2 | yamlParse | jsonPath {.username} | base64encode>`
