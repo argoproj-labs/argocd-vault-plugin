@@ -113,18 +113,6 @@ div[data-md-component=announce]>div#announce-msg>a{
     }
 }
 
-/* .rst-other-versions a {
-  cursor: pointer !important;
-  display: block !important;
-  outline: none !important;
-  padding-left: 0.6rem !important;
-  padding-right: 1.2rem !important;
-  scroll-snap-align: start !important;
-  transition: color .25s, background-color .25s !important;
-  white-space: nowrap !important;
-  width: 100% !important;
-} */
-
 .rst-other-versions dd {
   margin: 0px !important;
   cursor: pointer !important;
@@ -193,4 +181,10 @@ div[data-md-component=announce]>div#announce-msg>a{
 
 .rst-other-versions a:focus {
     background-color: var(--md-default-fg-color--lightest) !important;
+}
+
+@media screen and (max-width: 768px) {
+  .rst-versions {
+    display: block !important;
+  }
 }
