@@ -152,6 +152,7 @@ data:
   ESECRET: c2VjcmV0Mg==
   PASSWORD: dGVzdC1wYXNzd29yZA==
   USER: dGVzdC11c2Vy
+  YAML: c2VjcmV0MQ==
 kind: Secret
 metadata:
   annotations:
