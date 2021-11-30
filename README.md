@@ -13,7 +13,7 @@ An Argo CD plugin to retrieve secrets from various Secret Management tools (Hash
 This plugin is aimed at helping to solve the issue of secret management with GitOps and Argo CD. We wanted to find a simple way to utilize Secret Management tools without having to rely on an operator or custom resource definition. This plugin can be used not just for secrets but also for deployments, configMaps or any other Kubernetes resource.
 
 ## Documentation
-You can our full set of documentation at https://ibm.github.io/argocd-vault-plugin
+You can our full set of documentation at https://argocd-vault-plugin.readthedocs.io/
 
 ## Contributing
 Interested in contributing? Please read our contributing documentation [here](./CONTRIBUTING.md) to get started!
