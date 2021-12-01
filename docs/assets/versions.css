@@ -156,7 +156,7 @@ div[data-md-component=announce]>div#announce-msg>a{
   display: unset !important;
 }
 
-.rst-versions .rst-other-versions dd a {
+#rtd-version-item {
   cursor: pointer !important;
   display: block !important;
   outline: none !important;
@@ -175,11 +175,11 @@ div[data-md-component=announce]>div#announce-msg>a{
   font-weight: unset !important;
 }
 
-.rst-other-versions a:focus,.rst-other-versions a:hover {
+#rtd-version-item:focus,#rtd-version-item:hover {
     color: var(--md-accent-fg-color) !important;
 }
 
-.rst-other-versions a:focus {
+#rtd-version-item:focus {
     background-color: var(--md-default-fg-color--lightest) !important;
 }
 
