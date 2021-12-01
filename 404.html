@@ -1,23 +1,17 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Redirecting</title>
-  <noscript>
-    <meta http-equiv="refresh" content="1; url=/argocd-vault-plugin/stable/" />
-  </noscript>
+<body>
+  <p>If you are not redirected, <a href="https://argocd-vault-plugin.readthedocs.io/">click here</a>.</p>
   <script>
-    const matches = window.location.pathname.match("\/argocd-vault-plugin\/([^\/]*(?:\/)?(?:#.*)?)$");
-
-    // Redirect old documentation links from before versioned-docs to the stable version of that page
-    if (matches !== null) {
-      window.location.replace(`/argocd-vault-plugin/stable/${matches[1]}`);
+    var path = window.location.pathname;
+    if (path.startsWith('/argocd-vault-plugin')) {
+      path = path.substr('/argocd-vault-plugin'.length);
     }
-
-    // Actual 404, just go to stable docs
-    else {
-      window.location.replace(`/argocd-vault-plugin/stable/`);
+    if (path === '/') {
+      window.location.replace('https://argocd-vault-plugin.readthedocs.io/en/stable' + path + window.location.hash);
+    } else if (path.startsWith('/main') || path.startsWith('/preview')){
+      path = path.split('/')
+      window.location.replace('https://argocd-vault-plugin.readthedocs.io/en/latest/' + path[2]);
+    } else {
+      window.location.replace('https://argocd-vault-plugin.readthedocs.io/en/' + path + window.location.hash);
     }
   </script>
-</head>
-</html>
+</body>
