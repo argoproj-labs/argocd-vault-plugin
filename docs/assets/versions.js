@@ -12,17 +12,14 @@ setTimeout(function() {
     caret.classList.add('dropdown-caret')
     div.querySelector('.rst-current-version').appendChild(caret);
 
+    var items = document.querySelectorAll('.rst-versions .rst-other-versions dd a');
+    for (var i = 0, item; item = items[i]; i++) {
+      item.setAttribute('id','rtd-version-item');
+    }
+
     var currentVersion = document.getElementsByClassName("rst-current-version");
-    //if currentVersion[0].innerText.includes(":") {
     currentVersion[0].innerText = currentVersion[0].innerText.split(':')[1].trim()
-    // }
-
   }
-
-  var CSSLink = document.createElement('link');
-  CSSLink.rel='stylesheet';
-  CSSLink.href = 'assets/versions.css';
-  document.getElementsByTagName('head')[0].appendChild(CSSLink);
 
   var script = document.createElement('script');
   script.src = 'https://argocd-vault-plugin.readthedocs.io/_/api/v2/footer_html/?'+
