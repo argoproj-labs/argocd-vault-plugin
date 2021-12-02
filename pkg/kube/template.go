@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/types"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	yaml "sigs.k8s.io/yaml"
 )

@@ -7,9 +7,9 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/config"
-	"github.com/IBM/argocd-vault-plugin/pkg/kube"
-	"github.com/IBM/argocd-vault-plugin/pkg/types"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/config"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/kube"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

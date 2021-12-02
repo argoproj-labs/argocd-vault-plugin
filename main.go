@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/IBM/argocd-vault-plugin/cmd"
+	"github.com/argoproj-labs/argocd-vault-plugin/cmd"
 )
 
 func main() {

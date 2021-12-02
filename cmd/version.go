@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/IBM/argocd-vault-plugin/version"
+	"github.com/argoproj-labs/argocd-vault-plugin/version"
 	"github.com/spf13/cobra"
 )
 

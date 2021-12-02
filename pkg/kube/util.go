@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/types"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -107,7 +107,7 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 	// If the Vault path annotation is present, there may be placeholders with/without an explicit path
 	// so we look for those. Only if the annotation is absent do we narrow the search to placeholders with
 	// explicit paths, to prevent catching <things> that aren't placeholders
-	// See https://github.com/IBM/argocd-vault-plugin/issues/130
+	// See https://github.com/argoproj-labs/argocd-vault-plugin/issues/130
 	if _, pathAnnotationPresent := resource.Annotations[types.AVPPathAnnotation]; pathAnnotationPresent {
 		placeholderRegex = genericPlaceholder
 	}

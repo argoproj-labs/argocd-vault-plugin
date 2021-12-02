@@ -3,7 +3,7 @@ package backends_test
 import (
 	"fmt"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/keyvault"
-	"github.com/IBM/argocd-vault-plugin/pkg/backends"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
 	"io"
 	"net/http"
 	"net/url"
