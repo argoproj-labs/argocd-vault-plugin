@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/backends"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
 	"github.com/googleapis/gax-go/v2"
 	"golang.org/x/net/context"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"

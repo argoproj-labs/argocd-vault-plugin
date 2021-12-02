@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/types"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	"github.com/hashicorp/vault/api"
 )
 

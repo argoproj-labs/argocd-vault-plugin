@@ -1,4 +1,4 @@
-module github.com/IBM/argocd-vault-plugin
+module github.com/argoproj-labs/argocd-vault-plugin
 
 go 1.16
 

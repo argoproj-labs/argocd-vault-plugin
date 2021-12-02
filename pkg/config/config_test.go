@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/config"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/config"
 	"github.com/spf13/viper"
 )
 

@@ -3,8 +3,8 @@ package vault_test
 import (
 	"testing"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/auth/vault"
-	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/auth/vault"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/helpers"
 )
 
 // Need to find a way to mock GitHub Auth within Vault

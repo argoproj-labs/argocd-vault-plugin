@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/backends"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
 )
