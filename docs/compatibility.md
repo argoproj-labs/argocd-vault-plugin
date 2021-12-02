@@ -1,4 +1,4 @@
-AVP has been _explicitly_ tested/used with the following configuration of Kubernetes (or Openshift) and Argo CD. We always recommend running the [latest stable release](https://github.com/IBM/argocd-vault-plugin/releases). 
+AVP has been _explicitly_ tested/used with the following configuration of Kubernetes (or Openshift) and Argo CD. We always recommend running the [latest stable release](https://github.com/argoproj-labs/argocd-vault-plugin/releases). 
 
 If a version combination is missing from this table, **it is still very likely AVP will work**. 
 
