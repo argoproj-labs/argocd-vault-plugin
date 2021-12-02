@@ -1,11 +1,11 @@
 # argocd-vault-plugin
-![Pipeline](https://github.com/IBM/argocd-vault-plugin/workflows/Pipeline/badge.svg)
-![Code Scanning](https://github.com/IBM/argocd-vault-plugin/workflows/Code%20Scanning/badge.svg)
-[![Go Report Card](https://goreportcard.com/badge/github.com/IBM/argocd-vault-plugin)](https://goreportcard.com/report/github.com/IBM/argocd-vault-plugin)
+![Pipeline](https://github.com/argoproj-labs/argocd-vault-plugin/workflows/Pipeline/badge.svg)
+![Code Scanning](https://github.com/argoproj-labs/argocd-vault-plugin/workflows/Code%20Scanning/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/argoproj-labs/argocd-vault-plugin)](https://goreportcard.com/report/github.com/argoproj-labs/argocd-vault-plugin)
 ![Downloads](https://img.shields.io/github/downloads/IBM/argocd-vault-plugin/total?logo=github)
 [![codecov](https://codecov.io/gh/IBM/argocd-vault-plugin/branch/main/graph/badge.svg?token=p8XJMcip6l)](https://codecov.io/gh/IBM/argocd-vault-plugin)
 
-<img src="https://github.com/IBM/argocd-vault-plugin/raw/main/assets/argo_vault_logo.png" width="300">
+<img src="https://github.com/argoproj-labs/argocd-vault-plugin/raw/main/assets/argo_vault_logo.png" width="300">
 
 An Argo CD plugin to retrieve secrets from various Secret Management tools (HashiCorp Vault, IBM Cloud Secrets Manager, AWS Secrets Manager, etc.) and inject them into Kubernetes resources
 
