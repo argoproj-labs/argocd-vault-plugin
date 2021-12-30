@@ -1,7 +1,6 @@
 package backends
 
 import (
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"sync"
@@ -63,10 +62,7 @@ func (i *IBMSecretsManager) getSecretVersionedOrNot(secret *ibmsm.SecretResource
 			return nil, fmt.Errorf("Could not retrieve secret %s after %d retries, statuscode %d", *secret.ID, types.IBMMaxRetries, httpResponse.GetStatusCode())
 		}
 
-		// Versioned certificate secret_data comes back in a special struct and we want a map
-		certData := (secretVersion.Resources[0].(*ibmsm.SecretVersion)).SecretData
-		certJson, _ := json.Marshal(&certData)
-		_ = json.Unmarshal(certJson, &result)
+		result = (secretVersion.Resources[0].(*ibmsm.SecretVersion)).SecretData.(map[string]interface{})
 	} else {
 		secretRes, httpResponse, err := i.Client.GetSecret(&ibmsm.GetSecretOptions{
 			SecretType: secret.SecretType,

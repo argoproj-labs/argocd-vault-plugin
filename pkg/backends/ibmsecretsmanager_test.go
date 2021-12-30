@@ -150,8 +150,8 @@ func (m *MockIBMSMClient) GetSecretVersion(getSecretOptions *ibmsm.GetSecretVers
 		Resources: []ibmsm.SecretVersionIntf{
 			&ibmsm.SecretVersion{
 				ID: &id,
-				SecretData: &ibmsm.CertificateSecretData{
-					Certificate: &data,
+				SecretData: map[string]interface{}{
+					"certificate": data,
 				},
 			},
 		},
