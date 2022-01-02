@@ -1,7 +1,7 @@
 There are 3 different ways that parameters can be passed along to argocd-vault-plugin.
 
 ##### Kubernetes Secret
-You can define a Secret in the `argocd` namespace of your Argo CD cluster with the Vault configuration. The keys of the secret's `data`/`stringData`
+You can define a Secret with the Vault configuration. The keys of the secret's `data`/`stringData`
 should be the exact names given above, case-sensitive:
 ```yaml
 apiVersion: v1
@@ -17,6 +17,9 @@ metadata:
 type: Opaque
 ```
 You can use it like this: `argocd-vault-plugin generate /some/path -s vault-configuration`.
+
+By default, the secret is assumed to be in the `argocd` namespace. However, the namespace containing the secret can be provided by using the format `<namespace>:<name>` 
+
 <b>Note</b>: this requires the `argocd-repo-server` to have a service account token mounted in the standard location.
 
 ##### Configuration File
