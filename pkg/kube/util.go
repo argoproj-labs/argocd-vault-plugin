@@ -238,3 +238,16 @@ func kubeResourceDecoder(data *map[string]interface{}) *k8yaml.YAMLToJSONDecoder
 	decoder := k8yaml.NewYAMLToJSONDecoder(bytes.NewReader(jsondata))
 	return decoder
 }
+
+func secretNamespaceName(input string) (string, string) {
+	var secretNamespace, secretName string
+	nameFields := strings.Split(input, ":")
+	if len(nameFields) == 2 {
+		secretNamespace = nameFields[0]
+		secretName = nameFields[1]
+	} else {
+		secretNamespace = types.ArgoCDNamespace
+		secretName = nameFields[0]
+	}
+	return secretNamespace, secretName
+}
