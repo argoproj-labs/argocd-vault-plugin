@@ -17,7 +17,7 @@ If you determine that there has been no other issue related to yours please foll
 We follow the Github forking model for outside contributions
 
 1. Fork the repo and create your branch off the `main` branch
-2. Add tests for any code that is added of changed
+2. Add tests for any code that is added or changed
 3. Make sure all tests pass
 4. Commit any changes to your branch following the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) guidelines
 5. Push changes to the fork you created
