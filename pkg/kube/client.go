@@ -31,7 +31,7 @@ func NewClient() (*Client, error) {
 	}, nil
 }
 
-// ReadSecret reads the specified Secret from the `argocd` namespace
+// ReadSecret reads the specified Secret from the defined namespace, otherwise defaults to `argocd`
 // and returns a YAML []byte containing its data, decoded from base64
 func (c *Client) ReadSecret(name string) ([]byte, error) {
 	secretName, secretNamespace := secretNamespaceName(name)
