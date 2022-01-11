@@ -19,7 +19,7 @@ require (
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.10 // indirect
 	github.com/Azure/go-autorest/autorest/azure/cli v0.4.4 // indirect
 	github.com/IBM/go-sdk-core/v5 v5.9.1
-	github.com/IBM/secrets-manager-go-sdk v1.0.29
+	github.com/IBM/secrets-manager-go-sdk v1.0.31
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/aws/aws-sdk-go v1.42.26
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
