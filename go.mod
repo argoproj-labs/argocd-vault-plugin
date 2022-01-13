@@ -13,7 +13,7 @@ require (
 	cloud.google.com/go/kms v1.0.0 // indirect
 	cloud.google.com/go/monitoring v1.0.0 // indirect
 	cloud.google.com/go/secretmanager v1.0.0
-	github.com/Azure/azure-sdk-for-go v61.0.0+incompatible
+	github.com/Azure/azure-sdk-for-go v61.1.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.23 // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.9.18 // indirect
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.10 // indirect
