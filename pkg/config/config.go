@@ -25,6 +25,7 @@ import (
 	awssm "github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/hashicorp/vault/api"
 	"github.com/spf13/viper"
+	sops "go.mozilla.org/sops/v3/decrypt"
 )
 
 // Options options that can be passed to a Config struct
@@ -43,6 +44,7 @@ var backendPrefixes []string = []string{
 	"aws",
 	"azure",
 	"google",
+	"sops",
 }
 
 // New returns a new Config struct
@@ -166,6 +168,10 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 			basicClient := keyvault.New()
 			basicClient.Authorizer = authorizer
 			backend = backends.NewAzureKeyVaultBackend(basicClient)
+		}
+	case types.Sopsbackend:
+		{
+			backend = backends.NewLocalSecretManagerBackend(sops.File)
 		}
 	default:
 		return nil, errors.New("Must provide a supported Vault Type")
