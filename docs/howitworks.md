@@ -222,7 +222,7 @@ apiVersion: v1
 metadata:
   name: example-secret
   annotations:
-    avp.kubernetes.io/remove-missing: true
+    avp.kubernetes.io/remove-missing: "true"
 stringData:
   username: <username>
   password: <pass>
@@ -240,7 +240,7 @@ apiVersion: v1
 metadata:
   name: example-secret
   annotations:
-    avp.kubernetes.io/remove-missing: true
+    avp.kubernetes.io/remove-missing: "true"
 stringData:
   username: user
 ```
