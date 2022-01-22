@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
@@ -250,4 +251,63 @@ func secretNamespaceName(input string) (string, string) {
 		secretName = nameFields[0]
 	}
 	return secretNamespace, secretName
+}
+
+var dataTemplateFunctionContext template.FuncMap = func() template.FuncMap {
+	funcMap := template.FuncMap{}
+	for field, modifier := range modifiers {
+		modifier := modifier
+		funcMap[field] = func(input ...interface{}) (interface{}, error) {
+			paramsLen := len(input) - 1
+			if paramsLen < 0 {
+				paramsLen = 0
+			}
+			params := make([]string, paramsLen)
+			for i, param := range input[:paramsLen] {
+				switch param.(type) {
+				case string:
+					{
+						params[i] = param.(string)
+					}
+				default:
+					{
+						return nil, fmt.Errorf("invalid datatype %v", reflect.TypeOf(param))
+					}
+				}
+			}
+			return modifier(params, input[paramsLen])
+		}
+	}
+	return funcMap
+}()
+
+func replaceFromTemplate(r *Resource, rawTemplate string) error {
+	context := struct {
+		Data map[string]interface{}
+	}{
+		Data: r.Data,
+	}
+
+	t, err := template.New(types.AVPDataTemplateAnnotation).Funcs(dataTemplateFunctionContext).Parse(rawTemplate)
+	if err != nil {
+		return err
+	}
+
+	var renderedTemplate bytes.Buffer
+	if err := t.Execute(&renderedTemplate, context); err != nil {
+		return err
+	}
+
+	renderedTemplateAsJson, err := k8yaml.ToJSON(renderedTemplate.Bytes())
+	if err != nil {
+		return err
+	}
+
+	var newData interface{}
+	if err := json.Unmarshal(renderedTemplateAsJson, &newData); err != nil {
+		return err
+	}
+	r.TemplateData["data"] = newData
+
+	return nil
 }

@@ -44,6 +44,7 @@ const (
 	AVPRemoveMissingAnnotation = "avp.kubernetes.io/remove-missing"
 	AVPSecretVersionAnnotation = "avp.kubernetes.io/secret-version"
 	VaultKVVersionAnnotation   = "avp.kubernetes.io/kv-version"
+	AVPDataTemplateAnnotation  = "avp.kubernetes.io/data-template"
 
 	// Kube Constants
 	ArgoCDNamespace = "argocd"
