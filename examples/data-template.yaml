@@ -1,0 +1,12 @@
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/path: "kv/example"
+    avp.kubernetes.io/data-template: |
+      {{ range $Key, $Value := .Data }}
+      {{ $Key }}: {{ $Value | base64encode }}
+      {{ end }}
+      placeholder: {{ .Data.json | jsonPath "{.content}" }}
+type: Opaque

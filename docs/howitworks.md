@@ -246,6 +246,53 @@ stringData:
 ```
 This only works with _generic_ placeholders.
 
+##### Data templates
+If the `avp.kubernetes.io/data-template` annotation is present, the plugin will interpret its
+value as a [go template](https://pkg.go.dev/text/template) and use it to generate and replace
+the contents of the manifest's `data` field. This annotation should be used in tandem with
+`avp.kubernetes.io/path`. The plugin will fetch the secrets at this path and pass them to the
+template's context in the `.Data` field.
+
+For example, the following manifest:
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/path: "kv/example"
+    avp.kubernetes.io/data-template: |
+      {{ range $Key, $Value := .Data }}
+      {{ $Key }}: {{ $Value | base64encode }}
+      {{ end }}
+type: Opaque
+```
+
+Will be transformed into:
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/path: "kv/example"
+    avp.kubernetes.io/data-template: |
+      {{ range $Key, $Value := .Data }}
+      {{ $Key }}: {{ $Value | base64encode }}
+      {{ end }}
+type: Opaque
+data:
+  secret1: dmFsdWUx
+  secret2: dmFsdWUy
+  secret3: dmFsdWUz
+```
+
+The generated data will not be transformed by the plugin any further. For example, if one of the generated values was `<username>`, then it would not be interpreted as a Vault key. It would just remain as `<username>`.
+
+All the standard modifiers (base64encode, jsonPath, ...) can be used in data templates.
+
 #### Modifiers
 
 ##### `base64encode`
