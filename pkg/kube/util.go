@@ -281,11 +281,16 @@ var dataTemplateFunctionContext template.FuncMap = func() template.FuncMap {
 	return funcMap
 }()
 
-func replaceFromTemplate(r *Resource, rawTemplate string) error {
+func replaceFromTemplate(r *Resource) error {
 	context := struct {
 		Data map[string]interface{}
 	}{
 		Data: r.Data,
+	}
+
+	rawTemplate, rawTemplateExists := r.Annotations[types.AVPDataTemplateAnnotation]
+	if !rawTemplateExists {
+		return fmt.Errorf("annotation %s is not present", types.AVPDataTemplateAnnotation)
 	}
 
 	t, err := template.New(types.AVPDataTemplateAnnotation).Funcs(dataTemplateFunctionContext).Parse(rawTemplate)

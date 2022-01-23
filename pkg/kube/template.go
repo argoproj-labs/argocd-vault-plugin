@@ -55,10 +55,14 @@ func NewTemplate(template unstructured.Unstructured, backend types.Backend) (*Te
 // For both non-Secret resources and Secrets with <placeholder>'s in `stringData`, the value in Vault is emitted as-is
 // For Secret's with <placeholder>'s in `.data`, the value in Vault is emitted as base64
 // For any hard-coded strings that aren't <placeholder>'s, the string is emitted as-is
+//
+// If the `types.AVPDataTemplateAnnotation` annotation is present, the go template from
+// the annotation will be used to generate and replace the contents of the manifest's
+// `data` field.
 func (t *Template) Replace() error {
-	dataTemplate, dataTemplateExists := t.Annotations[types.AVPDataTemplateAnnotation]
+	_, dataTemplateExists := t.Annotations[types.AVPDataTemplateAnnotation]
 	if dataTemplateExists {
-		return replaceFromTemplate(&t.Resource, dataTemplate)
+		return replaceFromTemplate(&t.Resource)
 	}
 
 	var replacerFunc func(string, string, Resource) (interface{}, []error)

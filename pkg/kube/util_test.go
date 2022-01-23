@@ -658,3 +658,44 @@ func TestSecretNamespaceName(t *testing.T) {
 		}
 	}
 }
+
+func TestDataTemplateReplacement(t *testing.T) {
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{},
+		Data: map[string]interface{}{
+			"access_key_id":        "testkey",
+			"secret_access_key_id": "testsecret",
+			"json":                 `{ "content": "full" }`,
+		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+			(types.AVPDataTemplateAnnotation): "{{ range $Key, $Value := .Data }}\n" +
+				"{{ $Key }}: \"{{ $Value | base64encode }}\"\n" +
+				"{{ end }}\n" +
+				"placeholder: {{ .Data.json | jsonPath \"{.content}\" }}",
+		},
+	}
+
+	if err := replaceFromTemplate(&dummyResource); err != nil {
+		panic(err)
+	}
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"data": map[string]interface{}{
+				"access_key_id":        "dGVzdGtleQ==",
+				"secret_access_key_id": "dGVzdHNlY3JldA==",
+				"json":                 "eyAiY29udGVudCI6ICJmdWxsIiB9",
+				"placeholder":          "full",
+			},
+		},
+		Data: map[string]interface{}{
+			"access_key_id":        "testkey",
+			"secret_access_key_id": "testsecret",
+			"json":                 `{ "content": "full" }`,
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
