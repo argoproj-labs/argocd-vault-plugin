@@ -68,3 +68,4 @@ We support several different annotations that can be used inside a kubernetes re
 | avp.kubernetes.io/kv-version | Version of the KV Secret Engine |
 | avp.kubernetes.io/secret-version | Version of the secret to retrieve. Only effective on generic `<placeholder>`s so `avp.kubernetes.io/path` is required when this annotation is used |
 | avp.kubernetes.io/remove-missing | Plugin will not throw error when a key is missing from Vault Secret. Only works on `Secret` or `ConfigMap` resources |
+| avp.kubernetes.io/data-template | A Go template used to generate and replace the contents of the manifest's data field |
