@@ -1,6 +1,10 @@
 ### HashiCorp Vault
 We support AppRole and Github Auth Method for getting secrets from Vault.
 
+We currently support retrieving secrets from KV-V1 and KV-V2 backends.
+
+**Note**: For KV-V2 backends, the path needs to be specified as `${vault-kvv2-backend-path}/data/{path-to-secret}` where `vault-kvv2-backend-path` is the path to the KV-V2 backend (usually just `secret`) and `path-to-secret` is the path to the secret in Vault.
+
 ##### AppRole Authentication
 For AppRole Authentication, these are the required parameters:
 ```
