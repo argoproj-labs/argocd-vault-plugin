@@ -1,0 +1,11 @@
+# Using inline-path placeholders
+# This creates the same data as annotation-example.yaml but without the annotation
+# https://argocd-vault-plugin.readthedocs.io/en/stable/howitworks/#inline-path-placeholders
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-annotation
+type: Opaque
+data:
+  username: <path:secret/data/database#username>
+  password: <path:secret/data/database#password>

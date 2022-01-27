@@ -8,11 +8,19 @@ data:
       generate:
         command: ["argocd-vault-plugin"]
         args: ["generate", "./"]
+
     - name: argocd-vault-plugin-helm
       generate:
         command: ["sh", "-c"]
-        args: ["helm template . > all.yaml && argocd-vault-plugin generate all.yaml"]
+        args: ["helm template . | argocd-vault-plugin generate -"]
+
+    # This lets you pass args to the Helm invocation as described here: https://argocd-vault-plugin.readthedocs.io/en/stable/usage/#with-helm
+    - name: argocd-vault-plugin-helm-with-args
+      generate:
+        command: ["sh", "-c"]
+        args: ["helm template ${helm_args} . | argocd-vault-plugin generate -"]
+
     - name: argocd-vault-plugin-kustomize
       generate:
         command: ["sh", "-c"]
-        args: ["kustomize build . > all.yaml && argocd-vault-plugin generate all.yaml"]
+        args: ["kustomize build . | argocd-vault-plugin generate -"]

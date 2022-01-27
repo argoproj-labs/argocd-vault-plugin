@@ -26,31 +26,50 @@ The Argo CD docs provide information on how to get started <https://argoproj.git
 ##### InitContainer
 The first technique is to use an init container and a volumeMount to copy a different version of a tool into the repo-server container.
 ```yaml
-containers:
-- name: argocd-repo-server
-  volumeMounts:
-  - name: custom-tools
-    mountPath: /usr/local/bin/argocd-vault-plugin
-    subPath: argocd-vault-plugin
-  envFrom:
-    - secretRef:
-        name: argocd-vault-plugin-credentials
-volumes:
-- name: custom-tools
-  emptyDir: {}
-initContainers:
-- name: download-tools
-  image: alpine:3.8
-  command: [sh, -c]
-  args:
-    - >-
-      wget -O argocd-vault-plugin
-      https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v1.1.1/argocd-vault-plugin_1.1.1_linux_amd64 &&
-      chmod +x argocd-vault-plugin &&
-      mv argocd-vault-plugin /custom-tools/
-  volumeMounts:
-    - mountPath: /custom-tools
-      name: custom-tools
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-repo-server
+spec:
+  template:
+    spec:
+      containers:
+      - name: argocd-repo-server
+        volumeMounts:
+        - name: custom-tools
+          mountPath: /usr/local/bin/argocd-vault-plugin
+          subPath: argocd-vault-plugin
+
+        # Note: AVP config (for the secret manager, etc) can be passed in several ways. This is just one example
+        # https://argocd-vault-plugin.readthedocs.io/en/stable/config/
+        envFrom:
+          - secretRef:
+              name: argocd-vault-plugin-credentials
+      volumes:
+      - name: custom-tools
+        emptyDir: {}
+      initContainers:
+      - name: download-tools
+        image: alpine:3.8
+        command: [sh, -c]
+
+        # Don't forget to update this to whatever the stable release version is
+        # Note the lack of the `v` prefix unlike the git tag
+        env:
+          - name: AVP_VERSION
+            value: "1.7.0"
+        args:
+          - >-
+            wget -O argocd-vault-plugin
+            https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v${AVP_VERSION}/argocd-vault-plugin_${AVP_VERSION}_linux_amd64 &&
+            chmod +x argocd-vault-plugin &&
+            mv argocd-vault-plugin /custom-tools/
+        volumeMounts:
+          - mountPath: /custom-tools
+            name: custom-tools
+
+      # Not strictly necessary, but required for passing AVP configuration from a secret and for using Kubernetes auth to Hashicorp Vault
+      automountServiceAccountToken: true
 ```
 
 ##### Custom Image
@@ -73,9 +92,11 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install the AVP plugin (as root so we can copy to /usr/local/bin)
-RUN curl -L -o argocd-vault-plugin https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v1.1.1/argocd-vault-plugin_1.1.1_linux_amd64
-RUN chmod +x argocd-vault-plugin
-RUN mv argocd-vault-plugin /usr/local/bin
+ENV AVP_VERSION=0.2.2
+ENV BIN=argocd-vault-plugin
+RUN curl -L -o ${BIN} https://github.com/IBM/argocd-vault-plugin/releases/download/v${AVP_VERSION}/argocd-vault-plugin_${AVP_VERSION}_linux_amd64
+RUN chmod +x ${BIN}
+RUN mv ${BIN} /usr/local/bin
 
 # Switch back to non-root user
 USER argocd
