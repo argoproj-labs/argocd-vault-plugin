@@ -21,7 +21,7 @@ require (
 	github.com/IBM/go-sdk-core/v5 v5.9.1
 	github.com/IBM/secrets-manager-go-sdk v1.0.31
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
-	github.com/aws/aws-sdk-go v1.42.36
+	github.com/aws/aws-sdk-go v1.42.42
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
 	github.com/go-logr/logr v1.2.2 // indirect
 	github.com/go-openapi/errors v0.20.1 // indirect
