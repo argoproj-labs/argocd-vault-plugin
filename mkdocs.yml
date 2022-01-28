@@ -1,5 +1,6 @@
 site_name: Argo CD Vault Plugin
 repo_url: https://github.com/argoproj-labs/argocd-vault-plugin
+edit_uri: edit/main/docs/
 
 theme:
   name: material
