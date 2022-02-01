@@ -34,7 +34,7 @@ func NewClient() (*Client, error) {
 // ReadSecret reads the specified Secret from the defined namespace, otherwise defaults to `argocd`
 // and returns a YAML []byte containing its data, decoded from base64
 func (c *Client) ReadSecret(name string) ([]byte, error) {
-	secretName, secretNamespace := secretNamespaceName(name)
+	secretNamespace, secretName := secretNamespaceName(name)
 	s, err := c.client.CoreV1().Secrets(secretNamespace).Get(context.TODO(), secretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
