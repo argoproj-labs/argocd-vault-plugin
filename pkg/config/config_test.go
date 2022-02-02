@@ -44,11 +44,11 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":            "vault",
-				"AVP_AUTH_TYPE":       "k8s",
-				"AVP_K8S_MOUNT_POINT": "mount_point",
-				"AVP_K8S_ROLE":        "role",
-				"AVP_K8S_TOKEN_PATH":  "toke_path",
+				"AVP_TYPE":           "vault",
+				"AVP_AUTH_TYPE":      "k8s",
+				"AVP_K8S_MOUNT_PATH": "mount_point",
+				"AVP_K8S_ROLE":       "role",
+				"AVP_K8S_TOKEN_PATH": "toke_path",
 			},
 			"*backends.Vault",
 		},
@@ -62,10 +62,19 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":            "vault",
-				"AVP_AUTH_TYPE":       "k8s",
-				"AVP_K8S_MOUNT_POINT": "mount_point",
-				"AVP_K8S_ROLE":        "role",
+				"AVP_TYPE":           "vault",
+				"AVP_AUTH_TYPE":      "k8s",
+				"AVP_K8S_MOUNT_PATH": "mount_point",
+				"AVP_K8S_ROLE":       "role",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":       "vault",
+				"AVP_AUTH_TYPE":  "k8s",
+				"AVP_MOUNT_PATH": "mount_point",
+				"AVP_K8S_ROLE":   "role",
 			},
 			"*backends.Vault",
 		},

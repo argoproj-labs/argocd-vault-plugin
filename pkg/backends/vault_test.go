@@ -19,7 +19,7 @@ func TestVaultLogin(t *testing.T) {
 	}
 
 	t.Run("will authenticate with approle", func(t *testing.T) {
-		backend.AuthType = vault.NewAppRoleAuth(roleID, secretID)
+		backend.AuthType = vault.NewAppRoleAuth(roleID, secretID, "")
 
 		err := backend.Login()
 		if err != nil {
@@ -32,7 +32,7 @@ func TestVaultGetSecrets(t *testing.T) {
 	cluster, roleID, secretID := helpers.CreateTestAppRoleVault(t)
 	defer cluster.Cleanup()
 
-	auth := vault.NewAppRoleAuth(roleID, secretID)
+	auth := vault.NewAppRoleAuth(roleID, secretID, "")
 	backend := backends.NewVaultBackend(auth, cluster.Cores[0].Client, "")
 
 	t.Run("will get data from vault with kv1", func(t *testing.T) {
