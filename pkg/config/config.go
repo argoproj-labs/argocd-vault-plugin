@@ -78,23 +78,32 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 			switch authType {
 			case types.ApproleAuth:
 				if v.IsSet(types.EnvAvpRoleID) && v.IsSet(types.EnvAvpSecretID) {
-					auth = vault.NewAppRoleAuth(v.GetString(types.EnvAvpRoleID), v.GetString(types.EnvAvpSecretID))
+					auth = vault.NewAppRoleAuth(v.GetString(types.EnvAvpRoleID), v.GetString(types.EnvAvpSecretID), v.GetString(types.EnvAvpMountPath))
 				} else {
 					return nil, fmt.Errorf("%s and %s for approle authentication cannot be empty", types.EnvAvpRoleID, types.EnvAvpSecretID)
 				}
 			case types.GithubAuth:
 				if v.IsSet(types.EnvAvpGithubToken) {
-					auth = vault.NewGithubAuth(v.GetString(types.EnvAvpGithubToken))
+					auth = vault.NewGithubAuth(v.GetString(types.EnvAvpGithubToken), v.GetString(types.EnvAvpMountPath))
 				} else {
 					return nil, fmt.Errorf("%s for github authentication cannot be empty", types.EnvAvpGithubToken)
 				}
 			case types.K8sAuth:
 				if v.IsSet(types.EnvAvpK8sRole) {
-					auth = vault.NewK8sAuth(
-						v.GetString(types.EnvAvpK8sRole),
-						v.GetString(types.EnvAvpK8sMountPath),
-						v.GetString(types.EnvAvpK8sTokenPath),
-					)
+					// Prefer the K8s mount path if set (for backwards compatibility), use the generic Vault mount path otherwise
+					if v.IsSet(types.EnvAvpK8sMountPath) {
+						auth = vault.NewK8sAuth(
+							v.GetString(types.EnvAvpK8sRole),
+							v.GetString(types.EnvAvpK8sMountPath),
+							v.GetString(types.EnvAvpK8sTokenPath),
+						)
+					} else {
+						auth = vault.NewK8sAuth(
+							v.GetString(types.EnvAvpK8sRole),
+							v.GetString(types.EnvAvpMountPath),
+							v.GetString(types.EnvAvpK8sTokenPath),
+						)
+					}
 				} else {
 					return nil, fmt.Errorf("%s cannot be empty when using Kubernetes Auth", types.EnvAvpK8sRole)
 				}

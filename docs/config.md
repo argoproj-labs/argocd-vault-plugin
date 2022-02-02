@@ -53,7 +53,8 @@ We also support these AVP specific variables:
 | AVP_GITHUB_TOKEN   | Github token               | Required with `AUTH_TYPE` of `github` |
 | AVP_ROLE_ID        | Vault AppRole Role_ID      | Required with `AUTH_TYPE` of `approle` |
 | AVP_SECRET_ID      | Vault AppRole Secret_ID    | Required with `AUTH_TYPE` of `approle` |
-| AVP_K8S_MOUNT_PATH | Kuberentes Auth Mount PATH | Optional for `AUTH_TYPE` of `k8s` defaults to `auth/kubernetes` |
+| AVP_MOUNT_PATH | Vault Auth Mount PATH | Optional. Defaults to the appropriate path based on `AUTH_TYPE` (i.e, `auth/approle` for AppRole authentication, `auth/github` for Github, `auth/kubernetes` for Kubernetes) |
+| AVP_K8S_MOUNT_PATH | Kuberentes Auth Mount PATH | Optional for `AUTH_TYPE` of `k8s` defaults to `auth/kubernetes`. Takes precedence over `$AVP_MOUNT_PATH` |
 | AVP_K8S_ROLE       | Kuberentes Auth Role      | Required with `AUTH_TYPE` of `k8s` |
 | AVP_K8S_TOKEN_PATH | Path to JWT for Kubernetes Auth  | Optional for `AUTH_TYPE` of `k8s` defaults to `/var/run/secrets/kubernetes.io/serviceaccount/token` |
 | AVP_IBM_API_KEY      | IBM Cloud IAM API Key      | Required with `TYPE` of `ibmsecretsmanager` |

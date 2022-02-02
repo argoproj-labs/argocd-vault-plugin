@@ -12,7 +12,7 @@ func TestGithubLogin(t *testing.T) {
 	cluster := helpers.CreateTestAuthVault(t)
 	defer cluster.Cleanup()
 
-	github := vault.NewGithubAuth("123")
+	github := vault.NewGithubAuth("123", "")
 
 	err := github.Authenticate(cluster.Cores[0].Client)
 	if err != nil {
