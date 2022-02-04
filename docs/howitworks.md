@@ -99,7 +99,12 @@ Valid examples:
 - `<path:some/path#secret-key>`
 - `<path:some/path#secret-key#version>`
 
-If the `version` is omitted (first example), the latest version of the secret is retrieved. 
+If the `version` is omitted (first example), the latest version of the secret is retrieved.  
+Don't forget to use the `data` prefix in the path to your secret.  
+[Reference](https://www.vaultproject.io/api/secret/kv/kv-v2#read-secret-version)  
+Examples:  
+`<path:kv/data/testsecret#password>`  
+`<path:kv/data/testsecret#password#2>`
 
 ##### Specifying the path of a secret
 The only way to specify the path is in the placeholder itself: the string `path:` followed by the path in your secret manager to the secret. The `avp.kubernetes.io/path` annotation has _no effect_ on these placeholders.
