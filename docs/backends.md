@@ -1,6 +1,10 @@
 ### HashiCorp Vault
 We support AppRole and Github Auth Method for getting secrets from Vault.
 
+We currently support retrieving secrets from KV-V1 and KV-V2 backends.
+
+**Note**: For KV-V2 backends, the path needs to be specified as `${vault-kvv2-backend-path}/data/{path-to-secret}` where `vault-kvv2-backend-path` is the path to the KV-V2 backend (usually just `secret`) and `path-to-secret` is the path to the secret in Vault.
+
 ##### AppRole Authentication
 For AppRole Authentication, these are the required parameters:
 ```
@@ -391,4 +395,65 @@ data:
   current-password: <path:keyvault#password>
   current-password-again: <path:keyvault#password#8f8da2e06c8240808ee439ff093803b5>
   password-old: <path:keyvault#password#33740fc26214497f8904d93f20f7db6d>
+```
+
+### SOPS
+##### SOPS Authentication
+Refer to the [SOPS project page](https://github.com/mozilla/sops) for authentication options/environment variables.
+
+For SOPS, `path` is file path to a JSON or YAML file encrypted using SOPS  and `key` is a top level key in the document, `jsonpath` can be used to fetch subkeys.
+
+**Note**: Versioning is not supported.
+
+These are the parameters for SOPS:
+```
+AVP_TYPE: sops
+```
+
+##### Examples
+Given a file encrypted with SOPS named `example.yaml` and containing the following data:
+```yaml
+test-secret: test-data
+parent:
+  child: value
+```
+
+###### Path Annotation
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: "example.yaml"
+type: Opaque
+data:
+  password: <test-secret>
+```
+
+###### Inline Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+type: Opaque
+data:
+  password: <path:example.yaml#test-secret>
+```
+
+###### Sub key
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: "example.yaml"
+type: Opaque
+stringData:
+  password: <parent | jsonPath {.child}>
 ```

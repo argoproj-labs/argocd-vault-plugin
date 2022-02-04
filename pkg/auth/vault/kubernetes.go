@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	defaultMountPath   = "auth/kubernetes"
-	serviceAccountFile = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+	kubernetesMountPath = "auth/kubernetes"
+	serviceAccountFile  = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 )
 
 // K8sAuth TODO
@@ -49,7 +49,7 @@ func (k *K8sAuth) Authenticate(vaultClient *api.Client) error {
 		"jwt":  token,
 	}
 
-	kubeAuthPath := defaultMountPath
+	kubeAuthPath := kubernetesMountPath
 	if k.MountPath != "" {
 		kubeAuthPath = k.MountPath
 	}

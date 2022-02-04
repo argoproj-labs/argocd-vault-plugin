@@ -1,21 +1,31 @@
 package vault
 
 import (
+	"fmt"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"github.com/hashicorp/vault/api"
 )
 
+const (
+	approleMountPath = "auth/approle"
+)
+
 // AppRoleAuth is a struct for working with Vault that uses AppRole
 type AppRoleAuth struct {
-	RoleID   string
-	SecretID string
+	RoleID    string
+	SecretID  string
+	MountPath string
 }
 
 // NewAppRoleAuth initalizes a new AppRolAuth with role id and secret id
-func NewAppRoleAuth(roleID, secretID string) *AppRoleAuth {
+func NewAppRoleAuth(roleID, secretID, mountPath string) *AppRoleAuth {
 	appRoleAuth := &AppRoleAuth{
-		RoleID:   roleID,
-		SecretID: secretID,
+		RoleID:    roleID,
+		SecretID:  secretID,
+		MountPath: approleMountPath,
+	}
+	if mountPath != "" {
+		appRoleAuth.MountPath = mountPath
 	}
 
 	return appRoleAuth
@@ -27,7 +37,7 @@ func (a *AppRoleAuth) Authenticate(vaultClient *api.Client) error {
 		"role_id":   a.RoleID,
 		"secret_id": a.SecretID,
 	}
-	data, err := vaultClient.Logical().Write("auth/approle/login", payload)
+	data, err := vaultClient.Logical().Write(fmt.Sprintf("%s/login", a.MountPath), payload)
 	if err != nil {
 		return err
 	}

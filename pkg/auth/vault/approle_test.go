@@ -11,7 +11,7 @@ func TestAppRoleLogin(t *testing.T) {
 	cluster, roleID, secretID := helpers.CreateTestAppRoleVault(t)
 	defer cluster.Cleanup()
 
-	appRole := vault.NewAppRoleAuth(roleID, secretID)
+	appRole := vault.NewAppRoleAuth(roleID, secretID, "")
 
 	err := appRole.Authenticate(cluster.Cores[0].Client)
 	if err != nil {

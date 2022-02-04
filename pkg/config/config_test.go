@@ -44,11 +44,11 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":            "vault",
-				"AVP_AUTH_TYPE":       "k8s",
-				"AVP_K8S_MOUNT_POINT": "mount_point",
-				"AVP_K8S_ROLE":        "role",
-				"AVP_K8S_TOKEN_PATH":  "toke_path",
+				"AVP_TYPE":           "vault",
+				"AVP_AUTH_TYPE":      "k8s",
+				"AVP_K8S_MOUNT_PATH": "mount_point",
+				"AVP_K8S_ROLE":       "role",
+				"AVP_K8S_TOKEN_PATH": "toke_path",
 			},
 			"*backends.Vault",
 		},
@@ -62,10 +62,19 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":            "vault",
-				"AVP_AUTH_TYPE":       "k8s",
-				"AVP_K8S_MOUNT_POINT": "mount_point",
-				"AVP_K8S_ROLE":        "role",
+				"AVP_TYPE":           "vault",
+				"AVP_AUTH_TYPE":      "k8s",
+				"AVP_K8S_MOUNT_PATH": "mount_point",
+				"AVP_K8S_ROLE":       "role",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":       "vault",
+				"AVP_AUTH_TYPE":  "k8s",
+				"AVP_MOUNT_PATH": "mount_point",
+				"AVP_K8S_ROLE":   "role",
 			},
 			"*backends.Vault",
 		},
@@ -118,6 +127,12 @@ func TestNewConfig(t *testing.T) {
 				"AZURE_CLIENT_SECRET": "test",
 			},
 			"*backends.AzureKeyVault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE": "sops",
+			},
+			"*backends.LocalSecretManager",
 		},
 	}
 	for _, tc := range testCases {
@@ -369,4 +384,44 @@ func TestExternalConfigAWS(t *testing.T) {
 	os.Unsetenv("AWS_ACCESS_KEY_ID")
 	os.Unsetenv("AWS_SECRET_ACCESS_KEY")
 	os.Unsetenv("AWS_REGION")
+}
+
+func TestExternalConfigSOPS(t *testing.T) {
+	const avpSOPSConfig = `AVP_TYPE: sops
+SOPS_AGE_KEY_FILE: age`
+
+	var expectedSOPSEnvVars = map[string]string{
+		"AVP_TYPE":          "", // shouldn't be an env var
+		"SOPS_AGE_KEY_FILE": "age",
+	}
+
+	// Test setting SOPS_* env variables from external AVP config, note setting
+	// env vars is necessary to pass AVP config entries to SOPS
+	tmpFile, err := ioutil.TempFile("", "avpSOPSConfig.*.yaml")
+	if err != nil {
+		t.Errorf("Cannot create temporary file %s", err)
+	}
+
+	defer os.Remove(tmpFile.Name()) // clean up the file afterwards
+
+	if _, err = tmpFile.WriteString(avpSOPSConfig); err != nil {
+		t.Errorf("Failed to write to temporary file %s", err)
+	}
+
+	viper := viper.New()
+	if _, err = config.New(viper, &config.Options{ConfigPath: tmpFile.Name()}); err != nil {
+		t.Errorf("config.New returned error: %s", err)
+	}
+
+	if viper.GetString("AVP_TYPE") != "sops" {
+		t.Errorf("expected AVP_TYPE to be set from external config, was instead: %s", viper.GetString("AVP_TYPE"))
+	}
+
+	for envVar, expected := range expectedSOPSEnvVars {
+		if actual := os.Getenv(envVar); actual != expected {
+			t.Errorf("expected %s env to be %s, was instead: %s", envVar, expected, actual)
+		}
+	}
+
+	os.Unsetenv("SOPS_AGE_KEY_FILE")
 }
