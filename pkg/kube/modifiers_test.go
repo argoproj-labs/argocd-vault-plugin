@@ -191,3 +191,31 @@ func TestYamlJsonPath_unmarshal_succcess(t *testing.T) {
 	assertErrorEqual(t, nil, err2)
 	assertResultEqual(t, expected, res)
 }
+
+func TestIndent_multiline(t *testing.T) {
+	var data interface{} = "a\nmulti-line\nstring"
+	var expected interface{} = "a\n   multi-line\n   string"
+	res, err := indent([]string{"3"}, data)
+	assertErrorEqual(t, nil, err)
+	assertResultEqual(t, expected, res)
+}
+
+func TestIndent_singleline(t *testing.T) {
+	var data interface{} = "a-string"
+	var expected interface{} = "a-string"
+	res, err := indent([]string{"10"}, data)
+	assertErrorEqual(t, nil, err)
+	assertResultEqual(t, expected, res)
+}
+
+func TestIndent_invalid(t *testing.T) {
+	var data interface{} = "a-string"
+	var expected interface{} = nil
+	res, err := indent([]string{"ten"}, data)
+	assertErrorEqual(t, fmt.Errorf("invalid indentation level"), err)
+	assertResultEqual(t, expected, res)
+
+	res, err = indent([]string{"10", "10"}, data)
+	assertErrorEqual(t, fmt.Errorf("invalid parameters"), err)
+	assertResultEqual(t, expected, res)
+}
