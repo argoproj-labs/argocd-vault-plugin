@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	k8jsonpath "k8s.io/client-go/util/jsonpath"
@@ -18,6 +19,46 @@ var modifiers = map[string]func([]string, interface{}) (interface{}, error){
 	"jsonPath":     jsonPath,
 	"jsonParse":    jsonParse,
 	"yamlParse":    yamlParse,
+	"indent":       indent,
+}
+
+func indent(params []string, input interface{}) (interface{}, error) {
+	if len(params) != 1 {
+		return nil, fmt.Errorf("invalid parameters")
+	}
+
+	level, err := strconv.ParseInt(params[0], 10, 0)
+	if err != nil {
+		return nil, fmt.Errorf("invalid indentation level")
+	}
+
+	switch input.(type) {
+	case string:
+		{
+			lines := strings.Split(input.(string), "\n")
+			var builder strings.Builder
+			builder.WriteString(strings.TrimSpace(lines[0]))
+			if len(lines) > 1 {
+				builder.WriteString("\n")
+			}
+
+			for i := 1; i < len(lines); i += 1 {
+				if len(lines[i]) > 0 {
+					for j := 0; int64(j) < level; j += 1 {
+						builder.WriteString(" ")
+					}
+					builder.WriteString(strings.TrimSpace(lines[i]))
+					if i < len(lines)-1 {
+						builder.WriteString("\n")
+					}
+				}
+			}
+
+			return builder.String(), nil
+		}
+	default:
+		return nil, fmt.Errorf("invalid datatype %v", reflect.TypeOf(input))
+	}
 }
 
 func base64encode(params []string, input interface{}) (interface{}, error) {
