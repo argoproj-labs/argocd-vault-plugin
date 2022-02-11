@@ -25,6 +25,8 @@ import (
 	awssm "github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/hashicorp/vault/api"
 	"github.com/spf13/viper"
+	ycsdk "github.com/yandex-cloud/go-sdk"
+	"github.com/yandex-cloud/go-sdk/iamkey"
 	sops "go.mozilla.org/sops/v3/decrypt"
 )
 
@@ -181,6 +183,35 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 	case types.Sopsbackend:
 		{
 			backend = backends.NewLocalSecretManagerBackend(sops.File)
+		}
+	case types.YandexCloudLockboxbackend:
+		{
+			if !v.IsSet(types.EnvYCLKeyID) ||
+				!v.IsSet(types.EnvYCLServiceAccountID) ||
+				!v.IsSet(types.EnvYCLPrivateKey) {
+				return nil, fmt.Errorf(
+					"%s, %s and %s are required for yandex cloud lockbox",
+					types.EnvYCLKeyID,
+					types.EnvYCLServiceAccountID,
+					types.EnvYCLPrivateKey,
+				)
+			}
+
+			creds, err := ycsdk.ServiceAccountKey(&iamkey.Key{
+				Id:         v.GetString(types.EnvYCLKeyID),
+				Subject:    &iamkey.Key_ServiceAccountId{ServiceAccountId: v.GetString(types.EnvYCLServiceAccountID)},
+				PrivateKey: v.GetString(types.EnvYCLPrivateKey),
+			})
+			if err != nil {
+				return nil, err
+			}
+
+			sdk, err := ycsdk.Build(context.Background(), ycsdk.Config{Credentials: creds})
+			if err != nil {
+				return nil, err
+			}
+
+			backend = backends.NewYandexCloudLockboxBackend(sdk.LockboxPayload().Payload())
 		}
 	default:
 		return nil, errors.New("Must provide a supported Vault Type")

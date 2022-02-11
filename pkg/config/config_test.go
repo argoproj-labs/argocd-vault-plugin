@@ -130,6 +130,29 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
+				"AVP_TYPE":                   "yandexcloudlockbox",
+				"AVP_YCL_KEY_ID":             "test",
+				"AVP_YCL_SERVICE_ACCOUNT_ID": "test",
+				"AVP_YCL_PRIVATE_KEY": `-----BEGIN RSA PRIVATE KEY-----
+MIICXQIBAAKBgQCIwbOQ4mB4LlFKNvvkot8qnKoffHLxVu2+DNpKC3WiPbof23bf
+eHcFTj14/h3HP75dxH5GIop2C8HQzyGzScIEHMxqOpwgu8+tmHbsCAdWkbC03wQ0
+1++nHmI6kAUx0mFDAXGovyDiR132iZ5lX2hEJ2Nd2g67SHV140sB6T0vRQIDAQAB
+AoGASx2B4NnGvRxLwCTVVK71PzWP5/12MQNbUGFE4RjMQxH+kpL8ByDm1v4zm6qQ
+dqmXiW9tIF7GiLJKgcPTseOYcdQkGlST1MgYAqtxMkGYYCP94cGna0qy4lIFBJee
+B/dKY56UiIEtJbMvN/T9LFBx1Kw5jT4R5lhdysuabsqAt+ECQQDYHmfMee/Dzw+/
+G4xlJfIfcQ4648/zf53hlA5MwCBbm6wv2KLkWglzSl9Vy54f/UM4VtIfywjmTkj+
+C2b17Uq9AkEAof4tJwllt4AwIjIp1KEiBTY6z0Whoe9SO5RqFmBUkVTeiIuUxgGE
++NLCY+0NzG2FNglT96ik/Xxi+/uiy4wDKQJBAIQ9TpwyfIBe4a65R5XYuyd8AQ4N
+uX+wNcYC1yElamdDgP+h2kJJyYCPIHiZ5/6A9LGzhk1H6gEqI8W26mBOuy0CQEcl
+y88JYZNmyb07KwQogTioyMugWY01/3gLh0ysonfyPoraQ01z/WMLrjUVOKpAr/E7
+x5VOjKiIqTDjJG0h4YECQQDR7tTAXzccGQmHhmN72mDB5LfWi8uSADT4gsimY82m
+fDGt+yaf3RaZbVwHSVLzxiXGsu1WQJde3uJeNh5c6z+5
+-----END RSA PRIVATE KEY-----`,
+			},
+			"*backends.YandexCloudLockbox",
+		},
+		{
+			map[string]interface{}{
 				"AVP_TYPE": "sops",
 			},
 			"*backends.LocalSecretManager",
@@ -310,6 +333,14 @@ func TestNewConfigMissingParameter(t *testing.T) {
 				"AZURE_CLIENT_ID": "test",
 			},
 			"*backends.AzureKeyVault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":                   "yandexcloudlockbox",
+				"AVP_YCL_KEY_ID":             "test",
+				"AVP_YCL_SERVICE_ACCOUNT_ID": "test",
+			},
+			"*backends.YandexCloudLockbox",
 		},
 	}
 	for _, tc := range testCases {
