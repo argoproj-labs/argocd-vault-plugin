@@ -314,3 +314,11 @@ Valid examples:
 - `<path:secrets/data/db_yaml#yaml | yamlParse | jsonPath {.username}{':'}{.password}>`
 
 - `<path:secrets/data/db_yaml#yaml#version2 | yamlParse | jsonPath {.username} | base64encode>`
+
+##### `indent`
+
+The indent modifier indents the secret data by the specified number of space characters (`0x20`), largely useful when injecting secrets into YAML strings embedded in YAML.
+
+Valid examples:
+
+- `<path:secrets/data/db#certs | jsonPath {.certificate} | indent 3>`
