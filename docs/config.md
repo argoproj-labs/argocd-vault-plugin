@@ -59,7 +59,10 @@ We also support these AVP specific variables:
 | AVP_K8S_TOKEN_PATH | Path to JWT for Kubernetes Auth  | Optional for `AUTH_TYPE` of `k8s` defaults to `/var/run/secrets/kubernetes.io/serviceaccount/token` |
 | AVP_IBM_API_KEY      | IBM Cloud IAM API Key      | Required with `TYPE` of `ibmsecretsmanager` |
 | AVP_IBM_INSTANCE_URL | Endpoint URL for IBM Cloud Secrets Manager instance | If absent, fall back to `$VAULT_ADDR` |
-| AWS_REGION    | AWS Secrets Manager Region      | Only valid with `TYPE` `awssecretsmanager` |
+| AWS_REGION    | AWS Secrets Manager Region | Only valid with `TYPE` `awssecretsmanager` |
+| AVP_YCL_SERVICE_ACCOUNT_ID      | Yandex Cloud Lockbox service account ID | Required with `TYPE` of `yandexcloudlockbox` |
+| AVP_YCL_KEY_ID      | Yandex Cloud Lockbox service account Key ID | Required with `TYPE` of `yandexcloudlockbox` |
+| AVP_YCL_PRIVATE_KEY      | Yandex Cloud Lockbox service account private key | Required with `TYPE` of `yandexcloudlockbox` |
 
 ### Full List of Supported Annotation
 We support several different annotations that can be used inside a kubernetes resource. These annotations will override any corresponding configuration set via Environment Variable or Configuration File.

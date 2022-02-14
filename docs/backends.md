@@ -457,3 +457,58 @@ type: Opaque
 stringData:
   password: <parent | jsonPath {.child}>
 ```
+
+### Yandex Cloud Lockbox
+##### YCL Authentication
+Refer to the [IAM overview](https://cloud.yandex.com/en/docs/iam/concepts/) for yandex cloud APIs authorization.
+
+These are the parameters for YCL:
+```
+AVP_TYPE: yandexcloudlockbox
+AVP_YCL_SERVICE_ACCOUNT_ID: Service account ID
+AVP_YCL_KEY_ID: Service account authorized Key ID
+AVP_YCL_PRIVATE_KEY: Service account authorized private key
+```
+##### Examples
+
+###### Path Annotation
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: "secret-id"
+type: Opaque
+data:
+  password: <key>
+```
+
+###### Inline Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+type: Opaque
+data:
+  password: <path:secret-id#key>
+```
+
+###### Versioned secrets
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+    avp.kubernetes.io/path: "secret-id"
+    avp.kubernetes.io/secret-version: "version-id"
+type: Opaque
+data:
+  current-password: <password>
+  current-password-again: <path:secret-id#password#version-id>
+  password-old: <path:secret-id#password#old-version-id>
+```
