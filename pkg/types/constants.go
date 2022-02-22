@@ -20,6 +20,8 @@ const (
 	EnvYCLKeyID            = "AVP_YCL_KEY_ID"
 	EnvYCLServiceAccountID = "AVP_YCL_SERVICE_ACCOUNT_ID"
 	EnvYCLPrivateKey       = "AVP_YCL_PRIVATE_KEY"
+	EnvOPConnectToken      = "AVP_OP_CONNECT_TOKEN"
+	EnvOPConnectHost       = "AVP_OP_CONNECT_HOST"
 
 	// Backend and Auth Constants
 	VaultBackend              = "vault"
@@ -29,6 +31,7 @@ const (
 	AzureKeyVaultbackend      = "azurekeyvault"
 	Sopsbackend               = "sops"
 	YandexCloudLockboxbackend = "yandexcloudlockbox"
+	OnePasswordConnect        = "1passwordconnect"
 	K8sAuth                   = "k8s"
 	ApproleAuth               = "approle"
 	GithubAuth                = "github"
