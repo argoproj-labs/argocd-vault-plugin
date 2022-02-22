@@ -73,7 +73,7 @@ In order to use Kubernetes Authentication a couple of things are required.
           automountServiceAccountToken: true
     ```
 
-2. Configuring Kubernetes  
+2. Configuring Kubernetes
     Use the /config endpoint to configure Vault to talk to Kubernetes. Use `kubectl cluster-info` to validate the Kubernetes host address and TCP port. For the list of available configuration options, please see the [API documentation](https://www.vaultproject.io/api/auth/kubernetes).
 
     ```
@@ -159,7 +159,7 @@ data:
 **Note**: Only Vault KV-V2 backends support versioning. Versions specified with a KV-V1 Vault will be ignored and the latest version will be retrieved.
 
 ### IBM Cloud Secrets Manager
-For IBM Cloud Secret Manager we only support using IAM authentication at this time. 
+For IBM Cloud Secret Manager we only support using IAM authentication at this time.
 
 We support all types of secrets that can be retrieved from IBM Cloud Secret Manager. Please note:
 
@@ -511,4 +511,44 @@ data:
   current-password: <password>
   current-password-again: <path:secret-id#password#version-id>
   password-old: <path:secret-id#password#old-version-id>
+```
+
+### 1Password Connect
+##### 1Password Connect Authentication
+Refer to the [1Password Secrets Automation overview](https://support.1password.com/secrets-automation/) for 1Password Connect usage.
+
+These are the parameters for YCL:
+
+```
+AVP_TYPE: 1passwordconnect
+AVP_OP_CONNECT_TOKEN: Your 1Password Connect access token
+AVP_OP_CONNECT_HOST: The hostname of your 1Password Connect server
+```
+
+##### Examples
+
+###### Path Annotation
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: "vaults/vault-uuid/items/item-uuid"
+type: Opaque
+data:
+  password: <key>
+```
+
+###### Inline Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+type: Opaque
+data:
+  password: <path:vaults/vault-uuid/items/item-uuid#key>
 ```
