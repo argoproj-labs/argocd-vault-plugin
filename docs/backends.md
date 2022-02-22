@@ -521,8 +521,8 @@ These are the parameters for YCL:
 
 ```
 AVP_TYPE: 1passwordconnect
-AVP_OP_CONNECT_TOKEN: Your 1Password Connect access token
-AVP_OP_CONNECT_HOST: The hostname of your 1Password Connect server
+OP_CONNECT_TOKEN: Your 1Password Connect access token
+OP_CONNECT_HOST: The hostname of your 1Password Connect server
 ```
 
 ##### Examples

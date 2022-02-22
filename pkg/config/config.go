@@ -48,6 +48,7 @@ var backendPrefixes []string = []string{
 	"azure",
 	"google",
 	"sops",
+	"op_connect",
 }
 
 // New returns a new Config struct
@@ -224,7 +225,12 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				)
 			}
 
-			backend = backends.NewOnePasswordConnectBackend(connect.NewClient(v.GetString(types.EnvOPConnectHost), v.GetString(types.EnvOPConnectToken)))
+			client, err := connect.NewClientFromEnvironment()
+			if err != nil {
+				return nil, err
+			}
+
+			backend = backends.NewOnePasswordConnectBackend(client)
 		}
 	default:
 		return nil, errors.New("Must provide a supported Vault Type")

@@ -159,9 +159,9 @@ fDGt+yaf3RaZbVwHSVLzxiXGsu1WQJde3uJeNh5c6z+5
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":             "1passwordconnect",
-				"AVP_OP_CONNECT_TOKEN": "token",
-				"AVP_OP_CONNECT_HOST":  "opconnect.somedomain.com",
+				"AVP_TYPE":         "1passwordconnect",
+				"OP_CONNECT_TOKEN": "token",
+				"OP_CONNECT_HOST":  "opconnect.somedomain.com",
 			},
 			"*backends.OnePasswordConnect",
 		},
