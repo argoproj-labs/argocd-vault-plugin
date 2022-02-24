@@ -350,6 +350,13 @@ func TestNewConfigMissingParameter(t *testing.T) {
 			},
 			"*backends.YandexCloudLockbox",
 		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":         "1passwordconnect",
+				"OP_CONNECT_TOKEN": "token",
+			},
+			"*backends.OnePasswordConnect",
+		},
 	}
 	for _, tc := range testCases {
 		for k, v := range tc.environment {
