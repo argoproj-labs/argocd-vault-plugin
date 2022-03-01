@@ -73,8 +73,6 @@ We also support these AVP specific variables:
 | AVP_YCL_SERVICE_ACCOUNT_ID | Yandex Cloud Lockbox service account ID             | Required with `TYPE` of `yandexcloudlockbox`                                                                                                                                 |
 | AVP_YCL_KEY_ID             | Yandex Cloud Lockbox service account Key ID         | Required with `TYPE` of `yandexcloudlockbox`                                                                                                                                 |
 | AVP_YCL_PRIVATE_KEY        | Yandex Cloud Lockbox service account private key    | Required with `TYPE` of `yandexcloudlockbox`                                                                                                                                 |
-| OP_CONNECT_TOKEN           | 1Password Connect access token                      | Required with `TYPE` of `1passwordconnect`                                                                                                                                   |
-| OP_CONNECT_HOST            | 1Password Connect hostname                          | Required with `TYPE` of `1passwordconnect`                                                                                                                                   |
 
 ### Full List of Supported Annotation
 

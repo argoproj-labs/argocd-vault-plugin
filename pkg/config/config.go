@@ -216,15 +216,6 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 		}
 	case types.OnePasswordConnect:
 		{
-			if !v.IsSet(types.EnvOPConnectToken) ||
-				!v.IsSet(types.EnvOPConnectHost) {
-				return nil, fmt.Errorf(
-					"%s and %s are required for 1password connect",
-					types.EnvOPConnectToken,
-					types.EnvOPConnectHost,
-				)
-			}
-
 			client, err := connect.NewClientFromEnvironment()
 			if err != nil {
 				return nil, err

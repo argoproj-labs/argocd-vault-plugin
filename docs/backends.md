@@ -514,10 +514,14 @@ data:
 ```
 
 ### 1Password Connect
+
+**Note**: The 1Password Connect backend does not support versioning, so specifying a version will be ignored.
+
 ##### 1Password Connect Authentication
+
 Refer to the [1Password Secrets Automation overview](https://support.1password.com/secrets-automation/) for 1Password Connect usage.
 
-These are the parameters for YCL:
+These are the parameters for 1Password Connect:
 
 ```
 AVP_TYPE: 1passwordconnect
