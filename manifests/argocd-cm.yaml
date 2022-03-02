@@ -12,20 +12,20 @@ data:
     - name: argocd-vault-plugin-helm
       generate:
         command: ["sh", "-c"]
-        args: ["helm template . | argocd-vault-plugin generate -"]
+        args: ['helm template "$ARGOCD_APP_NAME" . | argocd-vault-plugin generate -']
 
     # This lets you pass args to the Helm invocation as described here: https://argocd-vault-plugin.readthedocs.io/en/stable/usage/#with-helm
     - name: argocd-vault-plugin-helm-with-args
       generate:
         command: ["sh", "-c"]
-        args: ["helm template ${helm_args} . | argocd-vault-plugin generate -"]
+        args: ['helm template "$ARGOCD_APP_NAME" ${helm_args} . | argocd-vault-plugin generate -']
 
     # This lets you pass a values file as a string as described here:
     # https://argocd-vault-plugin.readthedocs.io/en/stable/usage/#with-helm
     - name: argocd-vault-plugin-helm-with-values
       generate:
         command: ["bash", "-c"]
-        args: ['helm template -f <(echo "$HELM_VALUES") . | argocd-vault-plugin generate -']
+        args: ['helm template "$ARGOCD_APP_NAME" -f <(echo "$HELM_VALUES") . | argocd-vault-plugin generate -']
 
     - name: argocd-vault-plugin-kustomize
       generate:
