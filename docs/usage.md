@@ -61,6 +61,7 @@ configManagementPlugins: |
       command: ["sh", "-c"]
       args: ["helm template $ARGOCD_APP_NAME ${helm_args} . | argocd-vault-plugin generate -"]
 ```
+
 Helm args must be defined in the application manifest:
 ```yaml
   source:
@@ -70,6 +71,39 @@ Helm args must be defined in the application manifest:
       env:
         - name: helm_args
           value: -f values-dev.yaml -f values-dev-tag.yaml
+```
+
+Alternatively, if you'd like to use values inline in your application manifest (similar to the ArgoCD CLI's `--values-literal-file` option), you can create a plugin like this (note the use of `bash` instead of `sh` here):
+
+```yaml
+configManagementPlugins: |
+  - name: argocd-vault-plugin-helm
+    generate:
+      command: ["bash", "-c"]
+      args: ['helm template "$ARGOCD_APP_NAME" -f <(echo "$HELM_VALUES") . | argocd-vault-plugin generate -']
+```
+
+Then you can define your Helm values inline in your application manifest:
+```yaml
+  source:
+    path: your-app
+    plugin:
+      name: argocd-vault-plugin-helm
+      env:
+        - name: HELM_VALUES
+          value: |
+            # non-vault helm values are specified normally
+            someValue: lasldkfjlksa
+            moreStuff:
+              - a
+              - b
+              - c
+
+            # get mysql credentials from kv2 vault secret at path "kv/mysql"
+            mysql:
+              username: <path:kv/data/mysql#user>
+              password: <path:kv/data/mysql#password>
+              hostname: <path:kv/data/mysql#hostname>
 ```
 
 #### With Kustomize

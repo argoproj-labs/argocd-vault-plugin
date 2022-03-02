@@ -20,6 +20,13 @@ data:
         command: ["sh", "-c"]
         args: ["helm template ${helm_args} . | argocd-vault-plugin generate -"]
 
+    # This lets you pass a values file as a string as described here:
+    # https://argocd-vault-plugin.readthedocs.io/en/stable/usage/#with-helm
+    - name: argocd-vault-plugin-helm-with-values
+      generate:
+        command: ["bash", "-c"]
+        args: ['helm template -f <(echo "$HELM_VALUES") . | argocd-vault-plugin generate -']
+
     - name: argocd-vault-plugin-kustomize
       generate:
         command: ["sh", "-c"]
