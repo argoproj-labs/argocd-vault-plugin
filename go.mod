@@ -12,6 +12,7 @@ require (
 	cloud.google.com/go/kms v1.0.0 // indirect
 	cloud.google.com/go/monitoring v1.0.0 // indirect
 	cloud.google.com/go/secretmanager v1.0.0
+	github.com/1Password/connect-sdk-go v1.2.0
 	github.com/Azure/azure-sdk-for-go v61.2.0+incompatible
 	github.com/Azure/go-autorest/autorest v0.11.23 // indirect
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.10 // indirect
@@ -51,8 +52,6 @@ require (
 	k8s.io/utils v0.0.0-20211208161948-7d6a63dca704 // indirect
 	sigs.k8s.io/yaml v1.3.0
 )
-
-require github.com/1Password/connect-sdk-go v1.2.0
 
 require (
 	cloud.google.com/go v0.99.0 // indirect
