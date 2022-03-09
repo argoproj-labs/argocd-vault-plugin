@@ -57,7 +57,7 @@ There are 2 exceptions to this:
 
 - Placeholders that are in base64 format - see [Base64 placeholders](#base64-placeholders) for details
 
-- Modifiers - see [Modifiers](#Modifiers) for details
+- Modifiers - see [Modifiers](#modifiers) for details
 
 ### Types of placeholders
 
