@@ -29,6 +29,7 @@ const (
 	AzureKeyVaultbackend      = "azurekeyvault"
 	Sopsbackend               = "sops"
 	YandexCloudLockboxbackend = "yandexcloudlockbox"
+	OnePasswordConnect        = "1passwordconnect"
 	K8sAuth                   = "k8s"
 	ApproleAuth               = "approle"
 	GithubAuth                = "github"

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	gcpsm "cloud.google.com/go/secretmanager/apiv1"
+	"github.com/1Password/connect-sdk-go/connect"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/keyvault"
 	kvauth "github.com/Azure/azure-sdk-for-go/services/keyvault/auth"
 	"github.com/IBM/go-sdk-core/v5/core"
@@ -47,11 +48,11 @@ var backendPrefixes []string = []string{
 	"azure",
 	"google",
 	"sops",
+	"op_connect",
 }
 
 // New returns a new Config struct
 func New(v *viper.Viper, co *Options) (*Config, error) {
-
 	// Set Defaults
 	v.SetDefault(types.EnvAvpKvVersion, "2")
 
@@ -212,6 +213,15 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 			}
 
 			backend = backends.NewYandexCloudLockboxBackend(sdk.LockboxPayload().Payload())
+		}
+	case types.OnePasswordConnect:
+		{
+			client, err := connect.NewClientFromEnvironment()
+			if err != nil {
+				return nil, err
+			}
+
+			backend = backends.NewOnePasswordConnectBackend(client)
 		}
 	default:
 		return nil, errors.New("Must provide a supported Vault Type")

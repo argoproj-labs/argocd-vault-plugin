@@ -157,6 +157,14 @@ fDGt+yaf3RaZbVwHSVLzxiXGsu1WQJde3uJeNh5c6z+5
 			},
 			"*backends.LocalSecretManager",
 		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":         "1passwordconnect",
+				"OP_CONNECT_TOKEN": "token",
+				"OP_CONNECT_HOST":  "opconnect.somedomain.com",
+			},
+			"*backends.OnePasswordConnect",
+		},
 	}
 	for _, tc := range testCases {
 		for k, v := range tc.environment {
@@ -342,6 +350,13 @@ func TestNewConfigMissingParameter(t *testing.T) {
 			},
 			"*backends.YandexCloudLockbox",
 		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":         "1passwordconnect",
+				"OP_CONNECT_TOKEN": "token",
+			},
+			"*backends.OnePasswordConnect",
+		},
 	}
 	for _, tc := range testCases {
 		for k, v := range tc.environment {
@@ -356,7 +371,6 @@ func TestNewConfigMissingParameter(t *testing.T) {
 			os.Unsetenv(k)
 		}
 	}
-
 }
 
 func TestExternalConfig(t *testing.T) {
@@ -421,7 +435,7 @@ func TestExternalConfigSOPS(t *testing.T) {
 	const avpSOPSConfig = `AVP_TYPE: sops
 SOPS_AGE_KEY_FILE: age`
 
-	var expectedSOPSEnvVars = map[string]string{
+	expectedSOPSEnvVars := map[string]string{
 		"AVP_TYPE":          "", // shouldn't be an env var
 		"SOPS_AGE_KEY_FILE": "age",
 	}
