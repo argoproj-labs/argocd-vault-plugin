@@ -281,6 +281,37 @@ stringData:
 type: Opaque
 ```
 
+###### Secret in a different account
+
+The usage can be done using the 'friendly' name of the secret or the arn if the secret is located in another account:
+
+**Secret in the same account**
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-example
+stringData:
+  sample-secret: <path:test-aws-secret#test-secret>
+type: Opaque
+```
+
+**Secret in a different account**
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-example
+stringData:
+  sample-secret: <path:arn:aws:secretsmanager:<REGION>:<ACCOUNT_NUMBER>:<SECRET_ID>#<key>>
+type: Opaque
+```
+
+**NOTE**
+For cross account access there is the need to configure the correct permissions between accounts, please check:
+https://aws.amazon.com/premiumsupport/knowledge-center/secrets-manager-share-between-accounts  
+https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples_cross.html  
+
 ### GCP Secret Manager
 
 ##### GCP Authentication
