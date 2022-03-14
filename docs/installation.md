@@ -99,7 +99,7 @@ RUN chmod +x ${BIN}
 RUN mv ${BIN} /usr/local/bin
 
 # Switch back to non-root user
-USER argocd
+USER 999
 ```
 After making the plugin available, you must then register the plugin, documentation can be found at <https://argoproj.github.io/argo-cd/user-guide/config-management-plugins/#plugins> on how to do that.
 
