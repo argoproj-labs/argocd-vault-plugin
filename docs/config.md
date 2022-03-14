@@ -50,8 +50,7 @@ Make sure that these environment variables are available to the plugin when runn
 environment variables take precedence over configuration pulled from a Kubernetes Secret or a file.
 
 ### Full List of Supported Parameters
-
-We support all the backend specific environment variables each backend's SDK will accept (e.g, `VAULT_NAMESPACE`, `AWS_REGION`, etc). Refer to the [specific backend's documentation](./backends) for details.
+We support all the backend specific environment variables each backend's SDK will accept (e.g, `VAULT_NAMESPACE`, `AWS_REGION`, etc). Refer to the [specific backend's documentation](../backends) for details.
 
 We also support these AVP specific variables:
 
