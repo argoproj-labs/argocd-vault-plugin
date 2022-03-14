@@ -281,11 +281,10 @@ stringData:
 type: Opaque
 ```
 
-###### Secret in a different account
+###### Secret in the same account
 
-The usage can be done using the 'friendly' name of the secret or the arn if the secret is located in another account:
+The 'friendly' name of the secret can be used in this case.
 
-**Secret in the same account**
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -296,7 +295,10 @@ stringData:
 type: Opaque
 ```
 
-**Secret in a different account**
+###### Secret in a different account
+
+The arn of the secret needs to be used in this case:
+
 ```yaml
 apiVersion: v1
 kind: Secret
