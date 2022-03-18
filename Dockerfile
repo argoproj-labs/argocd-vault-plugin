@@ -1,4 +1,5 @@
-FROM golang@sha256:8474650232fca6807a8567151ee0a6bd2a54ea28cfc93f7824b42267ef4af693
+# golang:1.17-alpine
+FROM golang@sha256:ecd7f25b110a6b9b3b0b9f29faf1cd61e216569b250cf5ec4c4b044a8ee2d366
 
 RUN apk add make git
 
