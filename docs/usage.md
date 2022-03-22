@@ -73,6 +73,8 @@ Helm args must be defined in the application manifest:
           value: -f values-dev.yaml -f values-dev-tag.yaml
 ```
 
+**Note: Bypassing the parameters like this can be dangerous in a multi-tenant environment as it could allow for malicious injection of arbitrary commands. So be cautious when doing something like in a production environment. Ensuring proper permissions and protections is very important when doing something like this.** 
+
 Alternatively, if you'd like to use values inline in your application manifest (similar to the ArgoCD CLI's `--values-literal-file` option), you can create a plugin like this (note the use of `bash` instead of `sh` here):
 
 ```yaml
