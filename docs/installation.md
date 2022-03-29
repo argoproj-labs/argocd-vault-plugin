@@ -2,7 +2,7 @@ There are multiple ways to download and install argocd-vault-plugin depending on
 
 #### On Linux or macOS via Curl
 ```
-curl -Lo argocd-vault-plugin https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/{version}/argocd-vault-plugin_{version}_{linux|darwin}_amd64
+curl -Lo argocd-vault-plugin https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/{version}/argocd-vault-plugin_{version}_{linux|darwin}_{amd64|arm64|s390x}
 
 chmod +x argocd-vault-plugin
 
