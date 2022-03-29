@@ -16,6 +16,10 @@ builds:
     goarch:
       - amd64
       - arm64
+      - s390x
+    ignore:
+      - goos: darwin
+        goarch: s390x
     tags:
       - netgo
       - static_build
