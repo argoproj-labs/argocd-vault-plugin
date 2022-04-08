@@ -163,7 +163,7 @@ apiVersion: v1
 metadata:
   name: some-crd
 
-  # Notice, no `avp.kuberenetes.io/path` annotation here
+  # Notice, no `avp.kubernetes.io/path` annotation here
   annotations: {}
 type: Opaque
 fieldRef:
@@ -189,9 +189,9 @@ apiVersion: v1
 metadata:
   name: some-crd
 
-  # Notice, `avp.kuberenetes.io/ignore` annotation is set
+  # Notice, `avp.kubernetes.io/ignore` annotation is set
   annotations:
-    avp.kuberenetes.io/ignore: "true"
+    avp.kubernetes.io/ignore: "true"
 type: Opaque
 fieldRef:
 
