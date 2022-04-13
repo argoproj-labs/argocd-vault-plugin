@@ -69,4 +69,5 @@ data:
   PASSWORD: PHBhdGg6c2VjcmV0L2pzb25zdHJpbmcjc2VjcmV0IHwganNvblBhcnNlIHwganNvblBhdGggey5jcmVkZW50aWFscy5wYXNzfT4=
   ESECRET: <path:secret/base64#encoded_secret | base64decode | jsonPath {.key2} | base64encode>
   YAML: <path:secret/yaml#secret | yamlParse | jsonPath {.key1} | base64encode>
+  SHA256SUM: <path:secret/foo#secret | sha256sum | base64encode>
 ---

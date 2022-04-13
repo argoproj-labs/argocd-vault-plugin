@@ -219,3 +219,29 @@ func TestIndent_invalid(t *testing.T) {
 	assertErrorEqual(t, fmt.Errorf("invalid parameters"), err)
 	assertResultEqual(t, expected, res)
 }
+
+func TestSha256Sum_invalidParams(t *testing.T) {
+	var data interface{} = "mysecret"
+	expectedErr := fmt.Errorf("invalid parameters")
+	_, err := sha256sum([]string{"astring"}, data)
+	assertErrorEqual(t, expectedErr, err)
+}
+
+func TestSha256Sum_invalidDataType(t *testing.T) {
+	var data interface{} = map[string]interface{}{
+		"data": map[string]interface{}{
+			"subkey": "secret",
+		},
+	}
+	expectedErr := fmt.Errorf("invalid datatype map[string]interface {}, expected string")
+	_, err := sha256sum([]string{}, data)
+	assertErrorEqual(t, expectedErr, err)
+}
+
+func TestSha256Sum_success(t *testing.T) {
+	var data interface{} = "mysecret"
+	var expected interface{} = "652c7dc687d98c9889304ed2e408c74b611e86a40caa51c4b43f1dd5913c5cd0"
+	res, err := sha256sum([]string{}, data)
+	assertErrorEqual(t, nil, err)
+	assertResultEqual(t, expected, res)
+}
