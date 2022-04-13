@@ -322,3 +322,18 @@ The indent modifier indents the secret data by the specified number of space cha
 Valid examples:
 
 - `<path:secrets/data/db#certs | jsonPath {.certificate} | indent 3>`
+
+##### `sha256sum`
+
+The sha256sum modifier computes the SHA256 checksum of the string. Can be used to detect changes in a secret.
+
+Valid examples:
+
+```yaml
+kind: Deployment
+spec:
+  template:
+    metadata:
+      annotations:
+        checksum/secret: <path:secrets/data/db#certs | sha256sum>
+```
