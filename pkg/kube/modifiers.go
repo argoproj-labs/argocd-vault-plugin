@@ -2,7 +2,9 @@ package kube
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -20,6 +22,7 @@ var modifiers = map[string]func([]string, interface{}) (interface{}, error){
 	"jsonParse":    jsonParse,
 	"yamlParse":    yamlParse,
 	"indent":       indent,
+	"sha256sum":    sha256sum,
 }
 
 func indent(params []string, input interface{}) (interface{}, error) {
@@ -156,4 +159,17 @@ func yamlParse(params []string, input interface{}) (interface{}, error) {
 	default:
 		return nil, fmt.Errorf("invalid datatype %v", reflect.TypeOf(input))
 	}
+}
+
+func sha256sum(params []string, input interface{}) (interface{}, error) {
+	if len(params) > 0 {
+		return nil, fmt.Errorf("invalid parameters")
+	}
+	if reflect.ValueOf(input).Kind() == reflect.String {
+		sum := sha256.Sum256([]byte(input.(string)))
+		return hex.EncodeToString(sum[:]), nil
+	} else {
+		return nil, fmt.Errorf("invalid datatype %v, expected string", reflect.TypeOf(input))
+	}
+
 }
