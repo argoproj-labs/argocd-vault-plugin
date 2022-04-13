@@ -151,6 +151,7 @@ apiVersion: v1
 data:
   ESECRET: c2VjcmV0Mg==
   PASSWORD: dGVzdC1wYXNzd29yZA==
+  SHA256SUM: ZmNkZTJiMmVkYmE1NmJmNDA4NjAxZmI3MjFmZTliNWMzMzhkMTBlZTQyOWVhMDRmYWU1NTExYjY4ZmJmOGZiOQ==
   USER: dGVzdC11c2Vy
   YAML: c2VjcmV0MQ==
 kind: Secret
