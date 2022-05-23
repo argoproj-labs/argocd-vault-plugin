@@ -3,7 +3,7 @@ There are 3 different ways that parameters can be passed along to argocd-vault-p
 ##### Kubernetes Secret
 
 You can define a Secret with the Vault configuration. The keys of the secret's `data`/`stringData`
-should be the exact names given above, case-sensitive:
+should be the exact names given below, case-sensitive:
 
 ```yaml
 apiVersion: v1
