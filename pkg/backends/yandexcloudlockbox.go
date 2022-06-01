@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
+	"github.com/spf13/viper"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/lockbox/v1"
 )
 
@@ -34,9 +36,15 @@ func (ycl *YandexCloudLockbox) GetSecrets(secretID string, version string, _ map
 		req.SetVersionId(version)
 	}
 
+	if viper.GetBool("verboseOutput") {
+		utils.VerboseToStdErr("Yandex Cloud Lockbox getting secret %s at version %s", secretID, version)
+	}
 	resp, err := ycl.client.Get(context.Background(), req)
 	if err != nil {
 		return nil, err
+	}
+	if viper.GetBool("verboseOutput") {
+		utils.VerboseToStdErr("Yandex Cloud Lockbox get secret response %v", resp)
 	}
 
 	result := make(map[string]interface{}, len(resp.GetEntries()))

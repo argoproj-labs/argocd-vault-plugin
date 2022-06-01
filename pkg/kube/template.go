@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
+	"github.com/spf13/viper"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	yaml "sigs.k8s.io/yaml"
 )
@@ -36,6 +38,10 @@ func NewTemplate(template unstructured.Unstructured, backend types.Backend) (*Te
 		data, err = backend.GetSecrets(path, version, annotations)
 		if err != nil {
 			return nil, err
+		}
+
+		if viper.GetBool("verboseOutput") {
+			utils.VerboseToStdErr("calling GetSecrets to get all secrets from backend because %s is set to %s", types.AVPPathAnnotation, path)
 		}
 	}
 

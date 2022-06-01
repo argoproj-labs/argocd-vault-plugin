@@ -3,7 +3,6 @@ package config
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -21,6 +20,7 @@ import (
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/kube"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	awssm "github.com/aws/aws-sdk-go/service/secretsmanager"
@@ -63,7 +63,17 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 	}
 
 	// Instantiate Env
+	if viper.GetBool("verboseOutput") {
+		utils.VerboseToStdErr("reading configuration from environment, overriding any previous settings")
+	}
 	v.AutomaticEnv()
+
+	if viper.GetBool("verboseOutput") {
+		log.Print("AVP configured with the following settings:\n")
+		for k, viperValue := range v.AllSettings() {
+			utils.VerboseToStdErr("%s: %s\n", k, viperValue)
+		}
+	}
 
 	authType := v.GetString(types.EnvAvpAuthType)
 
@@ -117,7 +127,7 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 					return nil, fmt.Errorf("%s for token authentication cannot be empty", api.EnvVaultToken)
 				}
 			default:
-				return nil, errors.New("Must provide a supported Authentication Type")
+				return nil, fmt.Errorf("Must provide a supported Authentication Type, received %s", authType)
 			}
 			backend = backends.NewVaultBackend(auth, apiClient, v.GetString(types.EnvAvpKvVersion))
 		}
@@ -128,6 +138,10 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 			if !v.IsSet(types.EnvAvpIBMInstanceURL) {
 				if !v.IsSet(types.EnvVaultAddress) {
 					return nil, fmt.Errorf("%s or %s required for IBM Secrets Manager", types.EnvAvpIBMInstanceURL, types.EnvVaultAddress)
+				}
+
+				if viper.GetBool("verboseOutput") {
+					utils.VerboseToStdErr("falling back to %s in place of %s", types.EnvVaultAddress, types.EnvAvpIBMInstanceURL)
 				}
 				url = v.GetString(types.EnvVaultAddress)
 			}
@@ -140,14 +154,19 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				return nil, err
 			}
 
+			if viper.GetBool("verboseOutput") {
+				utils.VerboseToStdErr("IBM Cloud Secrets Manager enabling %d API call retries with %d seconds between tries", types.IBMMaxRetries, types.IBMRetryIntervalSeconds)
+			}
 			client.EnableRetries(types.IBMMaxRetries, time.Duration(types.IBMRetryIntervalSeconds)*time.Second)
 
 			backend = backends.NewIBMSecretsManagerBackend(client)
 		}
 	case types.AWSSecretsManagerbackend:
 		{
-			if !v.IsSet(types.EnvAWSRegion) { // issue warning when using default region
-				log.Printf("Warning: %s env var not set, using AWS region %s.\n", types.EnvAWSRegion, types.AwsDefaultRegion)
+			if !v.IsSet(types.EnvAWSRegion) {
+				if viper.GetBool("verboseOutput") {
+					utils.VerboseToStdErr("warning: %s env var not set, using AWS region %s", types.EnvAWSRegion, types.AwsDefaultRegion)
+				}
 				v.Set(types.EnvAWSRegion, types.AwsDefaultRegion)
 			}
 
@@ -224,7 +243,7 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 			backend = backends.NewOnePasswordConnectBackend(client)
 		}
 	default:
-		return nil, errors.New("Must provide a supported Vault Type")
+		return nil, fmt.Errorf("Must provide a supported Vault Type, received %s", v.GetString(types.EnvAvpType))
 	}
 
 	return &Config{
@@ -235,6 +254,10 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 func readConfigOrSecret(secretName, configPath string, v *viper.Viper) error {
 	// If a secret name is passed, pull config from Kubernetes
 	if secretName != "" {
+		if viper.GetBool("verboseOutput") {
+			utils.VerboseToStdErr("reading configuration from secret %s", secretName)
+		}
+
 		localClient, err := kube.NewClient()
 		if err != nil {
 			return err
@@ -249,6 +272,10 @@ func readConfigOrSecret(secretName, configPath string, v *viper.Viper) error {
 
 	// If a config file path is passed, read in that file and overwrite all other
 	if configPath != "" {
+		if viper.GetBool("verboseOutput") {
+			utils.VerboseToStdErr("reading configuration from config file %s, overriding any previous settings", configPath)
+		}
+
 		v.SetConfigFile(configPath)
 		err := v.ReadInConfig()
 		if err != nil {

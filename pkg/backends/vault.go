@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"github.com/hashicorp/vault/api"
+	"github.com/spf13/viper"
 )
 
 // Vault is a struct for working with a Vault backend
@@ -47,15 +49,24 @@ func (v *Vault) GetSecrets(path string, version string, annotations map[string]s
 
 	// Vault KV-V1 doesn't support versioning so we only honor `version` if KV-V2 is used
 	if version != "" && kvVersion == "2" {
+		if viper.GetBool("verboseOutput") {
+			utils.VerboseToStdErr("Hashicorp Vault getting kv pairs from KV-V2 path %s at version %s", path, version)
+		}
 		secret, err = v.VaultClient.Logical().ReadWithData(path, map[string][]string{
 			"version": {version},
 		})
 	} else {
+		if viper.GetBool("verboseOutput") {
+			utils.VerboseToStdErr("Hashicorp Vault getting kv pairs from KV-V1 path %s", path)
+		}
 		secret, err = v.VaultClient.Logical().Read(path)
 	}
 
 	if err != nil {
 		return nil, err
+	}
+	if viper.GetBool("verboseOutput") {
+		utils.VerboseToStdErr("Hashicorp Vault get kv pairs response: %v", secret)
 	}
 
 	if secret == nil {

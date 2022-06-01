@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/config"
@@ -189,7 +190,7 @@ fDGt+yaf3RaZbVwHSVLzxiXGsu1WQJde3uJeNh5c6z+5
 func TestNewConfigNoType(t *testing.T) {
 	viper := viper.New()
 	_, err := config.New(viper, &config.Options{})
-	expectedError := "Must provide a supported Vault Type"
+	expectedError := "Must provide a supported Vault Type, received "
 
 	if err.Error() != expectedError {
 		t.Errorf("expected error %s to be thrown, got %s", expectedError, err)
@@ -200,7 +201,7 @@ func TestNewConfigNoAuthType(t *testing.T) {
 	os.Setenv("AVP_TYPE", "vault")
 	viper := viper.New()
 	_, err := config.New(viper, &config.Options{})
-	expectedError := "Must provide a supported Authentication Type"
+	expectedError := "Must provide a supported Authentication Type, received "
 
 	if err.Error() != expectedError {
 		t.Errorf("expected error %s to be thrown, got %s", expectedError, err)
@@ -234,7 +235,7 @@ func TestNewConfigAwsRegionWarning(t *testing.T) {
 				"AWS_SECRET_ACCESS_KEY": "key",
 			},
 			"*backends.AWSSecretsManager",
-			"Warning: AWS_REGION env var not set, using AWS region us-east-2.\n",
+			"warning: AWS_REGION env var not set, using AWS region us-east-2\n",
 		},
 		{ // no warning is issued
 			map[string]interface{}{
@@ -252,10 +253,11 @@ func TestNewConfigAwsRegionWarning(t *testing.T) {
 		for k, v := range tc.environment {
 			os.Setenv(k, v.(string))
 		}
-		viper := viper.New()
+		viper.Set("verboseOutput", true)
 
+		v := viper.New()
 		output := captureOutput(func() {
-			config, err := config.New(viper, &config.Options{})
+			config, err := config.New(v, &config.Options{})
 			if err != nil {
 				t.Error(err)
 				t.FailNow()
@@ -266,7 +268,7 @@ func TestNewConfigAwsRegionWarning(t *testing.T) {
 			}
 		})
 
-		if output != tc.expectedLog {
+		if !strings.Contains(output, tc.expectedLog) {
 			t.Errorf("Unexpected warning issued. Expected: %s, actual: %s", tc.expectedLog, output)
 		}
 

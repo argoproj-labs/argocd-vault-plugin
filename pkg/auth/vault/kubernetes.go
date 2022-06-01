@@ -8,6 +8,7 @@ import (
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"github.com/hashicorp/vault/api"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -54,15 +55,23 @@ func (k *K8sAuth) Authenticate(vaultClient *api.Client) error {
 		kubeAuthPath = k.MountPath
 	}
 
+	if viper.GetBool("verboseOutput") {
+		utils.VerboseToStdErr("Hashicorp Vault authenticating with Vault role %s using Kubernetes service account token %s read from %s", k.Role, serviceAccountFile, token)
+	}
 	data, err := vaultClient.Logical().Write(fmt.Sprintf("%s/login", kubeAuthPath), payload)
 	if err != nil {
 		return err
+	}
+	if viper.GetBool("verboseOutput") {
+		utils.VerboseToStdErr("Hashicorp Vault authentication response: %v", data)
 	}
 
 	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
 	err = utils.SetToken(vaultClient, data.Auth.ClientToken)
 	if err != nil {
-		print(err)
+		if viper.GetBool("verboseOutput") {
+			utils.VerboseToStdErr("Hashicorp Vault cannot cache token for future runs: %v", err)
+		}
 	}
 
 	return nil

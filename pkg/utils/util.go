@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -105,4 +106,8 @@ func DefaultHttpClient() *http.Client {
 	}
 
 	return httpClient
+}
+
+func VerboseToStdErr(format string, message ...interface{}) {
+	log.Printf(fmt.Sprintf("%s\n", format), message...)
 }

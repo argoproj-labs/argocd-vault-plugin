@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"github.com/1Password/connect-sdk-go/connect"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
+	"github.com/spf13/viper"
 )
 
 // OnePassword is a struct for working with a 1Password Connect backend
@@ -30,9 +32,15 @@ func (a *OnePasswordConnect) GetSecrets(path string, version string, annotations
 	vaultUUID := splits[1]
 	itemUUID := splits[3]
 
+	if viper.GetBool("verboseOutput") {
+		utils.VerboseToStdErr("OnePassword Connect getting item %s from vault %s", itemUUID, vaultUUID)
+	}
 	result, err := a.Client.GetItem(itemUUID, vaultUUID)
 	if err != nil {
 		return nil, err
+	}
+	if viper.GetBool("verboseOutput") {
+		utils.VerboseToStdErr("OnePassword Connect get secret response: %v", result)
 	}
 
 	data := make(map[string]interface{})
