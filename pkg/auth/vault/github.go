@@ -5,7 +5,6 @@ import (
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"github.com/hashicorp/vault/api"
-	"github.com/spf13/viper"
 )
 
 const (
@@ -37,23 +36,18 @@ func (g *GithubAuth) Authenticate(vaultClient *api.Client) error {
 		"token": g.AccessToken,
 	}
 
-	if viper.GetBool("verboseOutput") {
-		utils.VerboseToStdErr("Hashicorp Vault authenticating with Github token %s", g.AccessToken)
-	}
+	utils.VerboseToStdErr("Hashicorp Vault authenticating with Github token %s", g.AccessToken)
 	data, err := vaultClient.Logical().Write(fmt.Sprintf("%s/login", g.MountPath), payload)
 	if err != nil {
 		return err
 	}
-	if viper.GetBool("verboseOutput") {
-		utils.VerboseToStdErr("Hashicorp Vault authentication response: %v", data)
-	}
+
+	utils.VerboseToStdErr("Hashicorp Vault authentication response: %v", data)
 
 	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
 	err = utils.SetToken(vaultClient, data.Auth.ClientToken)
 	if err != nil {
-		if viper.GetBool("verboseOutput") {
-			utils.VerboseToStdErr("Hashicorp Vault cannot cache token for future runs: %v", err)
-		}
+		utils.VerboseToStdErr("Hashicorp Vault cannot cache token for future runs: %v", err)
 	}
 
 	return nil

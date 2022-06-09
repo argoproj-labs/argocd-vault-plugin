@@ -9,7 +9,6 @@ import (
 	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv1"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
-	"github.com/spf13/viper"
 )
 
 var IBMPath, _ = regexp.Compile(`ibmcloud/(?P<type>.+)/secrets/groups/(?P<groupId>.+)`)
@@ -122,9 +121,7 @@ func (i *IBMSecretsManager) getSecretVersionedOrNot(secret *ibmsm.SecretResource
 			return nil, fmt.Errorf("Could not retrieve secret %s after %d retries, statuscode %d", *secret.ID, types.IBMMaxRetries, httpResponse.GetStatusCode())
 		}
 
-		if viper.GetBool("verboseOutput") {
-			utils.VerboseToStdErr("IBM Cloud Secrets Manager get versioned secret %s HTTP response: %v", *secret.ID, httpResponse)
-		}
+		utils.VerboseToStdErr("IBM Cloud Secrets Manager get versioned secret %s HTTP response: %v", *secret.ID, httpResponse)
 
 		result = (secretVersion.Resources[0].(*ibmsm.SecretVersion)).SecretData.(map[string]interface{})
 	} else {
@@ -139,9 +136,7 @@ func (i *IBMSecretsManager) getSecretVersionedOrNot(secret *ibmsm.SecretResource
 			return nil, fmt.Errorf("Could not retrieve secret %s after %d retries, statuscode %d", *secret.ID, types.IBMMaxRetries, httpResponse.GetStatusCode())
 		}
 
-		if viper.GetBool("verboseOutput") {
-			utils.VerboseToStdErr("IBM Cloud Secrets Manager get unversioned secret %s HTTP response: %v", *secret.ID, httpResponse)
-		}
+		utils.VerboseToStdErr("IBM Cloud Secrets Manager get unversioned secret %s HTTP response: %v", *secret.ID, httpResponse)
 
 		// APIKey secrets don't come from `SecretData`
 		if *secret.SecretType == types.IBMIAMCredentialsType {
@@ -181,15 +176,10 @@ func (i *IBMSecretsManager) getSecret(secret *ibmsm.SecretResource, version stri
 
 	// Bypass the cache when explicit version is requested
 	if cacheResult != nil && version == "" {
-		if viper.GetBool("verboseOutput") {
-			utils.VerboseToStdErr("IBM Cloud Secrets Manager get secret: cache hit for %s of type %s from group %s", secretName, secretType, groupId)
-		}
+		utils.VerboseToStdErr("IBM Cloud Secrets Manager get secret: cache hit for %s of type %s from group %s", secretName, secretType, groupId)
 		result["payload"] = cacheResult
 	} else {
-
-		if viper.GetBool("verboseOutput") {
-			utils.VerboseToStdErr("IBM Cloud Secrets Manager get secret: getting secret %s of type %s from group %s", secretName, secretType, groupId)
-		}
+		utils.VerboseToStdErr("IBM Cloud Secrets Manager get secret: getting secret %s of type %s from group %s", secretName, secretType, groupId)
 		secretData, err := i.getSecretVersionedOrNot(secret, version)
 		var payload interface{}
 		if err != nil {
@@ -227,17 +217,13 @@ func (i *IBMSecretsManager) listSecretsInGroup(groupId, secretType string) (map[
 	ckey := cacheKey{groupId, secretType}
 	cachedData := i.listAllSecretsCache[ckey]
 	if cachedData != nil {
-		if viper.GetBool("verboseOutput") {
-			utils.VerboseToStdErr("IBM Cloud Secrets Manager list secrets in group: cache hit group %s", groupId)
-		}
+		utils.VerboseToStdErr("IBM Cloud Secrets Manager list secrets in group: cache hit group %s", groupId)
 		return cachedData, nil
 	}
 
 	var offset int64 = 0
 	for {
-		if viper.GetBool("verboseOutput") {
-			utils.VerboseToStdErr("IBM Cloud Secrets Manager listing secrets of from group %s starting at offset %d", groupId, offset)
-		}
+		utils.VerboseToStdErr("IBM Cloud Secrets Manager listing secrets of from group %s starting at offset %d", groupId, offset)
 		res, details, err := i.Client.ListAllSecrets(&ibmsm.ListAllSecretsOptions{
 			Groups: []string{groupId},
 			Offset: &offset,
@@ -249,9 +235,7 @@ func (i *IBMSecretsManager) listSecretsInGroup(groupId, secretType string) (map[
 			return nil, fmt.Errorf("Could not list secrets for secret group %s: %d\n%s", groupId, details.GetStatusCode(), details.String())
 		}
 
-		if viper.GetBool("verboseOutput") {
-			utils.VerboseToStdErr("IBM Cloud Secrets Manager list secrets in group HTTP response: %v", details)
-		}
+		utils.VerboseToStdErr("IBM Cloud Secrets Manager list secrets in group HTTP response: %v", details)
 
 		for _, secret := range res.Resources {
 			name := *(secret.(*ibmsm.SecretResource).Name)

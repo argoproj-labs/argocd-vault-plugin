@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
-	"github.com/spf13/viper"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -37,9 +36,8 @@ func NewClient() (*Client, error) {
 // and returns a YAML []byte containing its data, decoded from base64
 func (c *Client) ReadSecret(name string) ([]byte, error) {
 	secretNamespace, secretName := secretNamespaceName(name)
-	if viper.GetBool("verboseOutput") {
-		utils.VerboseToStdErr("parsed secret name as %s from namespace %s", secretName, secretNamespace)
-	}
+
+	utils.VerboseToStdErr("parsed secret name as %s from namespace %s", secretName, secretNamespace)
 
 	s, err := c.client.CoreV1().Secrets(secretNamespace).Get(context.TODO(), secretName, metav1.GetOptions{})
 	if err != nil {

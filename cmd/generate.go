@@ -94,9 +94,7 @@ func NewGenerateCommand() *cobra.Command {
 						return err
 					}
 				} else {
-					if viper.GetBool("verboseOutput") {
-						utils.VerboseToStdErr("skipping %s.%s because %s annotation is present", manifest.GetNamespace(), manifest.GetName(), types.AVPIgnoreAnnotation)
-					}
+					utils.VerboseToStdErr("skipping %s.%s because %s annotation is present", manifest.GetNamespace(), manifest.GetName(), types.AVPIgnoreAnnotation)
 				}
 
 				output, err := template.ToYAML()

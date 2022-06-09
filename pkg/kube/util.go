@@ -12,7 +12,6 @@ import (
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
-	"github.com/spf13/viper"
 	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -94,9 +93,7 @@ func replaceInner(
 			}
 
 			if removeKey {
-				if viper.GetBool("verboseOutput") {
-					utils.VerboseToStdErr("removing key %s due to %s being set on the containing manifest", key, types.AVPRemoveMissingAnnotation)
-				}
+				utils.VerboseToStdErr("removing key %s due to %s being set on the containing manifest", key, types.AVPRemoveMissingAnnotation)
 				delete(obj, key)
 			} else {
 				obj[key] = replacement
@@ -124,9 +121,7 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 		pipelineFields := strings.Split(placeholder, "|")
 		placeholder = strings.Trim(pipelineFields[0], " ")
 
-		if viper.GetBool("verboseOutput") {
-			utils.VerboseToStdErr("found placeholder %s with modifiers %s", placeholder, pipelineFields[1:])
-		}
+		utils.VerboseToStdErr("found placeholder %s with modifiers %s", placeholder, pipelineFields[1:])
 
 		var secretValue interface{}
 		var secretErr error
@@ -138,9 +133,7 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 			key := indivSecretMatches[indivPlaceholderSyntax.SubexpIndex("key")]
 			version := indivSecretMatches[indivPlaceholderSyntax.SubexpIndex("version")]
 
-			if viper.GetBool("verboseOutput") {
-				utils.VerboseToStdErr("calling GetIndividualSecret for secret %s from path %s at version %s", key, path, version)
-			}
+			utils.VerboseToStdErr("calling GetIndividualSecret for secret %s from path %s at version %s", key, path, version)
 			secretValue, secretErr = resource.Backend.GetIndividualSecret(path, strings.TrimSpace(key), version, resource.Annotations)
 			if secretErr != nil {
 				err = append(err, secretErr)
@@ -156,9 +149,7 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 				fields := strings.Fields(stmt)
 				functionName := strings.Trim(fields[0], " ")
 
-				if viper.GetBool("verboseOutput") {
-					utils.VerboseToStdErr("processing modifier %s with args %q", functionName, fields)
-				}
+				utils.VerboseToStdErr("processing modifier %s with args %q", functionName, fields)
 
 				if _, ok := modifiers[functionName]; !ok {
 					e := fmt.Errorf("invalid modifier: %s for placeholder %s in string %s: %s", functionName, placeholder, key, value)
@@ -199,9 +190,7 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 	// In the case where the value is a non-string, we insert it directly here.
 	// Useful for cases like `replicas: <replicas>`
 	if nonStringReplacement != nil {
-		if viper.GetBool("verboseOutput") {
-			utils.VerboseToStdErr("value found in secret manager is non-string: %v, injecting directly into template")
-		}
+		utils.VerboseToStdErr("value found in secret manager is non-string: %v, injecting directly into template")
 		return nonStringReplacement, err
 	}
 
@@ -215,9 +204,8 @@ func configReplacement(key, value string, resource Resource) (interface{}, []err
 	}
 
 	// configMap data values must be strings
-	if viper.GetBool("verboseOutput") {
-		utils.VerboseToStdErr("key %s comes from ConfigMap manifest, stringifying value %s to fit", key, value)
-	}
+
+	utils.VerboseToStdErr("key %s comes from ConfigMap manifest, stringifying value %s to fit", key, value)
 	return stringify(res), err
 }
 
@@ -226,9 +214,7 @@ func secretReplacement(key, value string, resource Resource) (interface{}, []err
 	if err == nil && genericPlaceholder.Match(decoded) {
 		res, err := genericReplacement(key, string(decoded), resource)
 
-		if viper.GetBool("verboseOutput") {
-			utils.VerboseToStdErr("key %s comes from Secret manifest, base64 encoding value %s to fit", key, value)
-		}
+		utils.VerboseToStdErr("key %s comes from Secret manifest, base64 encoding value %s to fit", key, value)
 		return base64.StdEncoding.EncodeToString([]byte(stringify(res))), err
 	}
 
