@@ -37,15 +37,19 @@ func (a *AppRoleAuth) Authenticate(vaultClient *api.Client) error {
 		"role_id":   a.RoleID,
 		"secret_id": a.SecretID,
 	}
+
+	utils.VerboseToStdErr("Hashicorp Vault authenticating with role ID %s and secret ID %s", a.RoleID, a.SecretID)
 	data, err := vaultClient.Logical().Write(fmt.Sprintf("%s/login", a.MountPath), payload)
 	if err != nil {
 		return err
 	}
 
+	utils.VerboseToStdErr("Hashicorp Vault authentication response: %v", data)
+
 	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
 	err = utils.SetToken(vaultClient, data.Auth.ClientToken)
 	if err != nil {
-		print(err)
+		utils.VerboseToStdErr("Hashicorp Vault cannot cache token for future runs: %v", err)
 	}
 
 	return nil

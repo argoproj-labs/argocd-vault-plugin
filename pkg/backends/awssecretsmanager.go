@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
@@ -36,10 +37,13 @@ func (a *AWSSecretsManager) GetSecrets(path string, version string, annotations 
 		input.SetVersionId(version)
 	}
 
+	utils.VerboseToStdErr("AWS Secrets Manager getting secret %s at version %s", path, version)
 	result, err := a.Client.GetSecretValue(input)
 	if err != nil {
 		return nil, err
 	}
+
+	utils.VerboseToStdErr("AWS Secrets Manager get secret response %v", result)
 
 	var dat map[string]interface{}
 

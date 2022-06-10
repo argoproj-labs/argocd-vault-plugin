@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -70,8 +71,8 @@ func replaceInner(
 				}
 			}
 		} else if valueType == reflect.String {
-			// Base case, replace templated strings
 
+			// Base case, replace templated strings
 			removeKey := false
 			replacement, err := replacerFunc(key, value.(string), *r)
 			if len(err) != 0 {
@@ -92,6 +93,7 @@ func replaceInner(
 			}
 
 			if removeKey {
+				utils.VerboseToStdErr("removing key %s due to %s being set on the containing manifest", key, types.AVPRemoveMissingAnnotation)
 				delete(obj, key)
 			} else {
 				obj[key] = replacement
@@ -119,6 +121,8 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 		pipelineFields := strings.Split(placeholder, "|")
 		placeholder = strings.Trim(pipelineFields[0], " ")
 
+		utils.VerboseToStdErr("found placeholder %s with modifiers %s", placeholder, pipelineFields[1:])
+
 		var secretValue interface{}
 		var secretErr error
 		// Check to see if should call out to get individual secret (inline-path in placeholder)
@@ -129,6 +133,7 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 			key := indivSecretMatches[indivPlaceholderSyntax.SubexpIndex("key")]
 			version := indivSecretMatches[indivPlaceholderSyntax.SubexpIndex("version")]
 
+			utils.VerboseToStdErr("calling GetIndividualSecret for secret %s from path %s at version %s", key, path, version)
 			secretValue, secretErr = resource.Backend.GetIndividualSecret(path, strings.TrimSpace(key), version, resource.Annotations)
 			if secretErr != nil {
 				err = append(err, secretErr)
@@ -143,6 +148,9 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 			for _, stmt := range pipelineFields[1:] {
 				fields := strings.Fields(stmt)
 				functionName := strings.Trim(fields[0], " ")
+
+				utils.VerboseToStdErr("processing modifier %s with args %q", functionName, fields)
+
 				if _, ok := modifiers[functionName]; !ok {
 					e := fmt.Errorf("invalid modifier: %s for placeholder %s in string %s: %s", functionName, placeholder, key, value)
 					err = append(err, e)
@@ -182,6 +190,7 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 	// In the case where the value is a non-string, we insert it directly here.
 	// Useful for cases like `replicas: <replicas>`
 	if nonStringReplacement != nil {
+		utils.VerboseToStdErr("value found in secret manager is non-string: %v, injecting directly into template")
 		return nonStringReplacement, err
 	}
 
@@ -195,6 +204,8 @@ func configReplacement(key, value string, resource Resource) (interface{}, []err
 	}
 
 	// configMap data values must be strings
+
+	utils.VerboseToStdErr("key %s comes from ConfigMap manifest, stringifying value %s to fit", key, value)
 	return stringify(res), err
 }
 
@@ -202,6 +213,8 @@ func secretReplacement(key, value string, resource Resource) (interface{}, []err
 	decoded, err := base64.StdEncoding.DecodeString(value)
 	if err == nil && genericPlaceholder.Match(decoded) {
 		res, err := genericReplacement(key, string(decoded), resource)
+
+		utils.VerboseToStdErr("key %s comes from Secret manifest, base64 encoding value %s to fit", key, value)
 		return base64.StdEncoding.EncodeToString([]byte(stringify(res))), err
 	}
 
@@ -249,5 +262,6 @@ func secretNamespaceName(input string) (string, string) {
 		secretNamespace = types.ArgoCDNamespace
 		secretName = nameFields[0]
 	}
+
 	return secretNamespace, secretName
 }

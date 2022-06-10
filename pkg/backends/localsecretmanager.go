@@ -3,6 +3,7 @@ package backends
 import (
 	"fmt"
 
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -28,8 +29,10 @@ func (a *LocalSecretManager) Login() error {
 
 // GetSecrets gets secrets using decrypt function and returns the formatted data
 func (a *LocalSecretManager) GetSecrets(path string, version string, annotations map[string]string) (map[string]interface{}, error) {
-
+	utils.VerboseToStdErr("Local secret manager getting secret %s at version %s", path, version)
 	cleartext, err := a.Decrypt(path, "yaml")
+
+	utils.VerboseToStdErr("Local secret manager get secret response: %v", cleartext)
 
 	var dat map[string]interface{}
 

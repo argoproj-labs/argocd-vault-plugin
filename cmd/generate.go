@@ -10,6 +10,7 @@ import (
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/config"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/kube"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -18,6 +19,7 @@ import (
 func NewGenerateCommand() *cobra.Command {
 	const StdIn = "-"
 	var configPath, secretName string
+	var verboseOutput bool
 
 	var command = &cobra.Command{
 		Use:   "generate <path>",
@@ -59,6 +61,7 @@ func NewGenerateCommand() *cobra.Command {
 			}
 
 			v := viper.New()
+			viper.Set("verboseOutput", verboseOutput)
 			cmdConfig, err := config.New(v, &config.Options{
 				SecretName: secretName,
 				ConfigPath: configPath,
@@ -90,6 +93,8 @@ func NewGenerateCommand() *cobra.Command {
 					if err != nil {
 						return err
 					}
+				} else {
+					utils.VerboseToStdErr("skipping %s.%s because %s annotation is present", manifest.GetNamespace(), manifest.GetName(), types.AVPIgnoreAnnotation)
 				}
 
 				output, err := template.ToYAML()
@@ -106,5 +111,6 @@ func NewGenerateCommand() *cobra.Command {
 
 	command.Flags().StringVarP(&configPath, "config-path", "c", "", "path to a file containing Vault configuration (YAML, JSON, envfile) to use")
 	command.Flags().StringVarP(&secretName, "secret-name", "s", "", "name of a Kubernetes Secret in the argocd namespace containing Vault configuration data in the argocd namespace of your ArgoCD host (Only available when used in ArgoCD). The namespace can be overridden by using the format <namespace>:<name>")
+	command.Flags().BoolVar(&verboseOutput, "verbose-sensitive-output", false, "enable verbose mode for detailed info to help with debugging. Includes sensitive data (credentials), logged to stderr")
 	return command
 }

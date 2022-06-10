@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"github.com/googleapis/gax-go/v2"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 )
@@ -50,10 +51,13 @@ func (a *GCPSecretManager) GetSecrets(path string, version string, annotations m
 		Name: fmt.Sprintf("%s/versions/%s", path, version),
 	}
 
+	utils.VerboseToStdErr("GCP Secret Manager accessing secret at path %s at version  %v", path, version)
 	result, err := a.Client.AccessSecretVersion(a.Context, req)
 	if err != nil {
 		return nil, fmt.Errorf("Could not find secret: %v", err)
 	}
+
+	utils.VerboseToStdErr("GCP Secret Manager access secret version response %v", result)
 
 	data := make(map[string]interface{})
 

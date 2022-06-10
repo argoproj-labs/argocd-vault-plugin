@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/keyvault"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"path"
 	"strings"
 	"time"
@@ -36,18 +37,25 @@ func (a *AzureKeyVault) GetSecrets(kvpath string, version string, _ map[string]s
 
 	data := make(map[string]interface{})
 
+	utils.VerboseToStdErr("Azure Key Vault listing secrets in vault %v", kvpath)
 	secretList, err := a.Client.GetSecretsComplete(ctx, kvpath, nil)
 	if err != nil {
 		return nil, err
 	}
+
+	utils.VerboseToStdErr("Azure Key Vault list secrets response %v", secretList)
 	// Gather all secrets in Key Vault
+
 	for ; secretList.NotDone(); secretList.NextWithContext(ctx) {
 		secret := path.Base(*secretList.Value().ID)
 		if version == "" {
+			utils.VerboseToStdErr("Azure Key Vault getting secret %s from vault %s", secret, kvpath)
 			secretResp, err := a.Client.GetSecret(ctx, kvpath, secret, "")
 			if err != nil {
 				return nil, err
 			}
+
+			utils.VerboseToStdErr("Azure Key Vault get unversioned secret response %v", secretResp)
 			data[secret] = *secretResp.Value
 			continue
 		}
@@ -62,10 +70,13 @@ func (a *AzureKeyVault) GetSecrets(kvpath string, version string, _ map[string]s
 			}
 			// Secret version matched given version
 			if strings.Contains(*secretVersion.ID, version) {
+				utils.VerboseToStdErr("Azure Key Vault getting secret %s from vault %s at version %s", secret, kvpath, version)
 				secretResp, err := a.Client.GetSecret(ctx, kvpath, secret, version)
 				if err != nil {
 					return nil, err
 				}
+
+				utils.VerboseToStdErr("Azure Key Vault get versioned secret response %v", secretResp)
 				data[secret] = *secretResp.Value
 			}
 		}
@@ -81,11 +92,15 @@ func (a *AzureKeyVault) GetIndividualSecret(kvpath, secret, version string, anno
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	utils.VerboseToStdErr("Azure Key Vault getting secret %s from vault %s at version %s", secret, kvpath, version)
+
 	kvpath = fmt.Sprintf("https://%s.vault.azure.net", kvpath)
 	data, err := a.Client.GetSecret(ctx, kvpath, secret, version)
 	if err != nil {
 		return nil, err
 	}
+
+	utils.VerboseToStdErr("Azure Key Vault get versioned secret response %v", data)
 
 	return *data.Value, nil
 }
