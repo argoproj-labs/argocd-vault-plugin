@@ -1,6 +1,9 @@
 package types
 
 const (
+	// Environment Variable Prefix
+	EnvArgoCDPrefix = "ARGOCD_ENV"
+
 	// Environment Variable Constants
 	EnvAvpType             = "AVP_TYPE"
 	EnvAvpRoleID           = "AVP_ROLE_ID"

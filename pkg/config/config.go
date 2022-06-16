@@ -268,6 +268,16 @@ func readConfigOrSecret(secretName, configPath string, v *viper.Viper) error {
 		}
 	}
 
+	// Check for ArgoCD 2.4 prefixed environment variables
+	for _, envVar := range os.Environ() {
+		if strings.HasPrefix(envVar, types.EnvArgoCDPrefix) {
+			envVarPair := strings.SplitN(envVar, "=", 2)
+			key := strings.TrimPrefix(envVarPair[0], types.EnvArgoCDPrefix+"_")
+			val := envVarPair[1]
+			v.Set(key, val)
+		}
+	}
+
 	for k, viperValue := range v.AllSettings() {
 		for _, prefix := range backendPrefixes {
 			if strings.HasPrefix(k, prefix) {
