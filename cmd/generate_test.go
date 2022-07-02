@@ -80,7 +80,7 @@ func TestMain(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		expected := "No manifests"
+		expected := ""
 		if !strings.Contains(string(out), expected) {
 			t.Fatalf("expected to contain: %s but got %s", expected, out)
 		}
