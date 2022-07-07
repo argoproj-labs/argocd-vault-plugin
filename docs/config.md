@@ -25,6 +25,23 @@ By default, the secret is assumed to be in the `argocd` namespace. However, the 
 
 <b>Note</b>: this requires the `argocd-repo-server` to have a service account token mounted in the standard location.
 
+###### ArgoCD 2.4.0 Environment Variable Prefix
+
+Starting with ArgoCD 2.4.0, environment variables passed into the `init` and `generate` steps are prefixed with `ARGOCD_ENV` to prevent users from setting potentially-sensitive environment variables. All environment variables defined here will be prepended with the new prefix, e.g. `ARGOCD_ENV_AVP_TYPE`. The configuration will honor both prefixed and non-prefixed environment variables, preferring the prefixed variable if both are presented. There are no changes needed to the secret.
+
+```yaml
+apiVersion: v1
+stringData:
+  # Will be renamed to ARGOCD_ENV_AVP_AUTH_TYPE by ArgoCD before reaching the plugin.
+  AVP_AUTH_TYPE: vault
+kind: Secret
+metadata:
+  name: vault-configuration
+  namespace: argocd
+type: Opaque
+```
+
+See the [ArgoCD Upgrade Guide](https://argo-cd.readthedocs.io/en/latest/operator-manual/upgrading/2.3-2.4/#update-plugins-to-use-newly-prefixed-environment-variables) for more information.
 ##### Configuration File
 
 The configuration can be given in a file reachable from the plugin, in any Viper supported format (YAML, JSON, etc.). The keys must match the same names used in the the Kubernetes secret:
