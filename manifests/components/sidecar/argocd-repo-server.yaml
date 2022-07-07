@@ -10,6 +10,10 @@ spec:
       # Note: In 2.4.0 onward, there is a dedicated SA for repo-server (not default)
       # Note: This is not fully supported for Kubernetes < v1.19
       automountServiceAccountToken: true
+      # Note: This is not fully supported for Kubernetes < v1.19. If you are 
+      #   having issues with the token on < v1.19, try uncommenting this:
+      # securityContext:
+      #   fsGroup: 3999
 
       # Each of the embedded YAMLs inside cmp-plugin ConfigMap will be mounted into it's respective plugin sidecar
       volumes:
@@ -17,6 +21,8 @@ spec:
             name: cmp-plugin
           name: cmp-plugin
         - name: custom-tools
+          emptyDir: {}
+        - name: cmp-tmp
           emptyDir: {}
 
       # Download tools
@@ -51,7 +57,7 @@ spec:
           - mountPath: /home/argocd/cmp-server/plugins
             name: plugins
           - mountPath: /tmp
-            name: tmp
+            name: cmp-tmp
 
           # Register plugins into sidecar
           - mountPath: /home/argocd/cmp-server/config/plugin.yaml
@@ -76,7 +82,7 @@ spec:
           - mountPath: /home/argocd/cmp-server/plugins
             name: plugins
           - mountPath: /tmp
-            name: tmp
+            name: cmp-tmp
 
           # Register plugins into sidecar
           - mountPath: /home/argocd/cmp-server/config/plugin.yaml
@@ -101,7 +107,7 @@ spec:
           - mountPath: /home/argocd/cmp-server/plugins
             name: plugins
           - mountPath: /tmp
-            name: tmp
+            name: cmp-tmp
 
           # Register plugins into sidecar
           - mountPath: /home/argocd/cmp-server/config/plugin.yaml

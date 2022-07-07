@@ -4,6 +4,6 @@ kind: Kustomization
 resources:
 - https://github.com/argoproj/argo-cd/manifests/cluster-install
 
-patchesStrategicMerge:
-- argocd-repo-server-deploy.yaml
-- argocd-cm.yaml
+components:
+- ../components/configmap
+
