@@ -5,7 +5,4 @@ kind: Kustomization
 # Fixed in https://github.com/argoproj/argo-cd/pull/9319
 resources:
 - https://github.com/argoproj/argo-cd//manifests/cluster-install?ref=v2.4.0
-- cmp-plugin.yaml
-
-patchesStrategicMerge:
-- argocd-repo-server.yaml
+- ../plugin/sidecar
