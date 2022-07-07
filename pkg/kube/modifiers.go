@@ -35,10 +35,10 @@ func indent(params []string, input interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("invalid indentation level")
 	}
 
-	switch input.(type) {
+	switch i := input.(type) {
 	case string:
 		{
-			lines := strings.Split(input.(string), "\n")
+			lines := strings.Split(i, "\n")
 			var builder strings.Builder
 			builder.WriteString(strings.TrimSpace(lines[0]))
 			if len(lines) > 1 {
@@ -68,10 +68,10 @@ func base64encode(params []string, input interface{}) (interface{}, error) {
 	if len(params) > 0 {
 		return nil, fmt.Errorf("invalid parameters")
 	}
-	switch input.(type) {
+	switch i := input.(type) {
 	case string:
 		{
-			s := base64.StdEncoding.EncodeToString([]byte(input.(string)))
+			s := base64.StdEncoding.EncodeToString([]byte(i))
 			return s, nil
 		}
 	default:
@@ -83,10 +83,10 @@ func base64decode(params []string, input interface{}) (interface{}, error) {
 	if len(params) > 0 {
 		return nil, fmt.Errorf("invalid parameters")
 	}
-	switch input.(type) {
+	switch i := input.(type) {
 	case string:
 		{
-			s, _ := base64.StdEncoding.DecodeString(input.(string))
+			s, _ := base64.StdEncoding.DecodeString(i)
 			return string(s), nil
 		}
 	default:
@@ -127,11 +127,11 @@ func jsonParse(params []string, input interface{}) (interface{}, error) {
 	if len(params) > 0 {
 		return nil, fmt.Errorf("invalid parameters")
 	}
-	switch input.(type) {
+	switch i := input.(type) {
 	case string:
 		{
 			var obj interface{}
-			err := json.Unmarshal([]byte(input.(string)), &obj)
+			err := json.Unmarshal([]byte(i), &obj)
 			if err != nil {
 				return nil, err
 			}
@@ -146,11 +146,11 @@ func yamlParse(params []string, input interface{}) (interface{}, error) {
 	if len(params) > 0 {
 		return nil, fmt.Errorf("invalid parameters")
 	}
-	switch input.(type) {
+	switch i := input.(type) {
 	case string:
 		{
 			var obj interface{}
-			err := k8yaml.Unmarshal([]byte(input.(string)), &obj)
+			err := k8yaml.Unmarshal([]byte(i), &obj)
 			if err != nil {
 				return nil, err
 			}
@@ -171,5 +171,4 @@ func sha256sum(params []string, input interface{}) (interface{}, error) {
 	} else {
 		return nil, fmt.Errorf("invalid datatype %v, expected string", reflect.TypeOf(input))
 	}
-
 }

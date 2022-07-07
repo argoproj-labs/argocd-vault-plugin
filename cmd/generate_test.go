@@ -8,13 +8,11 @@ import (
 	"testing"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/helpers"
-	"github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/vault"
 )
 
 var roleid, secretid string
 var cluster *vault.TestCluster
-var client *api.Client
 
 func TestMain(t *testing.T) {
 	cluster, roleid, secretid = helpers.CreateTestAppRoleVault(t)
@@ -33,7 +31,11 @@ func TestMain(t *testing.T) {
 		cmd.SetArgs(args)
 		cmd.SetErr(c)
 		cmd.SetOut(bytes.NewBufferString(""))
-		cmd.Execute()
+		err := cmd.Execute()
+		if err == nil {
+			t.Errorf("Expected error but got none")
+		}
+
 		out, err := ioutil.ReadAll(c) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
@@ -53,7 +55,11 @@ func TestMain(t *testing.T) {
 		cmd.SetArgs(args)
 		cmd.SetErr(b)
 		cmd.SetOut(bytes.NewBufferString(""))
-		cmd.Execute()
+		err := cmd.Execute()
+		if err == nil {
+			t.Errorf("Expected error but got none")
+		}
+
 		out, err := ioutil.ReadAll(b) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
@@ -74,7 +80,11 @@ func TestMain(t *testing.T) {
 		cmd.SetArgs(args)
 		cmd.SetErr(b)
 		cmd.SetOut(bytes.NewBufferString(""))
-		cmd.Execute()
+		err := cmd.Execute()
+		if err != nil {
+			t.Errorf("Expected nil but got %v", err)
+		}
+
 		out, err := ioutil.ReadAll(b) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
@@ -99,7 +109,11 @@ func TestMain(t *testing.T) {
 		cmd.SetArgs(args)
 		cmd.SetErr(b)
 		cmd.SetOut(bytes.NewBufferString(""))
-		cmd.Execute()
+		err = cmd.Execute()
+		if err != nil {
+			t.Errorf("Expected nil but got %v", err)
+		}
+
 		out, err = ioutil.ReadAll(b) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
@@ -119,11 +133,16 @@ func TestMain(t *testing.T) {
 		cmd.SetArgs(args)
 		cmd.SetOut(b)
 		cmd.SetErr(e)
-		cmd.Execute()
+		err := cmd.Execute()
+		if err != nil {
+			t.Errorf("Expected nil, but got %v", err)
+		}
+
 		out, err := ioutil.ReadAll(b) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		stderr, err := ioutil.ReadAll(e) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
@@ -147,7 +166,11 @@ func TestMain(t *testing.T) {
 		b := bytes.NewBufferString("")
 		cmd.SetArgs(args)
 		cmd.SetOut(b)
-		cmd.Execute()
+		err := cmd.Execute()
+		if err != nil {
+			t.Errorf("Expected nil, but got %v", err)
+		}
+
 		out, err := ioutil.ReadAll(b) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
@@ -179,7 +202,11 @@ func TestMain(t *testing.T) {
 		cmd.SetArgs(args)
 		cmd.SetOut(stdout)
 		cmd.SetIn(stdin)
-		cmd.Execute()
+		err = cmd.Execute()
+		if err != nil {
+			t.Errorf("Expected nil, but got %v", err)
+		}
+
 		out, err := ioutil.ReadAll(stdout) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
@@ -212,7 +239,11 @@ func TestMain(t *testing.T) {
 		cmd.SetErr(stderr)
 		cmd.SetOut(bytes.NewBufferString(""))
 		cmd.SetIn(stdin)
-		cmd.Execute()
+		err = cmd.Execute()
+		if err == nil {
+			t.Error("Expected error but got nil")
+		}
+
 		out, err := ioutil.ReadAll(stderr) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)

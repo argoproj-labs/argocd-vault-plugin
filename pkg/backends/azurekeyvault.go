@@ -3,11 +3,12 @@ package backends
 import (
 	"context"
 	"fmt"
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/keyvault"
-	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"path"
 	"strings"
 	"time"
+
+	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/keyvault"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 )
 
 // AzureKeyVault is a struct for working with an Azure Key Vault backend
@@ -46,7 +47,11 @@ func (a *AzureKeyVault) GetSecrets(kvpath string, version string, _ map[string]s
 	utils.VerboseToStdErr("Azure Key Vault list secrets response %v", secretList)
 	// Gather all secrets in Key Vault
 
-	for ; secretList.NotDone(); secretList.NextWithContext(ctx) {
+	for ; secretList.NotDone(); err = secretList.NextWithContext(ctx) {
+		if err != nil {
+			return nil, err
+		}
+
 		secret := path.Base(*secretList.Value().ID)
 		if version == "" {
 			utils.VerboseToStdErr("Azure Key Vault getting secret %s from vault %s", secret, kvpath)
@@ -62,7 +67,11 @@ func (a *AzureKeyVault) GetSecrets(kvpath string, version string, _ map[string]s
 		// In Azure Key Vault the versions of a secret is first shown after running GetSecretVersions. So we need
 		// to loop through the versions for each secret in order to find the secret that has the specific version.
 		secretVersions, _ := a.Client.GetSecretVersionsComplete(ctx, kvpath, secret, nil)
-		for ; secretVersions.NotDone(); secretVersions.NextWithContext(ctx) {
+		for ; secretVersions.NotDone(); err = secretVersions.NextWithContext(ctx) {
+			if err != nil {
+				return nil, err
+			}
+
 			secretVersion := secretVersions.Value()
 			// Azure Key Vault has ability to enable/disable a secret, so lets honour that
 			if !*secretVersion.Attributes.Enabled {

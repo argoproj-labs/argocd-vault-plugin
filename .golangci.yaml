@@ -1,0 +1,21 @@
+# List of linters and their functionality can be found here:
+# https://golangci-lint.run/usage/linters/
+linters:
+  # Disable all linters.
+  disable-all: true
+  enable:
+    # Default golangci-lint linters.
+    - deadcode
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - structcheck
+    - typecheck
+    - unused
+    - varcheck
+
+    # Extra linters
+    - whitespace
+    - gofmt

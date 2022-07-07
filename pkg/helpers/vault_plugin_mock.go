@@ -31,10 +31,10 @@ func Backend(c *logical.BackendConfig) *backend {
 			Unauthenticated: []string{"login"},
 		},
 		Paths: []*framework.Path{
-			&framework.Path{
+			{
 				Pattern: "login",
 				Fields: map[string]*framework.FieldSchema{
-					"token": &framework.FieldSchema{
+					"token": {
 						Type: framework.TypeString,
 					},
 				},

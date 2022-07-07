@@ -249,12 +249,17 @@ func readConfigOrSecret(secretName, configPath string, v *viper.Viper) error {
 		if err != nil {
 			return err
 		}
+
 		yaml, err := localClient.ReadSecret(secretName)
 		if err != nil {
 			return err
 		}
+
 		v.SetConfigType("yaml")
-		v.ReadConfig(bytes.NewBuffer(yaml))
+		err = v.ReadConfig(bytes.NewBuffer(yaml))
+		if err != nil {
+			return err
+		}
 	}
 
 	// If a config file path is passed, read in that file and overwrite all other
@@ -272,9 +277,9 @@ func readConfigOrSecret(secretName, configPath string, v *viper.Viper) error {
 		for _, prefix := range backendPrefixes {
 			if strings.HasPrefix(k, prefix) {
 				var value string
-				switch viperValue.(type) {
+				switch v := viperValue.(type) {
 				case bool:
-					value = strconv.FormatBool(viperValue.(bool))
+					value = strconv.FormatBool(v)
 				default:
 					value = viperValue.(string)
 				}

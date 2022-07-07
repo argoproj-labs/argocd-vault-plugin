@@ -21,7 +21,11 @@ func TestVersion(t *testing.T) {
 		c := bytes.NewBufferString("")
 		cmd.SetArgs(args)
 		cmd.SetOut(c)
-		cmd.Execute()
+		err := cmd.Execute()
+		if err != nil {
+			t.Errorf("Expected error but got none")
+		}
+
 		out, err := ioutil.ReadAll(c) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
