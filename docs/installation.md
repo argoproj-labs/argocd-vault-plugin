@@ -5,7 +5,31 @@ In order to use the plugin in Argo CD you have 4 distinct options:
 - Installation via `argocd-cm` ConfigMap
 
     - Download AVP in a volume and control everything as Kubernetes manifests
-        - Available as a pre-built Kustomize app: <https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/cmp-configmap>
+        
+        - Available as a pre-built opinionated Kustomize app, including ArgoCD
+          via a base:
+          <https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/cmp-configmap>. To consume, use this in your kustomization.yaml:
+
+          ```yaml
+          apiVersion: kustomize.config.k8s.io/v1beta1
+          kind: Kustomization
+          resources:
+            - https://github.com/argoproj-labs/argocd-vault-plugin//manifests/cmp-configmap
+          ```
+
+        - Also available as only the plugin if you want to bring your own version of
+          ArgoCD (e.g. High-Availability) or compose it with other plugins:
+          <https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/plugin/configmap>.
+          To consume, use something like this in your kustomization.yaml:
+
+          ```yaml
+          apiVersion: kustomize.config.k8s.io/v1beta1
+          kind: Kustomization
+          resources:
+            - https://github.com/argoproj/argo-cd//manifests/ha/cluster-install?ref=2.4.4 
+            ... any other plugins/resources
+            - https://github.com/argoproj-labs/argocd-vault-plugin//manifests/plugin/configmap
+          ```
 
     - Create a custom `argocd-repo-server` image with AVP and supporting tools pre-installed
 
@@ -13,7 +37,30 @@ In order to use the plugin in Argo CD you have 4 distinct options:
 
     - Download AVP and supporting tools into a volume and control everything as Kubernetes manifests, using an off-the-shelf sidecar image
 
-        - Available as a pre-built Kustomize app: <https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/cmp-sidecar>
+        - Available as a pre-built opinionated Kustomize app, including ArgoCD
+          via a base:
+          <https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/cmp-sidecar>. To consume, use this in your kustomization.yaml:
+
+          ```yaml
+          apiVersion: kustomize.config.k8s.io/v1beta1
+          kind: Kustomization
+          resources:
+            - https://github.com/argoproj-labs/argocd-vault-plugin//manifests/cmp-sidecar
+          ```
+
+        - Also available as only the plugin if you want to bring your own version of
+          ArgoCD (e.g. High-Availability) or compose it with other plugins:
+          <https://github.com/argoproj-labs/argocd-vault-plugin/blob/main/manifests/plugin/sidecar>.
+          To consume, use something like this in your kustomization.yaml:
+
+          ```yaml
+          apiVersion: kustomize.config.k8s.io/v1beta1
+          kind: Kustomization
+          resources:
+            - https://github.com/argoproj/argo-cd//manifests/ha/cluster-install?ref=2.4.4 
+            ... any other plugins/resources
+            - https://github.com/argoproj-labs/argocd-vault-plugin//manifests/plugin/sidecar
+          ```
 
     - Create a custom sidecar image with AVP and supporting tools pre-installed
 
