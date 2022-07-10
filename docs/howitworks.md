@@ -337,3 +337,23 @@ spec:
       annotations:
         checksum/secret: <path:secrets/data/db#certs | sha256sum>
 ```
+
+### Error Handling
+
+#### Detecting errors in chained commands
+
+By default argocd-vault-plugin will read valid kubernetes YAMLs and replace variables with values from Vault.
+If a previous command failed and outputs nothing to stdout and AVP reads the input from stdin with
+the `-` argument, AVP will forward an empty YAML output downstream. To catch and prevent accientental errors
+in chained commands, please use the `-o pipefail` bash option like so:
+
+```bash
+$ sh -c '((>&2 echo "some error" && exit 1) | argocd-vault-plugin generate - | kubectl diff -f -); echo $?;'
+some error
+0
+
+$ set -o pipefail
+$ sh -c '((>&2 echo "some error" && exit 1) | argocd-vault-plugin generate - | kubectl diff -f -); echo $?;'
+some error
+1
+```
