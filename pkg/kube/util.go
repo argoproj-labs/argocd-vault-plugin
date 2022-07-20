@@ -53,16 +53,15 @@ func replaceInner(
 			replaceInner(r, &inner, replacerFunc)
 		} else if valueType == reflect.Slice {
 			for idx, elm := range value.([]interface{}) {
-				switch elm.(type) {
+				switch e := elm.(type) {
 				case map[string]interface{}:
 					{
-						inner := elm.(map[string]interface{})
-						replaceInner(r, &inner, replacerFunc)
+						replaceInner(r, &e, replacerFunc)
 					}
 				case string:
 					{
 						// Base case, replace templated strings
-						replacement, err := replacerFunc(key, elm.(string), *r)
+						replacement, err := replacerFunc(key, e, *r)
 						if len(err) != 0 {
 							r.replacementErrors = append(r.replacementErrors, err...)
 						}
@@ -71,7 +70,6 @@ func replaceInner(
 				}
 			}
 		} else if valueType == reflect.String {
-
 			// Base case, replace templated strings
 			removeKey := false
 			replacement, err := replacerFunc(key, value.(string), *r)
@@ -165,10 +163,10 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 				}
 			}
 
-			switch secretValue.(type) {
+			switch s := secretValue.(type) {
 			case string:
 				{
-					return []byte(secretValue.(string))
+					return []byte(s)
 				}
 			default:
 				{
@@ -222,22 +220,22 @@ func secretReplacement(key, value string, resource Resource) (interface{}, []err
 }
 
 func stringify(input interface{}) string {
-	switch input.(type) {
+	switch i := input.(type) {
 	case int:
 		{
-			return strconv.Itoa(input.(int))
+			return strconv.Itoa(i)
 		}
 	case bool:
 		{
-			return strconv.FormatBool(input.(bool))
+			return strconv.FormatBool(i)
 		}
 	case json.Number:
 		{
-			return string(input.(json.Number))
+			return string(i)
 		}
 	case []byte:
 		{
-			return string(input.([]byte))
+			return string(i)
 		}
 	default:
 		{
@@ -246,6 +244,7 @@ func stringify(input interface{}) string {
 	}
 }
 
+//nolint:deadcode,unused
 func kubeResourceDecoder(data *map[string]interface{}) *k8yaml.YAMLToJSONDecoder {
 	jsondata, _ := json.Marshal(data)
 	decoder := k8yaml.NewYAMLToJSONDecoder(bytes.NewReader(jsondata))

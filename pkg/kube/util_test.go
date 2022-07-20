@@ -485,7 +485,7 @@ func TestGenericReplacement_missingValue(t *testing.T) {
 		},
 		replacementErrors: []error{
 			&missingKeyError{
-				s: fmt.Sprint("replaceString: missing Vault value for placeholder replicas in string replicas: <replicas>"),
+				s: "replaceString: missing Vault value for placeholder replicas in string replicas: <replicas>",
 			},
 		},
 	}

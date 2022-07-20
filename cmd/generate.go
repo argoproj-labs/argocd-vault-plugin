@@ -80,7 +80,6 @@ func NewGenerateCommand() *cobra.Command {
 			}
 
 			for _, manifest := range manifests {
-
 				template, err := kube.NewTemplate(manifest, cmdConfig.Backend)
 				if err != nil {
 					return err

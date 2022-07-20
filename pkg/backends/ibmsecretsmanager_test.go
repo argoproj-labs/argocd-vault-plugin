@@ -178,7 +178,6 @@ func (m *MockIBMSMClient) GetSecretVersion(getSecretOptions *ibmsm.GetSecretVers
 }
 
 func TestIBMSecretsManagerGetSecrets(t *testing.T) {
-
 	t.Run("Retrieves arbitrary secrets from a group", func(t *testing.T) {
 		mock := MockIBMSMClient{}
 		sm := backends.NewIBMSecretsManagerBackend(&mock)
@@ -233,11 +232,11 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 		var offset int64 = 0
 		var offset2 int64 = 200
 		expectedListArgs := []*ibmsm.ListAllSecretsOptions{
-			&ibmsm.ListAllSecretsOptions{
+			{
 				Groups: []string{"big-group"},
 				Offset: &offset,
 			},
-			&ibmsm.ListAllSecretsOptions{
+			{
 				Groups: []string{"big-group"},
 				Offset: &offset2,
 			},

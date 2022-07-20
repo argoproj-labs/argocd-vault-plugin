@@ -21,8 +21,13 @@ func writeToken(token string) error {
 	if err != nil {
 		return err
 	}
+
 	path := filepath.Join(home, ".avp")
-	os.Mkdir(path, 0755)
+	err = os.Mkdir(path, 0755)
+	if err != nil && !os.IsExist(err) {
+		return err
+	}
+
 	data := map[string]interface{}{
 		"vault_token": token,
 	}
@@ -31,6 +36,7 @@ func writeToken(token string) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -44,13 +50,17 @@ func removeToken() error {
 	return nil
 }
 
-func readToken() interface{} {
+//nolint:deadcode,unused
+func readToken() (interface{}, error) {
 	home, _ := os.UserHomeDir()
 	path := filepath.Join(home, ".avp", "config.json")
 	dat, _ := ioutil.ReadFile(path)
 	var result map[string]interface{}
-	json.Unmarshal([]byte(dat), &result)
-	return result["vault_token"]
+	err := json.Unmarshal([]byte(dat), &result)
+	if err != nil {
+		return nil, err
+	}
+	return result["vault_token"], nil
 }
 
 func TestCheckExistingToken(t *testing.T) {
@@ -94,16 +104,18 @@ func TestCheckExistingToken(t *testing.T) {
 			t.Errorf("expected: %s, got: %s.", expected, err.Error())
 		}
 	})
-
 }
 
 func TestSetToken(t *testing.T) {
 	cluster, _, _ := helpers.CreateTestAppRoleVault(t)
 	defer cluster.Cleanup()
 
-	utils.SetToken(cluster.Cores[0].Client, "token")
+	err := utils.SetToken(cluster.Cores[0].Client, "token")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	err := removeToken()
+	err = removeToken()
 	if err != nil {
 		t.Fatal(err)
 	}

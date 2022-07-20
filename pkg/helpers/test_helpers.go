@@ -38,12 +38,15 @@ func CreateTestVault(t *testing.T) (net.Listener, *api.Client, string) {
 	}
 	client.SetToken(rootToken)
 
-	client.Sys().Mount("kv", &api.MountInput{
+	err = client.Sys().Mount("kv", &api.MountInput{
 		Type: "kv",
 		Options: map[string]string{
 			"version": "2",
 		},
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Setup required secrets, policies, etc.
 	_, err = client.Logical().Write("secret/foo", map[string]interface{}{
@@ -129,12 +132,15 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 
 	client := cluster.Cores[0].Client
 
-	client.Sys().Mount("kv", &api.MountInput{
+	err := client.Sys().Mount("kv", &api.MountInput{
 		Type: "kv",
 		Options: map[string]string{
 			"version": "2",
 		},
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if err := client.Sys().EnableAuthWithOptions("approle", &api.EnableAuthOptions{
 		Type: "approle",
@@ -143,7 +149,7 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 	}
 
 	// Create Policy for secret/foo
-	err := client.Sys().PutPolicy("approle-secret", "path \"secret/*\" { capabilities = [\"read\",\"list\"] }")
+	err = client.Sys().PutPolicy("approle-secret", "path \"secret/*\" { capabilities = [\"read\",\"list\"] }")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -310,12 +316,15 @@ func CreateTestAuthVault(t *testing.T) *vault.TestCluster {
 
 	client := cluster.Cores[0].Client
 
-	client.Sys().Mount("kv", &api.MountInput{
+	err := client.Sys().Mount("kv", &api.MountInput{
 		Type: "kv",
 		Options: map[string]string{
 			"version": "2",
 		},
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if err := client.Sys().EnableAuthWithOptions("github", &api.EnableAuthOptions{
 		Type: "github",

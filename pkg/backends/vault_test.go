@@ -167,5 +167,4 @@ func TestVaultGetSecrets(t *testing.T) {
 			t.Errorf("expected: %s, got: %s.", expected, err.Error())
 		}
 	})
-
 }

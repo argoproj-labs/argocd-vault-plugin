@@ -192,7 +192,6 @@ func TestToYAML_RemoveMissingInvalidResource(t *testing.T) {
 }
 
 func TestNewTemplate(t *testing.T) {
-
 	t.Run("will GetSecrets for placeholder'd YAML", func(t *testing.T) {
 		mv := helpers.MockVault{}
 
@@ -231,7 +230,7 @@ func TestNewTemplate(t *testing.T) {
 
 	t.Run("will GetSecrets only for YAMLs w/o avp.kubernetes.io/ignore: True", func(t *testing.T) {
 		mv := helpers.MockVault{}
-		NewTemplate(unstructured.Unstructured{
+		_, err := NewTemplate(unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"kind":       "Service",
 				"apiVersion": "v1",
@@ -254,6 +253,10 @@ func TestNewTemplate(t *testing.T) {
 				},
 			},
 		}, &mv)
+		if err != nil {
+			t.Fatalf("expected no error but got %s", err.Error())
+		}
+
 		if mv.GetSecretsCalled {
 			t.Fatalf("template contains avp.kubernetes.io/ignore:True so GetSecrets should NOT be called")
 		}

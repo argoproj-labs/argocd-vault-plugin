@@ -103,7 +103,7 @@ func (i *IBMSecretsManager) Login() error {
 // - `certificate`, `private_key`, etc. k/v pairs for versioned certificate secrets
 // API calls and their responses depend on the whether the secret "can be" versioned or not
 func (i *IBMSecretsManager) getSecretVersionedOrNot(secret *ibmsm.SecretResource, version string) (map[string]interface{}, error) {
-	result := make(map[string]interface{})
+	var result map[string]interface{}
 
 	// Only certificate secrets are versioned in IBM SM
 	if version != "" && (*secret.SecretType == types.IBMImportedCertType || *secret.SecretType == types.IBMPublicCertType) {
@@ -185,7 +185,6 @@ func (i *IBMSecretsManager) getSecret(secret *ibmsm.SecretResource, version stri
 		if err != nil {
 			result["err"] = err
 		} else {
-
 			// Copy whatever keys this non-arbitrary secret has into a map for use with `jsonParse`
 			if secretData["payload"] == nil {
 				payload = make(map[string]interface{})
@@ -297,7 +296,6 @@ func (i *IBMSecretsManager) GetSecrets(path string, version string, annotations 
 	launchedRoutines := 0
 
 	for _, secret := range result {
-
 		// There is space for more goroutines, so spawn immediately and continue
 		if launchedRoutines < MAX_GOROUTINES {
 			go i.getSecret(secret, version, secretResult, &wg)
@@ -356,7 +354,6 @@ func (i *IBMSecretsManager) GetIndividualSecret(kvpath, secretName, version stri
 	}
 	secret := secretResources[secretName]
 	if secret == nil {
-
 		// Allow the replacement code to handle this missing secret
 		return nil, nil
 	}
