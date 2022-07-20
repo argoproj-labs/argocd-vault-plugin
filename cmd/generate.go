@@ -75,10 +75,6 @@ func NewGenerateCommand() *cobra.Command {
 				return err
 			}
 
-			if len(manifests) == 0 {
-				return fmt.Errorf("No manifests")
-			}
-
 			for _, manifest := range manifests {
 
 				template, err := kube.NewTemplate(manifest, cmdConfig.Backend)
