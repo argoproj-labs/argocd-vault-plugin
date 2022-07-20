@@ -50,7 +50,7 @@ configManagementPlugins: |
       args: ["helm dependency build"]
     generate:
       command: ["sh", "-c"]
-      args: ["helm template $ARGOCD_APP_NAME . --install-crds | argocd-vault-plugin generate -"]
+      args: ["helm template $ARGOCD_APP_NAME . --include-crds | argocd-vault-plugin generate -"]
 ```
 For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [add a sidecar to run it](../installation#initcontainer-and-configuration-via-sidecar):
 ```yaml
@@ -73,7 +73,7 @@ For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [ad
           - sh
           - "-c"
           - |
-            helm template $ARGOCD_APP_NAME --install-crds . |
+            helm template $ARGOCD_APP_NAME --include-crds . |
             argocd-vault-plugin generate -
       lockRepo: false
 ```
@@ -90,7 +90,7 @@ configManagementPlugins: |
       args: ["helm dependency build"]
     generate:
       command: ["sh", "-c"]
-      args: ["helm template $ARGOCD_APP_NAME ${helm_args} . --install-crds | argocd-vault-plugin generate -"]
+      args: ["helm template $ARGOCD_APP_NAME ${helm_args} . --include-crds | argocd-vault-plugin generate -"]
 ```
 For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [add a sidecar to run it](../installation#initcontainer-and-configuration-via-sidecar):
 ```yaml
@@ -113,7 +113,7 @@ For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [ad
           - sh
           - "-c"
           - |
-            helm template $ARGOCD_APP_NAME --install-crds -n $ARGOCD_APP_NAMESPACE ${ARGOCD_ENV_HELM_ARGS} . |
+            helm template $ARGOCD_APP_NAME --include-crds -n $ARGOCD_APP_NAMESPACE ${ARGOCD_ENV_HELM_ARGS} . |
             argocd-vault-plugin generate -
       lockRepo: false
 ```
