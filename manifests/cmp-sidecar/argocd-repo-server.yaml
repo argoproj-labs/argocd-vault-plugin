@@ -8,6 +8,7 @@ spec:
 
       # Mount SA token for Kubernets auth
       # Note: In 2.4.0 onward, there is a dedicated SA for repo-server (not default)
+      # Note: This is not fully supported for Kubernetes < v1.19
       automountServiceAccountToken: true
 
       # Each of the embedded YAMLs inside cmp-plugin ConfigMap will be mounted into it's respective plugin sidecar
@@ -25,26 +26,12 @@ spec:
         env:
           - name: AVP_VERSION
             value: 1.11.0
-          - name: HELM_VERSION
-            value: 3.9.0
-          - name: KUSTOMIZE_VERSION
-            value: 4.5.5
         command: [sh, -c]
         args:
           - >-
             curl -L https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v$(AVP_VERSION)/argocd-vault-plugin_$(AVP_VERSION)_linux_amd64 -o argocd-vault-plugin &&
             chmod +x argocd-vault-plugin &&
-            mv argocd-vault-plugin /custom-tools/ &&
-
-            curl -L https://get.helm.sh/helm-v$(HELM_VERSION)-linux-amd64.tar.gz -o helm.tar.gz &&
-            tar -xvf helm.tar.gz &&
-            chmod +x linux-amd64/helm &&
-            mv linux-amd64/helm /custom-tools &&
-
-            curl -L https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv$(KUSTOMIZE_VERSION)/kustomize_v$(KUSTOMIZE_VERSION)_linux_amd64.tar.gz -o kustomize.tar.gz &&
-            tar -xvf kustomize.tar.gz &&
-            chmod +x kustomize &&
-            mv kustomize /custom-tools
+            mv argocd-vault-plugin /custom-tools/
 
         volumeMounts:
           - mountPath: /custom-tools
@@ -54,7 +41,7 @@ spec:
       containers:
       - name: avp-helm
         command: [/var/run/argocd/argocd-cmp-server]
-        image: registry.access.redhat.com/ubi8
+        image: quay.io/argoproj/argocd:v2.4.0
         securityContext:
           runAsNonRoot: true
           runAsUser: 999
@@ -75,14 +62,11 @@ spec:
           - name: custom-tools
             subPath: argocd-vault-plugin
             mountPath: /usr/local/bin/argocd-vault-plugin
-          - name: custom-tools
-            subPath: helm
-            mountPath: /usr/local/bin/helm
 
       # argocd-vault-plugin with Kustomize
       - name: avp-kustomize
         command: [/var/run/argocd/argocd-cmp-server]
-        image: registry.access.redhat.com/ubi8
+        image: quay.io/argoproj/argocd:v2.4.0
         securityContext:
           runAsNonRoot: true
           runAsUser: 999
@@ -103,14 +87,11 @@ spec:
           - name: custom-tools
             subPath: argocd-vault-plugin
             mountPath: /usr/local/bin/argocd-vault-plugin
-          - name: custom-tools
-            subPath: kustomize
-            mountPath: /usr/local/bin/kustomize
 
       # argocd-vault-plugin with plain YAML
       - name: avp
         command: [/var/run/argocd/argocd-cmp-server]
-        image: registry.access.redhat.com/ubi8
+        image: quay.io/argoproj/argocd:v2.4.0
         securityContext:
           runAsNonRoot: true
           runAsUser: 999
