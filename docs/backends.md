@@ -1,5 +1,5 @@
 ### HashiCorp Vault
-We support AppRole and Github Auth Method for getting secrets from Vault.
+We support AppRole, Token, Github and Kubernetes Auth Method for getting secrets from Vault.
 
 We currently support retrieving secrets from KV-V1 and KV-V2 backends.
 
