@@ -23,6 +23,8 @@ const (
 	EnvYCLKeyID            = "AVP_YCL_KEY_ID"
 	EnvYCLServiceAccountID = "AVP_YCL_SERVICE_ACCOUNT_ID"
 	EnvYCLPrivateKey       = "AVP_YCL_PRIVATE_KEY"
+	EnvAvpUsername         = "AVP_USERNAME"
+	EnvAvpPassword         = "AVP_PASSWORD"
 
 	// Backend and Auth Constants
 	VaultBackend              = "vault"
@@ -37,6 +39,7 @@ const (
 	ApproleAuth               = "approle"
 	GithubAuth                = "github"
 	TokenAuth                 = "token"
+	UserPass                  = "userpass"
 	IAMAuth                   = "iam"
 	AwsDefaultRegion          = "us-east-2"
 	GCPCurrentSecretVersion   = "latest"
