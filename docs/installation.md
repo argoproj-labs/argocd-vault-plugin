@@ -188,6 +188,9 @@ spec:
       initContainers:
       - name: download-tools
         image: registry.access.redhat.com/ubi8
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 999
         env:
           - name: AVP_VERSION
             value: 1.11.0
