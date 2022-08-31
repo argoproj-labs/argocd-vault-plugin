@@ -93,7 +93,7 @@ In order to use Kubernetes Authentication a couple of things are required.
     ```
     This role authorizes the "vault-auth" service account in the default namespace and it gives it the default policy.
 
-    You can find the full documentation on configuring Kubernetes Authentication [Here](vaultproject.io/docs/auth/kubernetes#configuration).
+    You can find the full documentation on configuring Kubernetes Authentication [here](https://www.vaultproject.io/docs/auth/kubernetes#configuration).
 
 
 Once Argo CD and Kubernetes are configured, you can then set the required environment variables for the plugin:
