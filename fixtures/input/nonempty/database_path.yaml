@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: example-database
+  namespace: default
+type: Opaque
+data:
+  DATABASE_USER_VAR: <path:database/creds/testing#username>
+  DATABASE_PASS_VAR: <path:database/creds/testing#password>

@@ -71,6 +71,40 @@ func TestVaultGetSecrets(t *testing.T) {
 		}
 	})
 
+	t.Run("will get database static credentials from vault", func(t *testing.T) {
+		annotations := map[string]string{
+		}
+		data, err := backend.GetSecrets("database/static-creds/testing", "", annotations)
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
+
+		expected := map[string]interface{}{
+			"username": "testing",
+		}
+
+		if !reflect.DeepEqual(data, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, data)
+		}
+	})
+
+	t.Run("will get database dynamic credentials from vault", func(t *testing.T) {
+		annotations := map[string]string{
+		}
+		data, err := backend.GetSecrets("database/creds/testing1", "", annotations)
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
+
+		expected := map[string]interface{}{
+			"username": "TODO",
+		}
+
+		if !reflect.DeepEqual(data, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, data)
+		}
+	})
+
 	t.Run("Vault GetIndividualSecret", func(t *testing.T) {
 		secret, err := backend.GetIndividualSecret("kv/data/test", "hello", "", map[string]string{
 			types.VaultKVVersionAnnotation: "2",

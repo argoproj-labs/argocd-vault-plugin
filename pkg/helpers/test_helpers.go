@@ -105,7 +105,7 @@ func CreateTestVault(t *testing.T) (net.Listener, *api.Client, string) {
 	return ln, client, rootToken
 }
 
-// CreateTestAppRoleVault initializes a new test vault with AppRole and Kv v2
+// CreateTestAppRoleVault initializes a new test vault with AppRole, database and Kv v2
 func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 	t.Helper()
 
@@ -136,6 +136,10 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 		},
 	})
 
+	client.Sys().Mount("database", &api.MountInput{
+		Type: "database",
+	})
+
 	if err := client.Sys().EnableAuthWithOptions("approle", &api.EnableAuthOptions{
 		Type: "approle",
 	}); err != nil {
@@ -154,10 +158,16 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 		t.Fatal(err)
 	}
 
+	// Create Policy for database
+	err = client.Sys().PutPolicy("approle-database", "path \"database/*\" { capabilities = [\"read\",\"list\"] }")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	_, err = client.Logical().Write("auth/approle/role/role1", map[string]interface{}{
 		"bind_secret_id": "true",
 		"period":         "300",
-		"policies":       "approle-secret, approle-kv",
+		"policies":       "approle-secret, approle-kv, approle-database",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -267,6 +277,33 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 
 	_, err = client.Logical().Write("secret/yaml", map[string]interface{}{
 		"secret": "---\nkey1: secret1\nkey2: secret2\nkey3: secret3",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("database/config/testing", map[string]interface{}{
+		"plugin_name": "postgresql-database-plugin",
+		"allowed_roles": "testing*",
+		"connection_url": "TODO",
+		"username": "TODO",
+		"password": "TODO",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("database/static-roles/testing", map[string]interface{}{
+		"db_name": "testing",
+		"username": "testing",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("database/roles/testing1", map[string]interface{}{
+		"db_name": "testing",
+		"creation_statements": "TODO",
 	})
 	if err != nil {
 		t.Fatal(err)

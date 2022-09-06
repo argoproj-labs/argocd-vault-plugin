@@ -3,6 +3,7 @@ package backends
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
@@ -69,6 +70,19 @@ func (v *Vault) GetSecrets(path string, version string, annotations map[string]s
 			return nil, fmt.Errorf("Could not find secrets at path %s", path)
 		}
 		return nil, fmt.Errorf("Could not find secrets at path %s with version %s", path, version)
+	}
+
+	// Special case when the path is `database`
+	if strings.HasPrefix(path, "database") {
+		if _, ok := secret.Data["username"]; ok {
+			if _, ok := secret.Data["password"]; ok {
+				return map[string]interface{}{
+					"username": secret.Data["username"],
+					"password": secret.Data["password"],
+				}, nil
+			}
+		}
+		return nil, errors.New("Could not get credentials from Vault, check that database is the correct engine")
 	}
 
 	if kvVersion == "2" {
