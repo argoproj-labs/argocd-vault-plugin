@@ -212,8 +212,6 @@ spec:
             name: var-files
           - mountPath: /home/argocd/cmp-server/plugins
             name: plugins
-          - mountPath: /tmp
-            name: tmp
           
           # Register plugins into sidecar
           - mountPath: /home/argocd/cmp-server/config/plugin.yaml
@@ -226,6 +224,63 @@ spec:
             mountPath: /usr/local/bin/argocd-vault-plugin
 ```
 
+#### Example Deployment using argocd helm chart
+The following example creates init container and sidecars via argocd helm chart.  This requires the `cmp-plugin` configmap be created beforehand.
+
+```
+helm repo add argo https://argoproj.github.io/argo-helm
+helm install my-release argo/argo-cd -f values.yaml
+```
+
+values.yaml
+```yaml
+global:
+  image:
+    tag: v2.4.2
+repoServer:
+  initContainers:
+    - name: download-tools
+      image: registry.access.redhat.com/ubi8
+      env:
+      - name: AVP_VERSION
+        value: 1.11.0
+      command: [sh, -c]
+      args:
+        - >-
+          curl -L https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v$(AVP_VERSION)/argocd-vault-plugin_$(AVP_VERSION)_linux_amd64 -o argocd-vault-plugin &&
+          chmod +x argocd-vault-plugin &&
+          mv argocd-vault-plugin /custom-tools/
+      volumeMounts:
+        - mountPath: /custom-tools
+          name: custom-tools
+  volumes:
+  - name: cmp-plugin
+    configMap: 
+      name: cmp-plugin
+  - name: custom-tools
+    emptyDir: {}
+  extraContainers:
+    - name: avp
+      command: [/var/run/argocd/argocd-cmp-server]
+      image: quay.io/argoproj/argocd:v2.4.2
+      env:
+      - name: AVP_TYPE
+        value: awssecretsmanager
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      volumeMounts:
+        - mountPath: /var/run/argocd
+          name: var-files
+        - mountPath: /home/argocd/cmp-server/plugins
+          name: plugins
+        - mountPath: /home/argocd/cmp-server/config/plugin.yaml
+          subPath: avp.yaml
+          name: cmp-plugin
+        - name: custom-tools
+          subPath: argocd-vault-plugin
+          mountPath: /usr/local/bin/argocd-vault-plugin
+```
 ### Custom Image and configuration via sidecar
 Define the plugin in a ConfigMap that will be mounted in the sidecar container
 ```yaml
@@ -310,8 +365,6 @@ spec:
             name: var-files
           - mountPath: /home/argocd/cmp-server/plugins
             name: plugins
-          - mountPath: /tmp
-            name: tmp
           
           # Register plugins into sidecar
           - mountPath: /home/argocd/cmp-server/config/plugin.yaml
