@@ -25,6 +25,7 @@ import (
 	awssm "github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/hashicorp/vault/api"
 	"github.com/spf13/viper"
+	thycoticsecretserver "github.com/thycotic/tss-sdk-go/server"
 )
 
 // Options options that can be passed to a Config struct
@@ -159,6 +160,25 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 			basicClient := keyvault.New()
 			basicClient.Authorizer = authorizer
 			backend = backends.NewAzureKeyVaultBackend(basicClient)
+		}
+	case types.ThycoticSecretServerbackend:
+		{
+			// Get instance URL from Thycotic specific env variable
+			if !v.IsSet(types.EnvAvpThycoticURL) {
+				return nil, fmt.Errorf("%s required for Thycotic Secret Server", types.EnvAvpThycoticURL)
+			}
+
+			tss, _ := thycoticsecretserver.New(thycoticsecretserver.Configuration{
+				Credentials: thycoticsecretserver.UserCredential{
+					Username: v.GetString(types.EnvAvpThycoticUser),
+					Password: v.GetString(types.EnvAvpThycoticPassword),
+				},
+				ServerURL: v.GetString(types.EnvAvpThycoticURL),
+			})
+			if err != nil {
+				return nil, err
+			}
+			backend = backends.NewThycoticSecretServerBackend(tss)
 		}
 	default:
 		return nil, errors.New("Must provide a supported Vault Type")
