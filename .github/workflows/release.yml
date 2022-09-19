@@ -24,7 +24,7 @@ jobs:
           go-version: 1.17.8
 
       - name: Install git-chglog
-        run: GO111MODULE=off go get github.com/git-chglog/git-chglog/cmd/git-chglog
+        run: go get github.com/git-chglog/git-chglog/cmd/git-chglog
 
       - name: generate changelog
         run: |
