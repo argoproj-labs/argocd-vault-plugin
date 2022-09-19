@@ -121,6 +121,12 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				} else {
 					return nil, fmt.Errorf("%s for token authentication cannot be empty", api.EnvVaultToken)
 				}
+			case types.UserPass:
+				if v.IsSet(types.EnvAvpUsername) && v.IsSet(types.EnvAvpPassword) {
+					auth = vault.NewUserPassAuth(v.GetString(types.EnvAvpUsername), v.GetString(types.EnvAvpPassword), v.GetString(types.EnvAvpMountPath))
+				} else {
+					return nil, fmt.Errorf("%s and %s for userpass authentication cannot be empty", types.EnvAvpUsername, types.EnvAvpPassword)
+				}
 			default:
 				return nil, fmt.Errorf("Must provide a supported Authentication Type, received %s", authType)
 			}
