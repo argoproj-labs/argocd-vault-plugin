@@ -81,6 +81,25 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "userpass",
+				"AVP_USERNAME":  "username",
+				"AVP_PASSWORD":  "password",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":       "vault",
+				"AVP_AUTH_TYPE":  "userpass",
+				"AVP_MOUNT_PATH": "mount_path",
+				"AVP_USERNAME":   "username",
+				"AVP_PASSWORD":   "password",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
 				"AVP_TYPE":             "ibmsecretsmanager",
 				"AVP_IBM_API_KEY":      "token",
 				"AVP_IBM_INSTANCE_URL": "http://ibm",
@@ -328,6 +347,29 @@ func TestNewConfigMissingParameter(t *testing.T) {
 			map[string]interface{}{
 				"AVP_TYPE":      "vault",
 				"AVP_AUTH_TYPE": "k8s",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "userpass",
+				"AVP_USERNAME":  "username",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "userpass",
+				"AVP_PASSWORD":  "password",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "userpass",
 			},
 			"*backends.Vault",
 		},
