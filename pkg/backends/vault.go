@@ -73,7 +73,10 @@ func (v *Vault) GetSecrets(path string, version string, annotations map[string]s
 
 	if kvVersion == "2" {
 		if _, ok := secret.Data["data"]; ok {
-			return secret.Data["data"].(map[string]interface{}), nil
+			if secret.Data["data"] != nil {
+				return secret.Data["data"].(map[string]interface{}), nil
+			}
+			return nil, fmt.Errorf("The secret version %s for Vault path %s is nil - is this version of the secret deleted?", version, path)
 		}
 		if len(secret.Data) == 0 {
 			return nil, fmt.Errorf("The Vault path: %s is empty - did you forget to include /data/ in the Vault path for kv-v2?", path)
