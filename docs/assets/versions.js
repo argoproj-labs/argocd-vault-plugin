@@ -25,6 +25,11 @@ setTimeout(function() {
   script.src = 'https://argocd-vault-plugin.readthedocs.io/_/api/v2/footer_html/?'+
       'callback=' + callbackName + '&project=argocd-vault-plugin&page=&theme=mkdocs&format=jsonp&docroot=docs&source_suffix=.md&version=' + (window['READTHEDOCS_DATA'] || { version: 'latest' }).version;
   document.getElementsByTagName('head')[0].appendChild(script);
+  
+  // Delete the injected footer (version dropdown) at the bottom of the page, while leaving the the version dropdown at the top
+  var bottomFooter = document.querySelectorAll("div.injected")[1]
+  bottomFooter.remove(); // Removes the div with the 'div-02' id
+
 }, 0);
 
 // VERSION WARNINGS
