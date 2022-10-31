@@ -398,6 +398,15 @@ These are the parameters for Azure:
 AVP_TYPE: azurekeyvault
 ```
 
+##### Azure Workload Identity
+Refer to the [Use an Azure AD workload identity on Azure Kubernetes Service (AKS)](https://learn.microsoft.com/en-us/azure/aks/workload-identity-overview) in the Azure AKS documentation.
+
+These are the parameters for Azure:
+```
+AVP_TYPE: azurekeyvault
+AVP_AUTH_TYPE: workloadIdentity
+```
+
 ##### Examples
 
 ###### Path Annotation

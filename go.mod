@@ -14,7 +14,7 @@ require (
 	cloud.google.com/go/secretmanager v1.4.0
 	github.com/1Password/connect-sdk-go v1.4.0
 	github.com/Azure/azure-sdk-for-go v65.0.0+incompatible
-	github.com/Azure/go-autorest/autorest v0.11.27 // indirect
+	github.com/Azure/go-autorest/autorest v0.11.27
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11 // indirect
 	github.com/Azure/go-autorest/autorest/azure/cli v0.4.5 // indirect
 	github.com/IBM/go-sdk-core/v5 v5.10.1
@@ -26,7 +26,7 @@ require (
 	github.com/go-openapi/errors v0.20.2 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
-	github.com/golang-jwt/jwt/v4 v4.4.1 // indirect
+	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.4.0
 	github.com/hashicorp/go-hclog v1.2.0
@@ -52,6 +52,8 @@ require (
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
 	sigs.k8s.io/yaml v1.3.0
 )
+
+require github.com/AzureAD/microsoft-authentication-library-for-go v0.7.0
 
 require (
 	cloud.google.com/go v0.102.0 // indirect
@@ -159,6 +161,7 @@ require (
 	github.com/joyent/triton-go v1.7.1-0.20200416154420-6801d15b779f // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/keybase/go-crypto v0.0.0-20190403132359-d65b6b94177f // indirect
+	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lib/pq v1.10.6 // indirect
 	github.com/linode/linodego v0.7.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect

@@ -49,6 +49,7 @@ const (
 	IBMIAMCredentialsType     = "iam_credentials"
 	IBMImportedCertType       = "imported_cert"
 	IBMPublicCertType         = "public_cert"
+	WorkloadIdentityAuth      = "workloadidentity"
 
 	// Supported annotations
 	AVPPathAnnotation          = "avp.kubernetes.io/path"
