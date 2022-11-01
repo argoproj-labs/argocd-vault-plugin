@@ -192,8 +192,6 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 			switch authType {
                         case types.WorkloadIdentityAuth:
 				basicClient.Authorizer = autorest.NewBearerAuthorizerCallback(nil, backends.ClientAssertionBearerAuthorizerCallback)
-				// TODO error handling
-				// TODO add tests
 			default:
 				authorizer, err := kvauth.NewAuthorizerFromEnvironment()
 				if err != nil {

@@ -407,6 +407,14 @@ AVP_TYPE: azurekeyvault
 AVP_AUTH_TYPE: workloadIdentity
 ```
 
+For Workload Identity, the following environment variables must be present. The Workload Identity webhook will inject these automatically.
+```
+AZURE_AUTHORITY_HOST
+AZURE_CLIENT_ID
+AZURE_FEDERATED_TOKEN_FILE
+AZURE_TENANT_ID
+```
+
 ##### Examples
 
 ###### Path Annotation

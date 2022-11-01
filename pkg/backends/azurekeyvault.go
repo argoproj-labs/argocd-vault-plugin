@@ -130,6 +130,7 @@ func ClientAssertionBearerAuthorizerCallback(tenantID, resource string) (*autore
 	authorityHost := os.Getenv("AZURE_AUTHORITY_HOST")
 
 	utils.VerboseToStdErr("Azure Client ID %v", clientID)
+	utils.VerboseToStdErr("Azure Tenant ID %v", tenantID)
 	utils.VerboseToStdErr("Azure TokenFilePath %v", tokenFilePath)
 	utils.VerboseToStdErr("Azure authorityHost %v", authorityHost)
 	// generate a token using the msal confidential client
@@ -138,14 +139,13 @@ func ClientAssertionBearerAuthorizerCallback(tenantID, resource string) (*autore
 	cred := confidential.NewCredFromAssertionCallback(func(context.Context, confidential.AssertionRequestOptions) (string, error) {
 		return ReadJWTFromFS(tokenFilePath)
 	})
-	utils.VerboseToStdErr("cred %v", cred)
+
 	// create the confidential client to request an AAD token
 	confidentialClientApp, err := confidential.New(
 		clientID,
 		cred,
 		confidential.WithAuthority(fmt.Sprintf("%s%s/oauth2/token", authorityHost, tenantID)))
 	if err != nil {
-		utils.VerboseToStdErr("Error in confidental new")
 		return nil, err
 	}
 
@@ -155,13 +155,11 @@ func ClientAssertionBearerAuthorizerCallback(tenantID, resource string) (*autore
 	if !strings.HasSuffix(resource, ".default") {
 		resource += "/.default"
 	}
-	utils.VerboseToStdErr("resource %v", resource)
 
 	result, err := confidentialClientApp.AcquireTokenByCredential(context.Background(), []string{resource})
 	if err != nil {
 		return nil, err
 	}
-	utils.VerboseToStdErr("access token %v", result.AccessToken)
 
 	return autorest.NewBearerAuthorizer(authResult{
 		accessToken:    result.AccessToken,

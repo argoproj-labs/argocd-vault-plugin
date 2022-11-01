@@ -140,7 +140,7 @@ configManagementPlugins: |
   - name: argocd-vault-plugin-helm
     generate:
       command: ["bash", "-c"]
-      args: ['helm template "$ARGOCD_APP_NAME" -f <(echo "$HELM_VALUES") . | argocd-vault-plugin generate -']
+      args: ['helm template "$ARGOCD_APP_NAME" -f <(echo "$ARGOCD_ENV_HELM_VALUES") . | argocd-vault-plugin generate -']
 ```
 For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [add a sidecar to run it](../installation#initcontainer-and-configuration-via-sidecar):
 ```yaml
