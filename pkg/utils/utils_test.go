@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
-	"github.com/IBM/argocd-vault-plugin/pkg/utils"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/helpers"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 )
 
 func writeToken(token string) error {

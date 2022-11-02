@@ -1,7 +1,10 @@
 # Using PATH_PREFIX environment variable
 # Set PATH_PREFIX enviroment variable to secret/data/database
-# The Vault path where the username and password key is expecte will be
+# The Vault path where the username and password key is expected will be
 # secret/data/database/secret
+
+# Note: This no longer works in version >= 1.x. Use the path annotation or inline-path placeholder instead
+# https://argocd-vault-plugin.readthedocs.io/en/stable/0x-1x/#removed-path_prefix
 kind: Secret
 apiVersion: v1
 metadata:

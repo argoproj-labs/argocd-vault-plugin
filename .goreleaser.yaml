@@ -5,9 +5,9 @@ builds:
     flags: "-trimpath"
     ldflags: >-
       -s -w
-      -X "github.com/IBM/argocd-vault-plugin/version.Version={{.Tag}}"
-      -X "github.com/IBM/argocd-vault-plugin/version.BuildDate={{.Date}}"
-      -X "github.com/IBM/argocd-vault-plugin/version.CommitSHA={{.Commit}}"
+      -X "github.com/argoproj-labs/argocd-vault-plugin/version.Version={{.Tag}}"
+      -X "github.com/argoproj-labs/argocd-vault-plugin/version.BuildDate={{.Date}}"
+      -X "github.com/argoproj-labs/argocd-vault-plugin/version.CommitSHA={{.Commit}}"
     env:
       - "CGO_ENABLED=0"
     goos:
@@ -16,6 +16,10 @@ builds:
     goarch:
       - amd64
       - arm64
+      - s390x
+    ignore:
+      - goos: darwin
+        goarch: s390x
     tags:
       - netgo
       - static_build

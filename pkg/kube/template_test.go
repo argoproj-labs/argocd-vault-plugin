@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
-	"github.com/IBM/argocd-vault-plugin/pkg/types"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/helpers"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )

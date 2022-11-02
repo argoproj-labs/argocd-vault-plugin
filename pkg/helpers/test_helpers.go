@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"fmt"
 	"net"
 	"strconv"
 	"testing"
@@ -9,9 +10,16 @@ import (
 	kv "github.com/hashicorp/vault-plugin-secrets-kv"
 	"github.com/hashicorp/vault/api"
 	credAppRole "github.com/hashicorp/vault/builtin/credential/approle"
+	credUserPass "github.com/hashicorp/vault/builtin/credential/userpass"
 	"github.com/hashicorp/vault/http"
 	"github.com/hashicorp/vault/sdk/logical"
 	"github.com/hashicorp/vault/vault"
+)
+
+// Test Constants
+const (
+	authUserPassUsername = "test-username"
+	authUserPassPassword = "test-password"
 )
 
 // CreateTestVault initializes a test vault with kv v2
@@ -65,13 +73,13 @@ func CreateTestVault(t *testing.T) (net.Listener, *api.Client, string) {
 	// Setup required secrets, policies, etc.
 	_, err = client.Logical().Write("secret/ibm/arbitrary/groups/1", map[string]interface{}{
 		"secrets": []map[string]interface{}{
-			map[string]interface{}{
+			{
 				"id": "1",
 			},
-			map[string]interface{}{
+			{
 				"id": "2",
 			},
-			map[string]interface{}{
+			{
 				"id": "3",
 			},
 		},
@@ -199,6 +207,32 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 		t.Fatal(err)
 	}
 
+	_, err = client.Logical().Write("secret/json", map[string]interface{}{
+		"data": map[string]interface{}{
+			"service": map[string]interface{}{
+				"enableTLS": true,
+				"ports":     []int{80, 8080},
+			},
+			"deployment": map[string]interface{}{
+				"replicas": 2,
+				"image": map[string]interface{}{
+					"name": "json-test",
+					"tag":  "latest",
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/jsonstring", map[string]interface{}{
+		"secret": "{\"credentials\":{\"user\":\"test-user\",\"pass\":\"test-password\"}}",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	_, err = client.Logical().Write("kv/data/test", map[string]interface{}{
 		"data": map[string]interface{}{
 			"hello": "world",
@@ -227,6 +261,20 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 		"data": map[string]interface{}{
 			"secret": "version2",
 		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/base64", map[string]interface{}{
+		"encoded_secret": "ewogICJrZXkxIjogInNlY3JldDEiLAogICJrZXkyIjogInNlY3JldDIiLAogICJrZXkzIjogInNlY3JldDMiCn0K",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/yaml", map[string]interface{}{
+		"secret": "---\nkey1: secret1\nkey2: secret2\nkey3: secret3",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -298,11 +346,173 @@ func CreateTestAuthVault(t *testing.T) *vault.TestCluster {
 	return cluster
 }
 
+// CreateTestUserPassVault initializes a new test vault with UserPass and Kv v2
+func CreateTestUserPassVault(t *testing.T) (*vault.TestCluster, string, string) {
+	t.Helper()
+
+	coreConfig := &vault.CoreConfig{
+		LogicalBackends: map[string]logical.Factory{
+			"kv": kv.Factory,
+		},
+		CredentialBackends: map[string]logical.Factory{
+			"userpass": credUserPass.Factory,
+		},
+	}
+
+	cluster := vault.NewTestCluster(t, coreConfig, &vault.TestClusterOptions{
+		HandlerFunc: http.Handler,
+		Logger:      hclog.NewNullLogger(),
+	})
+
+	cluster.Start()
+
+	vault.TestWaitActive(t, cluster.Cores[0].Core)
+
+	client := cluster.Cores[0].Client
+
+	// Enable kv version-2 Secret Engine at path=kv
+	client.Sys().Mount("kv", &api.MountInput{
+		Type: "kv",
+		Options: map[string]string{
+			"version": "2",
+		},
+	})
+
+	// Enable userpass Auth method at path=userpass
+	if err := client.Sys().EnableAuthWithOptions("userpass", &api.EnableAuthOptions{
+		Type: "userpass",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create Policy for secret/foo
+	if err := client.Sys().PutPolicy("userpass-secret", "path \"secret/*\" { capabilities = [\"read\",\"list\"] }"); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create Policy for kv
+	if err := client.Sys().PutPolicy("userpass-kv", "path \"kv/*\" { capabilities = [\"read\",\"list\"] }"); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create User with policies & password
+	if _, err := client.Logical().Write(fmt.Sprintf("auth/userpass/users/%s", authUserPassUsername), map[string]interface{}{
+		"period":   "300",
+		"policies": "userpass-secret, userpass-kv",
+		"password": authUserPassPassword,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create kv data
+	if _, err := client.Logical().Write("secret/testing", map[string]interface{}{
+		"name":              "test-name",
+		"namespace":         "test-namespace",
+		"version":           "1.0",
+		"replicas":          "2",
+		"tag":               "1.0",
+		"secret-var-value":  "dGVzdC1wYXNzd29yZA==",
+		"secret-var-value2": "dGVzdC1wYXNzd29yZDI=",
+		"secret-num":        "MQ==",
+		"secret-var-clear":  "test-password",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := client.Logical().Write("kv/data/testing", map[string]interface{}{
+		"data": map[string]interface{}{
+			"name":        "test-kv-name",
+			"namespace":   "test-kv-namespace",
+			"version":     "1.2",
+			"replicas":    "3",
+			"tag":         "1.1",
+			"target-port": 80,
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := client.Logical().Write("secret/foo", map[string]interface{}{
+		"secret": "bar",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := client.Logical().Write("secret/json", map[string]interface{}{
+		"data": map[string]interface{}{
+			"service": map[string]interface{}{
+				"enableTLS": true,
+				"ports":     []int{80, 8080},
+			},
+			"deployment": map[string]interface{}{
+				"replicas": 2,
+				"image": map[string]interface{}{
+					"name": "json-test",
+					"tag":  "latest",
+				},
+			},
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := client.Logical().Write("secret/jsonstring", map[string]interface{}{
+		"secret": "{\"credentials\":{\"user\":\"test-user\",\"pass\":\"test-password\"}}",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := client.Logical().Write("kv/data/test", map[string]interface{}{
+		"data": map[string]interface{}{
+			"hello": "world",
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := client.Logical().Write("secret/bad_test", map[string]interface{}{
+		"hello": "world",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := client.Logical().Write("kv/data/versioned", map[string]interface{}{
+		"data": map[string]interface{}{
+			"secret": "version1",
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := client.Logical().Write("kv/data/versioned", map[string]interface{}{
+		"data": map[string]interface{}{
+			"secret": "version2",
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := client.Logical().Write("secret/base64", map[string]interface{}{
+		"encoded_secret": "ewogICJrZXkxIjogInNlY3JldDEiLAogICJrZXkyIjogInNlY3JldDIiLAogICJrZXkzIjogInNlY3JldDMiCn0K",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := client.Logical().Write("secret/yaml", map[string]interface{}{
+		"secret": "---\nkey1: secret1\nkey2: secret2\nkey3: secret3",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	return cluster, authUserPassUsername, authUserPassPassword
+}
+
 // MockVault is used to mock out a generic SM Backend
 // It's useful for testing replacement behavior
 type MockVault struct {
-	GetSecretsCalled bool
-	Data             []map[string]interface{}
+	GetSecretsCalled          bool
+	GetIndividualSecretCalled bool
+	Data                      []map[string]interface{}
 }
 
 func (v *MockVault) Login() error {
@@ -321,4 +531,15 @@ func (v *MockVault) GetSecrets(path string, version string, annotations map[stri
 	}
 	num, _ := strconv.ParseInt(version, 10, 0)
 	return v.Data[num-1], nil
+}
+func (v *MockVault) GetIndividualSecret(path, secret, version string, annotations map[string]string) (interface{}, error) {
+	v.GetIndividualSecretCalled = true
+	if len(v.Data) == 0 {
+		return nil, nil
+	}
+	if version == "" {
+		return v.Data[len(v.Data)-1][secret], nil
+	}
+	num, _ := strconv.ParseInt(version, 10, 0)
+	return v.Data[num-1][secret], nil
 }

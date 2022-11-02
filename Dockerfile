@@ -1,6 +1,7 @@
-FROM golang@sha256:a92abf53d0ac8dd292b432525c15ce627554546ebc4164d1d4149256998122ce
+# golang:1.17-alpine
+FROM golang@sha256:f4ece20984a30d1065b04653bf6781f51ab63421b4b8f011565de0401cfe58d7
 
-RUN apk add make
+RUN apk add make git
 
 ADD go.mod go.mod
 ADD go.sum go.sum

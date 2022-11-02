@@ -6,13 +6,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/utils"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"github.com/hashicorp/vault/api"
 )
 
 const (
-	defaultMountPath   = "auth/kubernetes"
-	serviceAccountFile = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+	kubernetesMountPath = "auth/kubernetes"
+	serviceAccountFile  = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 )
 
 // K8sAuth TODO
@@ -49,20 +49,23 @@ func (k *K8sAuth) Authenticate(vaultClient *api.Client) error {
 		"jwt":  token,
 	}
 
-	kubeAuthPath := defaultMountPath
+	kubeAuthPath := kubernetesMountPath
 	if k.MountPath != "" {
 		kubeAuthPath = k.MountPath
 	}
 
+	utils.VerboseToStdErr("Hashicorp Vault authenticating with Vault role %s using Kubernetes service account token %s read from %s", k.Role, serviceAccountFile, token)
 	data, err := vaultClient.Logical().Write(fmt.Sprintf("%s/login", kubeAuthPath), payload)
 	if err != nil {
 		return err
 	}
 
+	utils.VerboseToStdErr("Hashicorp Vault authentication response: %v", data)
+
 	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
 	err = utils.SetToken(vaultClient, data.Auth.ClientToken)
 	if err != nil {
-		print(err)
+		utils.VerboseToStdErr("Hashicorp Vault cannot cache token for future runs: %v", err)
 	}
 
 	return nil

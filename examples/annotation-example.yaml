@@ -1,5 +1,6 @@
 # Using avp.kubernetes.io/path  Annotation
 # We are setting avp.kubernetes.io/path  to tell the plugin exactly where to find data
+# https://argocd-vault-plugin.readthedocs.io/en/stable/howitworks/#generic-placeholders
 kind: Secret
 apiVersion: v1
 metadata:
