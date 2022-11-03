@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/types"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	yaml "sigs.k8s.io/yaml"
 )
@@ -37,6 +38,8 @@ func NewTemplate(template unstructured.Unstructured, backend types.Backend) (*Te
 		if err != nil {
 			return nil, err
 		}
+
+		utils.VerboseToStdErr("calling GetSecrets to get all secrets from backend because %s is set to %s", types.AVPPathAnnotation, path)
 	}
 
 	return &Template{

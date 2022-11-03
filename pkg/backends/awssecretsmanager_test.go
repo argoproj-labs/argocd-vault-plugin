@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/backends"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
 )
@@ -45,6 +45,19 @@ func TestAWSSecretManagerGetSecrets(t *testing.T) {
 
 		if !reflect.DeepEqual(expected, data) {
 			t.Errorf("expected: %s, got: %s.", expected, data)
+		}
+	})
+
+	t.Run("AWS GetIndividualSecret", func(t *testing.T) {
+		secret, err := sm.GetIndividualSecret("test", "test-secret", "previous", map[string]string{})
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
+
+		expected := "previous-value"
+
+		if !reflect.DeepEqual(expected, secret) {
+			t.Errorf("expected: %s, got: %s.", expected, secret)
 		}
 	})
 

@@ -20,8 +20,10 @@ Steps to reproduce the behavior:
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**Screenshots**
+**Screenshots/Verbose output**
 If applicable, add screenshots to help explain your problem.
+
+If you've tried running `argocd-vault-plugin generate` with `--verbose-sensitive-output` to help debug, please include that output here after redacting any secrets.
 
 **Additional context**
 Add any other context about the problem here.

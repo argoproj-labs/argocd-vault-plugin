@@ -3,7 +3,7 @@ BINARY=argocd-vault-plugin
 default: build
 
 quality:
-	go vet github.com/IBM/argocd-vault-plugin
+	go vet github.com/argoproj-labs/argocd-vault-plugin
 	go test -v -coverprofile cover.out ./...
 
 build:

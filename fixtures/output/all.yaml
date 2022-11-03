@@ -95,6 +95,73 @@ metadata:
   name: my-app
   namespace: default
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    avp.kubernetes.io/kv-version: "1"
+    avp.kubernetes.io/path: secret/json
+  name: modifiers-test
+  namespace: modifiers-test
+spec:
+  minReadySeconds: 5
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: modifiers-test
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: modifiers-test
+    spec:
+      containers:
+      - image: foo.com/json-test:latest
+        imagePullPolicy: Always
+        name: modifiers-test
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    avp.kubernetes.io/kv-version: "1"
+    avp.kubernetes.io/path: secret/json
+  labels:
+    app: modifiers-test
+  name: modifiers-test
+  namespace: modifiers-test
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: modifiers-test
+  type: NodePort
+---
+apiVersion: v1
+data:
+  ESECRET: c2VjcmV0Mg==
+  PASSWORD: dGVzdC1wYXNzd29yZA==
+  SHA256SUM: ZmNkZTJiMmVkYmE1NmJmNDA4NjAxZmI3MjFmZTliNWMzMzhkMTBlZTQyOWVhMDRmYWU1NTExYjY4ZmJmOGZiOQ==
+  USER: dGVzdC11c2Vy
+  YAML: c2VjcmV0MQ==
+kind: Secret
+metadata:
+  annotations:
+    avp.kubernetes.io/kv-version: "1"
+  name: modifiers-test
+  namespace: modifiers-test
+type: Opaque
+---
 apiVersion: v1
 data:
   SECRET_NUM: MQ==

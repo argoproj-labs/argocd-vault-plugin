@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -31,10 +32,14 @@ func NewClient() (*Client, error) {
 	}, nil
 }
 
-// ReadSecret reads the specified Secret from the `argocd` namespace
+// ReadSecret reads the specified Secret from the defined namespace, otherwise defaults to `argocd`
 // and returns a YAML []byte containing its data, decoded from base64
 func (c *Client) ReadSecret(name string) ([]byte, error) {
-	s, err := c.client.CoreV1().Secrets("argocd").Get(context.TODO(), name, metav1.GetOptions{})
+	secretNamespace, secretName := secretNamespaceName(name)
+
+	utils.VerboseToStdErr("parsed secret name as %s from namespace %s", secretName, secretNamespace)
+
+	s, err := c.client.CoreV1().Secrets(secretNamespace).Get(context.TODO(), secretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

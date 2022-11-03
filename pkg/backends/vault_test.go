@@ -4,10 +4,10 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/auth/vault"
-	"github.com/IBM/argocd-vault-plugin/pkg/backends"
-	"github.com/IBM/argocd-vault-plugin/pkg/helpers"
-	"github.com/IBM/argocd-vault-plugin/pkg/types"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/auth/vault"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/helpers"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 )
 
 func TestVaultLogin(t *testing.T) {
@@ -19,7 +19,7 @@ func TestVaultLogin(t *testing.T) {
 	}
 
 	t.Run("will authenticate with approle", func(t *testing.T) {
-		backend.AuthType = vault.NewAppRoleAuth(roleID, secretID)
+		backend.AuthType = vault.NewAppRoleAuth(roleID, secretID, "")
 
 		err := backend.Login()
 		if err != nil {
@@ -32,7 +32,7 @@ func TestVaultGetSecrets(t *testing.T) {
 	cluster, roleID, secretID := helpers.CreateTestAppRoleVault(t)
 	defer cluster.Cleanup()
 
-	auth := vault.NewAppRoleAuth(roleID, secretID)
+	auth := vault.NewAppRoleAuth(roleID, secretID, "")
 	backend := backends.NewVaultBackend(auth, cluster.Cores[0].Client, "")
 
 	t.Run("will get data from vault with kv1", func(t *testing.T) {
@@ -68,6 +68,21 @@ func TestVaultGetSecrets(t *testing.T) {
 
 		if !reflect.DeepEqual(data, expected) {
 			t.Errorf("expected: %s, got: %s.", expected, data)
+		}
+	})
+
+	t.Run("Vault GetIndividualSecret", func(t *testing.T) {
+		secret, err := backend.GetIndividualSecret("kv/data/test", "hello", "", map[string]string{
+			types.VaultKVVersionAnnotation: "2",
+		})
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
+
+		expected := "world"
+
+		if !reflect.DeepEqual(expected, secret) {
+			t.Errorf("expected: %s, got: %s", expected, secret)
 		}
 	})
 

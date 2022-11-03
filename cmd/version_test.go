@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/IBM/argocd-vault-plugin/version"
+	"github.com/argoproj-labs/argocd-vault-plugin/version"
 )
 
 func TestVersion(t *testing.T) {

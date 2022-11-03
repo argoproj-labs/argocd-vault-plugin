@@ -6,9 +6,10 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"testing"
 
-	"github.com/IBM/argocd-vault-plugin/pkg/config"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/config"
 	"github.com/spf13/viper"
 )
 
@@ -44,11 +45,11 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":            "vault",
-				"AVP_AUTH_TYPE":       "k8s",
-				"AVP_K8S_MOUNT_POINT": "mount_point",
-				"AVP_K8S_ROLE":        "role",
-				"AVP_K8S_TOKEN_PATH":  "toke_path",
+				"AVP_TYPE":           "vault",
+				"AVP_AUTH_TYPE":      "k8s",
+				"AVP_K8S_MOUNT_PATH": "mount_point",
+				"AVP_K8S_ROLE":       "role",
+				"AVP_K8S_TOKEN_PATH": "toke_path",
 			},
 			"*backends.Vault",
 		},
@@ -62,10 +63,38 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":            "vault",
-				"AVP_AUTH_TYPE":       "k8s",
-				"AVP_K8S_MOUNT_POINT": "mount_point",
-				"AVP_K8S_ROLE":        "role",
+				"AVP_TYPE":           "vault",
+				"AVP_AUTH_TYPE":      "k8s",
+				"AVP_K8S_MOUNT_PATH": "mount_point",
+				"AVP_K8S_ROLE":       "role",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":       "vault",
+				"AVP_AUTH_TYPE":  "k8s",
+				"AVP_MOUNT_PATH": "mount_point",
+				"AVP_K8S_ROLE":   "role",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "userpass",
+				"AVP_USERNAME":  "username",
+				"AVP_PASSWORD":  "password",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":       "vault",
+				"AVP_AUTH_TYPE":  "userpass",
+				"AVP_MOUNT_PATH": "mount_path",
+				"AVP_USERNAME":   "username",
+				"AVP_PASSWORD":   "password",
 			},
 			"*backends.Vault",
 		},
@@ -119,6 +148,60 @@ func TestNewConfig(t *testing.T) {
 			},
 			"*backends.AzureKeyVault",
 		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":                   "yandexcloudlockbox",
+				"AVP_YCL_KEY_ID":             "test",
+				"AVP_YCL_SERVICE_ACCOUNT_ID": "test",
+				"AVP_YCL_PRIVATE_KEY": `-----BEGIN RSA PRIVATE KEY-----
+MIICXQIBAAKBgQCIwbOQ4mB4LlFKNvvkot8qnKoffHLxVu2+DNpKC3WiPbof23bf
+eHcFTj14/h3HP75dxH5GIop2C8HQzyGzScIEHMxqOpwgu8+tmHbsCAdWkbC03wQ0
+1++nHmI6kAUx0mFDAXGovyDiR132iZ5lX2hEJ2Nd2g67SHV140sB6T0vRQIDAQAB
+AoGASx2B4NnGvRxLwCTVVK71PzWP5/12MQNbUGFE4RjMQxH+kpL8ByDm1v4zm6qQ
+dqmXiW9tIF7GiLJKgcPTseOYcdQkGlST1MgYAqtxMkGYYCP94cGna0qy4lIFBJee
+B/dKY56UiIEtJbMvN/T9LFBx1Kw5jT4R5lhdysuabsqAt+ECQQDYHmfMee/Dzw+/
+G4xlJfIfcQ4648/zf53hlA5MwCBbm6wv2KLkWglzSl9Vy54f/UM4VtIfywjmTkj+
+C2b17Uq9AkEAof4tJwllt4AwIjIp1KEiBTY6z0Whoe9SO5RqFmBUkVTeiIuUxgGE
++NLCY+0NzG2FNglT96ik/Xxi+/uiy4wDKQJBAIQ9TpwyfIBe4a65R5XYuyd8AQ4N
+uX+wNcYC1yElamdDgP+h2kJJyYCPIHiZ5/6A9LGzhk1H6gEqI8W26mBOuy0CQEcl
+y88JYZNmyb07KwQogTioyMugWY01/3gLh0ysonfyPoraQ01z/WMLrjUVOKpAr/E7
+x5VOjKiIqTDjJG0h4YECQQDR7tTAXzccGQmHhmN72mDB5LfWi8uSADT4gsimY82m
+fDGt+yaf3RaZbVwHSVLzxiXGsu1WQJde3uJeNh5c6z+5
+-----END RSA PRIVATE KEY-----`,
+			},
+			"*backends.YandexCloudLockbox",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE": "sops",
+			},
+			"*backends.LocalSecretManager",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":         "1passwordconnect",
+				"OP_CONNECT_TOKEN": "token",
+				"OP_CONNECT_HOST":  "opconnect.somedomain.com",
+			},
+			"*backends.OnePasswordConnect",
+		},
+		{
+			map[string]interface{}{
+				"ARGOCD_ENV_AVP_TYPE":         "vault",
+				"ARGOCD_ENV_AVP_AUTH_TYPE":    "github",
+				"ARGOCD_ENV_AVP_GITHUB_TOKEN": "token",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"ARGOCD_ENV_AVP_TYPE":         "vault",
+				"AVP_TYPE":                    "not-valid-type",
+				"ARGOCD_ENV_AVP_AUTH_TYPE":    "github",
+				"ARGOCD_ENV_AVP_GITHUB_TOKEN": "token",
+			},
+			"*backends.Vault",
+		},
 	}
 	for _, tc := range testCases {
 		for k, v := range tc.environment {
@@ -143,7 +226,7 @@ func TestNewConfig(t *testing.T) {
 func TestNewConfigNoType(t *testing.T) {
 	viper := viper.New()
 	_, err := config.New(viper, &config.Options{})
-	expectedError := "Must provide a supported Vault Type"
+	expectedError := "Must provide a supported Vault Type, received "
 
 	if err.Error() != expectedError {
 		t.Errorf("expected error %s to be thrown, got %s", expectedError, err)
@@ -154,7 +237,7 @@ func TestNewConfigNoAuthType(t *testing.T) {
 	os.Setenv("AVP_TYPE", "vault")
 	viper := viper.New()
 	_, err := config.New(viper, &config.Options{})
-	expectedError := "Must provide a supported Authentication Type"
+	expectedError := "Must provide a supported Authentication Type, received "
 
 	if err.Error() != expectedError {
 		t.Errorf("expected error %s to be thrown, got %s", expectedError, err)
@@ -188,7 +271,7 @@ func TestNewConfigAwsRegionWarning(t *testing.T) {
 				"AWS_SECRET_ACCESS_KEY": "key",
 			},
 			"*backends.AWSSecretsManager",
-			"Warning: AWS_REGION env var not set, using AWS region us-east-2.\n",
+			"warning: AWS_REGION env var not set, using AWS region us-east-2\n",
 		},
 		{ // no warning is issued
 			map[string]interface{}{
@@ -206,10 +289,11 @@ func TestNewConfigAwsRegionWarning(t *testing.T) {
 		for k, v := range tc.environment {
 			os.Setenv(k, v.(string))
 		}
-		viper := viper.New()
+		viper.Set("verboseOutput", true)
 
+		v := viper.New()
 		output := captureOutput(func() {
-			config, err := config.New(viper, &config.Options{})
+			config, err := config.New(v, &config.Options{})
 			if err != nil {
 				t.Error(err)
 				t.FailNow()
@@ -220,7 +304,7 @@ func TestNewConfigAwsRegionWarning(t *testing.T) {
 			}
 		})
 
-		if output != tc.expectedLog {
+		if !strings.Contains(output, tc.expectedLog) {
 			t.Errorf("Unexpected warning issued. Expected: %s, actual: %s", tc.expectedLog, output)
 		}
 
@@ -268,6 +352,29 @@ func TestNewConfigMissingParameter(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "userpass",
+				"AVP_USERNAME":  "username",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "userpass",
+				"AVP_PASSWORD":  "password",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "userpass",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
 				"AVP_TYPE":        "ibmsecretsmanager",
 				"AVP_IAM_API_KEY": "token",
 			},
@@ -296,6 +403,21 @@ func TestNewConfigMissingParameter(t *testing.T) {
 			},
 			"*backends.AzureKeyVault",
 		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":                   "yandexcloudlockbox",
+				"AVP_YCL_KEY_ID":             "test",
+				"AVP_YCL_SERVICE_ACCOUNT_ID": "test",
+			},
+			"*backends.YandexCloudLockbox",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":         "1passwordconnect",
+				"OP_CONNECT_TOKEN": "token",
+			},
+			"*backends.OnePasswordConnect",
+		},
 	}
 	for _, tc := range testCases {
 		for k, v := range tc.environment {
@@ -310,7 +432,6 @@ func TestNewConfigMissingParameter(t *testing.T) {
 			os.Unsetenv(k)
 		}
 	}
-
 }
 
 func TestExternalConfig(t *testing.T) {
@@ -369,4 +490,44 @@ func TestExternalConfigAWS(t *testing.T) {
 	os.Unsetenv("AWS_ACCESS_KEY_ID")
 	os.Unsetenv("AWS_SECRET_ACCESS_KEY")
 	os.Unsetenv("AWS_REGION")
+}
+
+func TestExternalConfigSOPS(t *testing.T) {
+	const avpSOPSConfig = `AVP_TYPE: sops
+SOPS_AGE_KEY_FILE: age`
+
+	expectedSOPSEnvVars := map[string]string{
+		"AVP_TYPE":          "", // shouldn't be an env var
+		"SOPS_AGE_KEY_FILE": "age",
+	}
+
+	// Test setting SOPS_* env variables from external AVP config, note setting
+	// env vars is necessary to pass AVP config entries to SOPS
+	tmpFile, err := ioutil.TempFile("", "avpSOPSConfig.*.yaml")
+	if err != nil {
+		t.Errorf("Cannot create temporary file %s", err)
+	}
+
+	defer os.Remove(tmpFile.Name()) // clean up the file afterwards
+
+	if _, err = tmpFile.WriteString(avpSOPSConfig); err != nil {
+		t.Errorf("Failed to write to temporary file %s", err)
+	}
+
+	viper := viper.New()
+	if _, err = config.New(viper, &config.Options{ConfigPath: tmpFile.Name()}); err != nil {
+		t.Errorf("config.New returned error: %s", err)
+	}
+
+	if viper.GetString("AVP_TYPE") != "sops" {
+		t.Errorf("expected AVP_TYPE to be set from external config, was instead: %s", viper.GetString("AVP_TYPE"))
+	}
+
+	for envVar, expected := range expectedSOPSEnvVars {
+		if actual := os.Getenv(envVar); actual != expected {
+			t.Errorf("expected %s env to be %s, was instead: %s", envVar, expected, actual)
+		}
+	}
+
+	os.Unsetenv("SOPS_AGE_KEY_FILE")
 }

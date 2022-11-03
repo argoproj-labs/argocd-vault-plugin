@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/hashicorp/vault/api"
+	"github.com/spf13/viper"
 )
 
 // CheckExistingToken takes a VaultType interface and logs in, while writting the config file
@@ -105,4 +107,10 @@ func DefaultHttpClient() *http.Client {
 	}
 
 	return httpClient
+}
+
+func VerboseToStdErr(format string, message ...interface{}) {
+	if viper.GetBool("verboseOutput") {
+		log.Printf(fmt.Sprintf("%s\n", format), message...)
+	}
 }

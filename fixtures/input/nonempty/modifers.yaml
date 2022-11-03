@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    avp.kubernetes.io/path: secret/json
+    avp.kubernetes.io/kv-version: "1"
+  name: modifiers-test
+  namespace: modifiers-test
+spec:
+  selector:
+    matchLabels:
+      app: modifiers-test
+  replicas: <  data |jsonPath  {.deployment.replicas}|  jsonParse >
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  minReadySeconds: 5
+  revisionHistoryLimit: 10
+  template:
+    metadata:
+      labels:
+        app: modifiers-test
+    spec:
+      containers:
+      - name: modifiers-test
+        image: foo.com/<data | jsonPath {.deployment.image.name}>:<data | jsonPath {.deployment.image.tag}>
+        imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    avp.kubernetes.io/path: secret/json
+    avp.kubernetes.io/kv-version: "1"
+  name: modifiers-test
+  namespace: modifiers-test
+  labels:
+    app: modifiers-test
+spec:
+  selector:
+    app: modifiers-test
+  ports: >-
+    <data | jsonPath
+    {'['}
+    {range .service.ports[0:-1:1]}
+    {'{"protocol":"TCP",'}
+    {'"port":'}{@}
+    {',"targetPort":'}{@}
+    {'},'}
+    {end}
+    {'{"protocol":"TCP",'}
+    {'"port":'}{.service.ports[-1]}
+    {',"targetPort":'}{.service.ports[-1]}
+    {'}]'} | jsonParse >
+  type: NodePort
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    avp.kubernetes.io/kv-version: "1"
+  name: modifiers-test
+  namespace: modifiers-test
+type: Opaque
+data:
+  USER: <path:secret/jsonstring#secret | jsonParse | jsonPath {.credentials.user} | base64encode>
+  PASSWORD: PHBhdGg6c2VjcmV0L2pzb25zdHJpbmcjc2VjcmV0IHwganNvblBhcnNlIHwganNvblBhdGggey5jcmVkZW50aWFscy5wYXNzfT4=
+  ESECRET: <path:secret/base64#encoded_secret | base64decode | jsonPath {.key2} | base64encode>
+  YAML: <path:secret/yaml#secret | yamlParse | jsonPath {.key1} | base64encode>
+  SHA256SUM: <path:secret/foo#secret | sha256sum | base64encode>
+---

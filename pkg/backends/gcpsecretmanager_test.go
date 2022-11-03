@@ -1,13 +1,14 @@
 package backends_test
 
 import (
-	"github.com/IBM/argocd-vault-plugin/pkg/backends"
-	"github.com/googleapis/gax-go/v2"
-	"golang.org/x/net/context"
-	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
+	"github.com/googleapis/gax-go/v2"
+	"golang.org/x/net/context"
+	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 )
 
 type mockSecretManagerClient struct {
@@ -51,11 +52,24 @@ func TestGCPSecretManagerGetSecrets(t *testing.T) {
 
 		// Data correct
 		expected := map[string]interface{}{
-			"test-secret": []byte("some-value"),
+			"test-secret": "some-value",
 		}
 
 		if !reflect.DeepEqual(expected, data) {
 			t.Errorf("expected: %s, got: %s.", expected, data)
+		}
+	})
+
+	t.Run("GCP GetIndividualSecret", func(t *testing.T) {
+		secret, err := sm.GetIndividualSecret("projects/project/secrets/test-secret", "test-secret", "", map[string]string{})
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
+
+		expected := "some-value"
+
+		if !reflect.DeepEqual(expected, secret) {
+			t.Errorf("expected: %s, got: %s", expected, secret)
 		}
 	})
 
@@ -73,7 +87,7 @@ func TestGCPSecretManagerGetSecrets(t *testing.T) {
 
 		// Data correct
 		expected := map[string]interface{}{
-			"test-secret": []byte("v3-value"),
+			"test-secret": "v3-value",
 		}
 		if !reflect.DeepEqual(expected, data) {
 			t.Errorf("expected: %s, got: %s.", expected, data)
