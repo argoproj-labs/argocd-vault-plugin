@@ -36,15 +36,18 @@ func (a *ThycoticSecretServer) GetSecrets(path string, version string, annotatio
 
 	input, err := strconv.Atoi(path)
 	if err != nil {
-		return nil, fmt.Errorf("could not read path %s", path)
+		return nil, fmt.Errorf("could not read path %s, error: %s", path, err)
 	}
 	secret, err := a.Client.Secret(input)
 	if err != nil {
-		return nil, fmt.Errorf("could not access secret %s", path)
+		return nil, fmt.Errorf("could not access secret %s, error: %s", path, err)
 	}
 	utils.VerboseToStdErr("Thycotic Secret Server getting path %s", path)
 
 	secret_json, err := json.MarshalIndent(secret, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("enable to parse json secret %s, error: %s", path, err)
+	}
 
 	validation := make(map[string]interface{})
 
