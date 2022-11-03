@@ -273,7 +273,7 @@ If you want to load in a new value from your Secret Manager without making any n
 
 <img src="https://github.com/argoproj-labs/argocd-vault-plugin/raw/main/assets/hard-refresh.png" width="300">  
 
-You can also use the `argocd app diff` command passing the `--hard-refresh` flag. This will run argocd-vault-plugin again and pull in the new values from you Secret Manager and then you can either have Auto Sync setup or Sync manually to apply the new values.
+You can also use the `argocd app diff` command passing the `--hard-refresh` flag. This will run argocd-vault-plugin again and pull in the new values from your Secret Manager and then you can either have Auto Sync setup or Sync manually to apply the new values.
 
 ### Caveats
 
