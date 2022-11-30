@@ -264,13 +264,15 @@ FROM registry.access.redhat.com/ubi8
 USER root
 
 # Install tools needed for your repo-server to retrieve & decrypt secrets, render manifests
-# (e.g. curl, awscli, gpg, sops)
-RUN apt-get update && \
-    apt-get install -y \
+# (e.g. curl, python3-pip, gpg, sops)
+RUN yum update && \
+    yum install -y \
         curl \
-        awscli \
         gpg && \
-    apt-get clean && \
+    yum clean all && \
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+    unzip awscliv2.zip && \
+    ./aws/install && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install the AVP plugin (as root so we can copy to /usr/local/bin)
