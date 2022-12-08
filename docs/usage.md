@@ -79,7 +79,12 @@ For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [ad
 ```
 
 ##### With additional Helm arguments
-If you want to use Helm along with argocd-vault-plugin and use additional helm args,
+
+Use this option if you want to use Helm along with argocd-vault-plugin and use additional helm args.
+
+**IMPORTANT**: passing `${ARGOCD_ENV_helm_args}` effectively allows users to run arbitrary code in the Argo CD 
+repo-server (or, if using a sidecar, in the plugin sidecar). Only use this when the users are completely trusted. If  
+possible, determine which Helm arguments are needed by your users and explicitly pass only those arguments.
 
 For `argocd-cm` ConfigMap configured plugins, add this to `argod-cm` ConfigMap:
 ```yaml

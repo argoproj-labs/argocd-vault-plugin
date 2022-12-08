@@ -15,6 +15,9 @@ data:
         args: ['helm template "$ARGOCD_APP_NAME" -n "$ARGOCD_APP_NAMESPACE" . | argocd-vault-plugin generate -']
 
     # This lets you pass args to the Helm invocation as described here: https://argocd-vault-plugin.readthedocs.io/en/stable/usage/#with-helm
+    # IMPORTANT: passing $helm_args effectively allows users to run arbitrary code in the Argo CD repo-server.
+    # Only use this when the users are completely trusted. If possible, determine which Helm arguments are needed by 
+    # your users and explicitly pass only those arguments.
     - name: argocd-vault-plugin-helm-with-args
       generate:
         command: ["sh", "-c"]
