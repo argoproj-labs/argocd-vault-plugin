@@ -334,3 +334,17 @@ mv argocd-vault-plugin /usr/local/bin
 ```
 brew install argocd-vault-plugin
 ```
+
+## Security considerations
+
+The Argo CD Vault Plugin injects secrets into Kubernetes manifests generated inside the Argo CD repo-server component.
+Those manifests, and the secrets they contain, are cached in the Redis instance used by Argo CD. So they are available
+to anyone with direct access to the Redis instance. The manifests are also accessible to anyone with direct access to 
+the repo-server.
+
+Mitigations:
+1. Set up network policies to prevent direct access to Argo CD components (Redis and the repo-server). Make sure your 
+   cluster supports those network policies and can actually enforce them.
+2. Consider running Argo CD on its own cluster, with no other applications running on it.
+3. [Enable password authentication on the Redis instance](https://github.com/argoproj/argo-cd/issues/3130) (currently
+   only supported for non-HA Argo CD installations).
