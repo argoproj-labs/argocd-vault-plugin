@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"testing"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/helpers"
@@ -109,6 +110,89 @@ func TestGenericReplacement_specificPath(t *testing.T) {
 	}
 
 	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
+func TestGenericReplacement_specificPathWithValidation(t *testing.T) {
+	// Test that the specific-path placeholder syntax is used to find/replace placeholders
+	// along with the generic syntax, since the generic Vault path is defined
+	mv := helpers.MockVault{}
+	mv.LoadData(map[string]interface{}{
+		"namespace": "default",
+	})
+
+	t.Run("valid path", func(t *testing.T) {
+		dummyResource := Resource{
+			TemplateData: map[string]interface{}{
+				"namespace": "<path:blah/blah#namespace>",
+				"name":      "<name>",
+			},
+			Data: map[string]interface{}{
+				"namespace": "something-else",
+				"name":      "foo",
+			},
+			Backend: &mv,
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
+			PathValidation: regexp.MustCompile(`^([A-Za-z/]*)$`),
+		}
+
+		replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+		if !mv.GetIndividualSecretCalled {
+			t.Fatalf("expected GetSecrets to be called since placeholder contains explicit path so Vault lookup is neeed")
+		}
+
+		expected := Resource{
+			TemplateData: map[string]interface{}{
+				"namespace": "default",
+				"name":      "foo",
+			},
+			Data: map[string]interface{}{
+				"namespace": "something-else",
+				"name":      "foo",
+			},
+			replacementErrors: []error{},
+		}
+
+		assertSuccessfulReplacement(&dummyResource, &expected, t)
+	})
+
+	t.Run("invalid path", func(t *testing.T) {
+		dummyResource := Resource{
+			TemplateData: map[string]interface{}{
+				"namespace": "<path:../blah/blah#namespace>",
+			},
+			Data: map[string]interface{}{
+				"namespace": "something-else",
+			},
+			Backend: &mv,
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
+			PathValidation: regexp.MustCompile(`^([A-Za-z/]*)$`),
+		}
+
+		replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+		if !mv.GetIndividualSecretCalled {
+			t.Fatalf("expected GetSecrets to be called since placeholder contains explicit path so Vault lookup is neeed")
+		}
+
+		expected := Resource{
+			TemplateData: map[string]interface{}{
+				"namespace": "<path:../blah/blah#namespace>",
+			},
+			Data: map[string]interface{}{
+				"namespace": "something-else",
+			},
+			replacementErrors: []error{
+				fmt.Errorf("the path ../blah/blah is disallowed by AVP_PATH_VALIDATION restriction"),
+			},
+		}
+
+		assertFailedReplacement(&dummyResource, &expected, t)
+	})
 }
 
 func TestGenericReplacement_specificPathVersioned(t *testing.T) {

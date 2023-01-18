@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -76,8 +77,15 @@ func NewGenerateCommand() *cobra.Command {
 			}
 
 			for _, manifest := range manifests {
+				var pathValidation *regexp.Regexp
+				if rexp := v.GetString(types.EnvPathValidation); rexp != "" {
+					pathValidation, err = regexp.Compile(rexp)
+					if err != nil {
+						return fmt.Errorf("%s is not a valid regular expression: %s", rexp, err)
+					}
+				}
 
-				template, err := kube.NewTemplate(manifest, cmdConfig.Backend)
+				template, err := kube.NewTemplate(manifest, cmdConfig.Backend, pathValidation)
 				if err != nil {
 					return err
 				}
