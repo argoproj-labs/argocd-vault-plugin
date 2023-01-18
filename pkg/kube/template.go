@@ -2,6 +2,7 @@ package kube
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
@@ -18,6 +19,7 @@ type Resource struct {
 	replacementErrors []error                // Any errors encountered in performing replacements
 	Data              map[string]interface{} // The data to replace with, from Vault
 	Annotations       map[string]string
+	PathValidation    *regexp.Regexp
 }
 
 // Template is the template for Kubernetes
@@ -26,7 +28,7 @@ type Template struct {
 }
 
 // NewTemplate returns a *Template given the template's data, and a VaultType
-func NewTemplate(template unstructured.Unstructured, backend types.Backend) (*Template, error) {
+func NewTemplate(template unstructured.Unstructured, backend types.Backend, pathValidation *regexp.Regexp) (*Template, error) {
 	annotations := template.GetAnnotations()
 	path := annotations[types.AVPPathAnnotation]
 	version := annotations[types.AVPSecretVersionAnnotation]
@@ -34,6 +36,9 @@ func NewTemplate(template unstructured.Unstructured, backend types.Backend) (*Te
 	var err error
 	var data map[string]interface{}
 	if path != "" {
+		if pathValidation != nil && !pathValidation.MatchString(path) {
+			return nil, fmt.Errorf("the path %s is disallowed by %s restriction", path, types.EnvPathValidation)
+		}
 		data, err = backend.GetSecrets(path, version, annotations)
 		if err != nil {
 			return nil, err
@@ -44,11 +49,12 @@ func NewTemplate(template unstructured.Unstructured, backend types.Backend) (*Te
 
 	return &Template{
 		Resource{
-			Kind:         template.GetKind(),
-			TemplateData: template.Object,
-			Backend:      backend,
-			Data:         data,
-			Annotations:  annotations,
+			Kind:           template.GetKind(),
+			TemplateData:   template.Object,
+			Backend:        backend,
+			Data:           data,
+			Annotations:    annotations,
+			PathValidation: pathValidation,
 		},
 	}, nil
 }

@@ -133,6 +133,11 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 			key := indivSecretMatches[indivPlaceholderSyntax.SubexpIndex("key")]
 			version := indivSecretMatches[indivPlaceholderSyntax.SubexpIndex("version")]
 
+			if resource.PathValidation != nil && !resource.PathValidation.MatchString(path) {
+				err = append(err, fmt.Errorf("the path %s is disallowed by %s restriction", path, types.EnvPathValidation))
+				return match
+			}
+
 			utils.VerboseToStdErr("calling GetIndividualSecret for secret %s from path %s at version %s", key, path, version)
 			secretValue, secretErr = resource.Backend.GetIndividualSecret(path, strings.TrimSpace(key), version, resource.Annotations)
 			if secretErr != nil {

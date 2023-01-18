@@ -25,6 +25,7 @@ const (
 	EnvYCLPrivateKey       = "AVP_YCL_PRIVATE_KEY"
 	EnvAvpUsername         = "AVP_USERNAME"
 	EnvAvpPassword         = "AVP_PASSWORD"
+	EnvPathValidation      = "AVP_PATH_VALIDATION"
 
 	// Backend and Auth Constants
 	VaultBackend              = "vault"

@@ -3,6 +3,7 @@ package kube
 import (
 	"io/ioutil"
 	"reflect"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -219,7 +220,7 @@ func TestNewTemplate(t *testing.T) {
 					},
 				},
 			},
-		}, &mv)
+		}, &mv, nil)
 		if template.Resource.Kind != "Service" {
 			t.Fatalf("template should have Kind of %s, instead it has %s", "Service", template.Resource.Kind)
 		}
@@ -253,7 +254,7 @@ func TestNewTemplate(t *testing.T) {
 					},
 				},
 			},
-		}, &mv)
+		}, &mv, nil)
 		if mv.GetSecretsCalled {
 			t.Fatalf("template contains avp.kubernetes.io/ignore:True so GetSecrets should NOT be called")
 		}
@@ -286,7 +287,7 @@ func TestNewTemplate(t *testing.T) {
 					"old-value": "<password>",
 				},
 			},
-		}, &mv)
+		}, &mv, nil)
 
 		if template.Resource.Kind != "Secret" {
 			t.Fatalf("template should have Kind of %s, instead it has %s", "Secret", template.Resource.Kind)
@@ -349,7 +350,110 @@ func TestNewTemplate(t *testing.T) {
 					"new-value": "<password>",
 				},
 			},
-		}, &mv)
+		}, &mv, nil)
+
+		if template.Resource.Kind != "Secret" {
+			t.Fatalf("template should have Kind of %s, instead it has %s", "Secret", template.Resource.Kind)
+		}
+
+		if !mv.GetSecretsCalled {
+			t.Fatalf("template does contain <placeholders> so GetSecrets should be called")
+		}
+
+		err := template.Replace()
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		expected := map[string]interface{}{
+			"kind":       "Secret",
+			"apiVersion": "v1",
+			"metadata": map[string]interface{}{
+				"annotations": map[string]interface{}{
+					types.AVPPathAnnotation: "path/to/secret",
+				},
+				"namespace": "default",
+				"name":      "my-app",
+			},
+			"data": map[string]interface{}{
+				"new-value": "changed-value",
+				"old-value": "original-value",
+			},
+		}
+
+		if !reflect.DeepEqual(expected, template.TemplateData) {
+			t.Fatalf("expected %s got %s", expected, template.TemplateData)
+		}
+	})
+
+	t.Run("GetSecrets with path validation and invalid path", func(t *testing.T) {
+		mv := helpers.MockVault{}
+
+		mv.LoadData(map[string]interface{}{
+			"password": "original-value",
+		})
+		mv.LoadData(map[string]interface{}{
+			"password": "changed-value",
+		})
+
+		template, err := NewTemplate(unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"kind":       "Secret",
+				"apiVersion": "v1",
+				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						types.AVPPathAnnotation: "path/to/secret",
+					},
+					"namespace": "default",
+					"name":      "my-app",
+				},
+				"data": map[string]interface{}{
+					"old-value": "<path:/path/to/secret#password#1>",
+					"new-value": "<password>",
+				},
+			},
+		}, &mv, regexp.MustCompile(`/[A-Z]/`))
+
+		if template != nil {
+			t.Fatalf("expected template to be nil got %s", template)
+		}
+		if err == nil {
+			t.Fatalf("expected error got nil")
+		}
+
+		expected := "the path path/to/secret is disallowed by AVP_PATH_VALIDATION restriction"
+		if err.Error() != expected {
+			t.Fatalf("expected %s got %s", expected, err.Error())
+		}
+	})
+
+	t.Run("will GetSecrets with latest version by default and path validation regexp", func(t *testing.T) {
+		mv := helpers.MockVault{}
+
+		mv.LoadData(map[string]interface{}{
+			"password": "original-value",
+		})
+		mv.LoadData(map[string]interface{}{
+			"password": "changed-value",
+		})
+
+		template, _ := NewTemplate(unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"kind":       "Secret",
+				"apiVersion": "v1",
+				"metadata": map[string]interface{}{
+					"annotations": map[string]interface{}{
+						types.AVPPathAnnotation: "path/to/secret",
+					},
+					"namespace": "default",
+					"name":      "my-app",
+				},
+				"data": map[string]interface{}{
+					"old-value": "<path:/path/to/secret#password#1>",
+					"new-value": "<password>",
+				},
+			},
+		}, &mv, regexp.MustCompile(`^([A-Za-z/]*)$`))
 
 		if template.Resource.Kind != "Secret" {
 			t.Fatalf("template should have Kind of %s, instead it has %s", "Secret", template.Resource.Kind)
