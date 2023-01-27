@@ -27,6 +27,10 @@ const (
 	EnvAvpPassword         = "AVP_PASSWORD"
 	EnvPathValidation      = "AVP_PATH_VALIDATION"
 	EnvAvpKSMConfigPath    = "AVP_KEEPER_CONFIG_PATH"
+	EnvAvpDelineaURL       = "AVP_DELINEA_URL"
+	EnvAvpDelineaUser      = "AVP_DELINEA_USER"
+	EnvAvpDelineaPassword  = "AVP_DELINEA_PASSWORD"
+	EnvAvpDelineaDomain    = "AVP_DELINEA_DOMAIN"
 
 	// Backend and Auth Constants
 	VaultBackend                = "vault"
@@ -36,6 +40,7 @@ const (
 	AzureKeyVaultbackend        = "azurekeyvault"
 	Sopsbackend                 = "sops"
 	YandexCloudLockboxbackend   = "yandexcloudlockbox"
+	DelineaSecretServerbackend  = "delineasecretserver"
 	OnePasswordConnect          = "1passwordconnect"
 	KeeperSecretsManagerBackend = "keepersecretsmanager"
 	K8sAuth                     = "k8s"

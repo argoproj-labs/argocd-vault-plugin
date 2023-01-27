@@ -209,6 +209,16 @@ fDGt+yaf3RaZbVwHSVLzxiXGsu1WQJde3uJeNh5c6z+5
 			},
 			"*backends.KeeperSecretsManager",
 		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":             "delineasecretserver",
+				"AVP_AUTH_TYPE":        "userpass",
+				"AVP_DELINEA_URL":      "http://my-delinea-server",
+				"AVP_DELINEA_USER":     "username",
+				"AVP_DELINEA_PASSWORD": "password",
+			},
+			"*backends.DelineaSecretServer",
+		},
 	}
 	for _, tc := range testCases {
 		for k, v := range tc.environment {
@@ -424,6 +434,56 @@ func TestNewConfigMissingParameter(t *testing.T) {
 				"OP_CONNECT_TOKEN": "token",
 			},
 			"*backends.OnePasswordConnect",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":         "delineasecretserver",
+				"AVP_AUTH_TYPE":    "userpass",
+				"AVP_DELINEA_URL":  "http://my-delinea-server",
+				"AVP_DELINEA_USER": "username",
+			},
+			"*backends.DelineaSecretServer",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":             "delineasecretserver",
+				"AVP_AUTH_TYPE":        "userpass",
+				"AVP_DELINEA_URL":      "http://my-delinea-server",
+				"AVP_DELINEA_PASSWORD": "password",
+			},
+			"*backends.DelineaSecretServer",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":             "delineasecretserver",
+				"AVP_AUTH_TYPE":        "userpass",
+				"AVP_DELINEA_USER":     "username",
+				"AVP_DELINEA_PASSWORD": "password",
+			},
+			"*backends.DelineaSecretServer",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":         "delineasecretserver",
+				"AVP_AUTH_TYPE":    "userpass",
+				"AVP_DELINEA_USER": "username",
+			},
+			"*backends.DelineaSecretServer",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":             "delineasecretserver",
+				"AVP_AUTH_TYPE":        "userpass",
+				"AVP_DELINEA_PASSWORD": "password",
+			},
+			"*backends.DelineaSecretServer",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":      "delineasecretserver",
+				"AVP_AUTH_TYPE": "userpass",
+			},
+			"*backends.DelineaSecretServer",
 		},
 	}
 	for _, tc := range testCases {
