@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	awssm "github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/hashicorp/vault/api"
+	ksm "github.com/keeper-security/secrets-manager-go/core"
 	"github.com/spf13/viper"
 	ycsdk "github.com/yandex-cloud/go-sdk"
 	"github.com/yandex-cloud/go-sdk/iamkey"
@@ -236,6 +237,20 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 			}
 
 			backend = backends.NewOnePasswordConnectBackend(client)
+		}
+	case types.KeeperSecretsManagerBackend:
+		{
+			if !v.IsSet(types.EnvAvpKSMConfigPath) {
+				return nil, fmt.Errorf("%s is required for Keeper Secrets Manager", types.EnvAvpKSMConfigPath)
+			}
+
+			client := ksm.NewSecretsManager(&ksm.ClientOptions{
+				Config: ksm.NewFileKeyValueStorage(
+					v.GetString(types.EnvAvpKSMConfigPath),
+				),
+			})
+
+			backend = backends.NewKeeperSecretsManagerBackend(client)
 		}
 	default:
 		return nil, fmt.Errorf("Must provide a supported Vault Type, received %s", v.GetString(types.EnvAvpType))

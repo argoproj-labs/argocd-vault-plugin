@@ -202,6 +202,13 @@ fDGt+yaf3RaZbVwHSVLzxiXGsu1WQJde3uJeNh5c6z+5
 			},
 			"*backends.Vault",
 		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":               "keepersecretsmanager",
+				"AVP_KEEPER_CONFIG_PATH": "/mnt/foobar",
+			},
+			"*backends.KeeperSecretsManager",
+		},
 	}
 	for _, tc := range testCases {
 		for k, v := range tc.environment {
