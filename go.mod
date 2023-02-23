@@ -34,6 +34,7 @@ require (
 	github.com/hashicorp/vault-plugin-secrets-kv v0.11.0
 	github.com/hashicorp/vault/api v1.5.0
 	github.com/hashicorp/vault/sdk v0.4.2-0.20220721224803-6e72b150730c
+	github.com/keeper-security/secrets-manager-go/core v1.5.0
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/spf13/cobra v1.4.0

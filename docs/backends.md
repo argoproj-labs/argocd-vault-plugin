@@ -599,3 +599,44 @@ type: Opaque
 data:
   password: <path:vaults/vault-uuid/items/item-uuid#key>
 ```
+
+### Keeper Secrets Manager
+
+**Note**: The Keeper Secrets Manager backend does not support versioning, or annotations. It does not support injecting attached files.
+
+#### Keeper Authentication
+
+These are the parameters for Keeper:
+```
+AVP_TYPE: keepersecretsmanager
+AVP_KEEPER_CONFIG_PATH: the path to the keeper configuration file on disk.
+```
+
+##### Examples
+Examples assume that the secrets are not saved base64 encoded in the Secret Server.
+
+###### Path Annotation
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: "secret-id"
+type: Opaque
+stringData:
+  password: <key>
+```
+
+###### Inline Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+type: Opaque
+data:
+  password: <path:secret-id#key | base64encode>
+```

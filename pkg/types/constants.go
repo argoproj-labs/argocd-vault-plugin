@@ -26,30 +26,32 @@ const (
 	EnvAvpUsername         = "AVP_USERNAME"
 	EnvAvpPassword         = "AVP_PASSWORD"
 	EnvPathValidation      = "AVP_PATH_VALIDATION"
+	EnvAvpKSMConfigPath    = "AVP_KEEPER_CONFIG_PATH"
 
 	// Backend and Auth Constants
-	VaultBackend              = "vault"
-	IBMSecretsManagerbackend  = "ibmsecretsmanager"
-	AWSSecretsManagerbackend  = "awssecretsmanager"
-	GCPSecretManagerbackend   = "gcpsecretmanager"
-	AzureKeyVaultbackend      = "azurekeyvault"
-	Sopsbackend               = "sops"
-	YandexCloudLockboxbackend = "yandexcloudlockbox"
-	OnePasswordConnect        = "1passwordconnect"
-	K8sAuth                   = "k8s"
-	ApproleAuth               = "approle"
-	GithubAuth                = "github"
-	TokenAuth                 = "token"
-	UserPass                  = "userpass"
-	IAMAuth                   = "iam"
-	AwsDefaultRegion          = "us-east-2"
-	GCPCurrentSecretVersion   = "latest"
-	IBMMaxRetries             = 3
-	IBMRetryIntervalSeconds   = 20
-	IBMMaxPerPage             = 200
-	IBMIAMCredentialsType     = "iam_credentials"
-	IBMImportedCertType       = "imported_cert"
-	IBMPublicCertType         = "public_cert"
+	VaultBackend                = "vault"
+	IBMSecretsManagerbackend    = "ibmsecretsmanager"
+	AWSSecretsManagerbackend    = "awssecretsmanager"
+	GCPSecretManagerbackend     = "gcpsecretmanager"
+	AzureKeyVaultbackend        = "azurekeyvault"
+	Sopsbackend                 = "sops"
+	YandexCloudLockboxbackend   = "yandexcloudlockbox"
+	OnePasswordConnect          = "1passwordconnect"
+	KeeperSecretsManagerBackend = "keepersecretsmanager"
+	K8sAuth                     = "k8s"
+	ApproleAuth                 = "approle"
+	GithubAuth                  = "github"
+	TokenAuth                   = "token"
+	UserPass                    = "userpass"
+	IAMAuth                     = "iam"
+	AwsDefaultRegion            = "us-east-2"
+	GCPCurrentSecretVersion     = "latest"
+	IBMMaxRetries               = 3
+	IBMRetryIntervalSeconds     = 20
+	IBMMaxPerPage               = 200
+	IBMIAMCredentialsType       = "iam_credentials"
+	IBMImportedCertType         = "imported_cert"
+	IBMPublicCertType           = "public_cert"
 
 	// Supported annotations
 	AVPPathAnnotation          = "avp.kubernetes.io/path"
