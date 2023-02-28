@@ -1,22 +1,28 @@
 package backends
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
-	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
+
+type AWSSecretsManagerIface interface {
+	GetSecretValue(ctx context.Context,
+		params *secretsmanager.GetSecretValueInput,
+		optFns ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error)
+}
 
 // AWSSecretsManager is a struct for working with a AWS Secrets Manager backend
 type AWSSecretsManager struct {
-	Client secretsmanageriface.SecretsManagerAPI
+	Client AWSSecretsManagerIface
 }
 
 // NewAWSSecretsManagerBackend initializes a new AWS Secrets Manager backend
-func NewAWSSecretsManagerBackend(client secretsmanageriface.SecretsManagerAPI) *AWSSecretsManager {
+func NewAWSSecretsManagerBackend(client AWSSecretsManagerIface) *AWSSecretsManager {
 	return &AWSSecretsManager{
 		Client: client,
 	}
@@ -34,11 +40,11 @@ func (a *AWSSecretsManager) GetSecrets(path string, version string, annotations 
 	}
 
 	if version != "" {
-		input.SetVersionId(version)
+		input.VersionId = aws.String(version)
 	}
 
 	utils.VerboseToStdErr("AWS Secrets Manager getting secret %s at version %s", path, version)
-	result, err := a.Client.GetSecretValue(input)
+	result, err := a.Client.GetSecretValue(context.TODO(), input)
 	if err != nil {
 		return nil, err
 	}
