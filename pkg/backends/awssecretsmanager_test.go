@@ -1,19 +1,19 @@
 package backends_test
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
-	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
 type mockSecretsManagerClient struct {
-	secretsmanageriface.SecretsManagerAPI
+	backends.AWSSecretsManagerIface
 }
 
-func (m *mockSecretsManagerClient) GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error) {
+func (m *mockSecretsManagerClient) GetSecretValue(ctx context.Context, input *secretsmanager.GetSecretValueInput, options ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error) {
 	data := &secretsmanager.GetSecretValueOutput{}
 
 	switch *input.SecretId {

@@ -20,9 +20,8 @@ import (
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/kube"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	awssm "github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/config"
+	awssm "github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/hashicorp/vault/api"
 	ksm "github.com/keeper-security/secrets-manager-go/core"
 	"github.com/spf13/viper"
@@ -166,14 +165,14 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				v.Set(types.EnvAWSRegion, types.AwsDefaultRegion)
 			}
 
-			s, err := session.NewSession(&aws.Config{
-				Region: aws.String(v.GetString(types.EnvAWSRegion)),
-			})
+			s, err := config.LoadDefaultConfig(context.TODO(),
+				config.WithRegion(v.GetString(types.EnvAWSRegion)),
+			)
 			if err != nil {
 				return nil, err
 			}
 
-			client := awssm.New(s)
+			client := awssm.NewFromConfig(s)
 			backend = backends.NewAWSSecretsManagerBackend(client)
 		}
 	case types.GCPSecretManagerbackend:

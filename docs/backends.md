@@ -237,8 +237,10 @@ stringData:
 ### AWS Secrets Manager
 
 ##### AWS Authentication
-Refer to the [AWS go SDK README](https://github.com/aws/aws-sdk-go#configuring-credentials) for supplying AWS credentials.
-Supported credentials and the order in which they are loaded are described [here](https://github.com/aws/aws-sdk-go/blob/v1.38.62/aws/session/doc.go#L22).
+Refer to the [AWS SDK for Go V2
+documentation](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials) for
+supplying AWS credentials. Supported credentials and the order in which they are loaded are
+described [here](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials).
 
 These are the parameters for AWS:
 ```
