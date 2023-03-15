@@ -145,7 +145,7 @@ configManagementPlugins: |
   - name: argocd-vault-plugin-helm
     generate:
       command: ["bash", "-c"]
-      args: ['helm template "$ARGOCD_APP_NAME" -f <(echo "$HELM_VALUES") . | argocd-vault-plugin generate -']
+      args: ['helm template "$ARGOCD_APP_NAME" -f <(echo "$ARGOCD_ENV_helm_values") . | argocd-vault-plugin generate -']
 ```
 For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [add a sidecar to run it](../installation#initcontainer-and-configuration-via-sidecar):
 ```yaml
@@ -168,7 +168,7 @@ For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [ad
           - bash
           - "-c"
           - |
-            helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE -f <(echo "$ARGOCD_ENV_HELM_VALUES") . |
+            helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE -f <(echo "$ARGOCD_ENV_helm_values") . |
             argocd-vault-plugin generate -
       lockRepo: false
 ```
@@ -180,7 +180,7 @@ Then you can define your Helm values inline in your application manifest:
     plugin:
       name: argocd-vault-plugin-helm
       env:
-        - name: HELM_VALUES
+        - name: helm_values
           value: |
             # non-vault helm values are specified normally
             someValue: lasldkfjlksa
