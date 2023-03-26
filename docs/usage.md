@@ -118,7 +118,7 @@ For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [ad
           - sh
           - "-c"
           - |
-            helm template $ARGOCD_APP_NAME --include-crds -n $ARGOCD_APP_NAMESPACE ${ARGOCD_ENV_HELM_ARGS} . |
+            helm template $ARGOCD_APP_NAME --include-crds -n $ARGOCD_APP_NAMESPACE ${ARGOCD_ENV_helm_args} . |
             argocd-vault-plugin generate -
       lockRepo: false
 ```
