@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -40,8 +41,19 @@ func (a *AWSSecretsManager) Login() error {
 
 // GetSecrets gets secrets from aws secrets manager and returns the formatted data
 func (a *AWSSecretsManager) GetSecrets(path string, version string, annotations map[string]string) (map[string]interface{}, error) {
+	var opts = func(o *secretsmanager.Options) {}
+
 	input := &secretsmanager.GetSecretValueInput{
 		SecretId: aws.String(path),
+	}
+
+	re := regexp.MustCompile(`(?m)^(?:[^:]+:){3}([^:]+).*`)
+	if re.MatchString(path) {
+		parts := re.FindStringSubmatch(path)
+
+		opts = func(o *secretsmanager.Options) {
+			o.Region = parts[1]
+		}
 	}
 
 	if version != "" {
@@ -53,7 +65,7 @@ func (a *AWSSecretsManager) GetSecrets(path string, version string, annotations 
 	}
 
 	utils.VerboseToStdErr("AWS Secrets Manager getting secret %s at version %s", path, version)
-	result, err := a.Client.GetSecretValue(context.TODO(), input)
+	result, err := a.Client.GetSecretValue(context.TODO(), input, opts)
 	if err != nil {
 		return nil, err
 	}

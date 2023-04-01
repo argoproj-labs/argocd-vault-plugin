@@ -243,6 +243,10 @@ documentation](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specify
 supplying AWS credentials. Supported credentials and the order in which they are loaded are
 described [here](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials).
 
+**Note About Region**
+If you provide the full AWS ARN as the secret path, ex. `arn:aws:secretsmanager:us-east-1:123123123:secret:some-secret`, 
+the region from the ARN (us-east-1) in this example, will take precedents over the AWS_REGION environment variable listed below. 
+
 These are the parameters for AWS:
 ```
 AVP_TYPE: awssecretsmanager
