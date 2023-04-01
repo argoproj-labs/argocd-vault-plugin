@@ -643,3 +643,49 @@ type: Opaque
 data:
   password: <path:secret-id#key | base64encode>
 ```
+
+### Delinea Secret Server
+
+**Note**: The Delinea Secret Server backend does not support versioning.
+
+##### Delinea Authentication
+Refer to the [REST API documentation on your Delinea Secret Server](https://your-delinea-server/SecretServer/Documents/restapi/) for API authentication.
+
+These are the parameters for Delinea:
+```
+AVP_TYPE: delineasecretserver
+AVP_DELINEA_URL: The URL of the Dilenea Secret Server
+AVP_DELINEA_USER: The account for authentication
+AVP_DELINEA_PASSWORD: The password for authentication
+
+Optional:
+AVP_DELINEA_DOMAIN: The authentication domain (e.g. the Active Directory domain)
+```
+##### Examples
+Examples assume that the secrets are not saved base64 encoded in the Secret Server.
+
+###### Path Annotation
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: "secret-id"
+type: Opaque
+stringData:
+  password: <key>
+```
+
+###### Inline Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+type: Opaque
+data:
+  password: <path:secret-id#key | base64encode>
+```
