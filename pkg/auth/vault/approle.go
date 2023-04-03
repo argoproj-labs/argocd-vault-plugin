@@ -38,7 +38,7 @@ func (a *AppRoleAuth) Authenticate(vaultClient *api.Client) error {
 		"secret_id": a.SecretID,
 	}
 
-	utils.VerboseToStdErr("Hashicorp Vault authenticating with role ID %s and secret ID %s", a.RoleID, a.SecretID)
+	utils.VerboseToStdErr("Hashicorp Vault authenticating with role ID %s and secret ID %s at path %s", a.RoleID, a.SecretID, a.MountPath)
 	data, err := vaultClient.Logical().Write(fmt.Sprintf("%s/login", a.MountPath), payload)
 	if err != nil {
 		return err
