@@ -13,6 +13,7 @@ import (
 	"github.com/1Password/connect-sdk-go/connect"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/keyvault"
 	kvauth "github.com/Azure/azure-sdk-for-go/services/keyvault/auth"
+	delineasecretserver "github.com/DelineaXPM/tss-sdk-go/v2/server"
 	"github.com/IBM/go-sdk-core/v5/core"
 	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv1"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/auth/vault"
@@ -250,6 +251,32 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 			})
 
 			backend = backends.NewKeeperSecretsManagerBackend(client)
+		}
+	case types.DelineaSecretServerbackend:
+		{
+			// Get required Delinea specific env variables
+			if !v.IsSet(types.EnvAvpDelineaURL) ||
+				!v.IsSet(types.EnvAvpDelineaUser) ||
+				!v.IsSet(types.EnvAvpDelineaPassword) {
+				return nil, fmt.Errorf("%s, %s and %s are required for Delinea Secret Server",
+					types.EnvAvpDelineaURL,
+					types.EnvAvpDelineaUser,
+					types.EnvAvpDelineaPassword,
+				)
+			}
+
+			tss, _ := delineasecretserver.New(delineasecretserver.Configuration{
+				Credentials: delineasecretserver.UserCredential{
+					Username: v.GetString(types.EnvAvpDelineaUser),
+					Password: v.GetString(types.EnvAvpDelineaPassword),
+					Domain:   v.GetString(types.EnvAvpDelineaDomain),
+				},
+				ServerURL: v.GetString(types.EnvAvpDelineaURL),
+			})
+			if err != nil {
+				return nil, err
+			}
+			backend = backends.NewDelineaSecretServerBackend(tss)
 		}
 	default:
 		return nil, fmt.Errorf("Must provide a supported Vault Type, received %s", v.GetString(types.EnvAvpType))
