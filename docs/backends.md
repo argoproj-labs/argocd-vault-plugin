@@ -322,10 +322,24 @@ stringData:
 type: Opaque
 ```
 
+###### Retrieving of binary data
+
+Since there is no way to set a key for binary type in AWS Secret Manager, set the `<key>` part to `SecretBinary` to retrieve binary data:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-example
+stringData:
+  sample-secret: <path:arn:aws:secretsmanager:<REGION>:<ACCOUNT_NUMBER>:<SECRET_ID>#SecretBinary>
+type: Opaque
+```
+
 **NOTE**
 For cross account access there is the need to configure the correct permissions between accounts, please check:
-https://aws.amazon.com/premiumsupport/knowledge-center/secrets-manager-share-between-accounts  
-https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples_cross.html  
+https://aws.amazon.com/premiumsupport/knowledge-center/secrets-manager-share-between-accounts
+https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples_cross.html
 
 ### GCP Secret Manager
 

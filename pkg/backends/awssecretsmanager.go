@@ -67,6 +67,11 @@ func (a *AWSSecretsManager) GetSecrets(path string, version string, annotations 
 		if err != nil {
 			return nil, err
 		}
+	} else if result.SecretBinary != nil {
+		utils.VerboseToStdErr("Get binary value for %v", path)
+		dat = make(map[string]interface{})
+		dat["SecretBinary"] = result.SecretBinary
+		return dat, nil
 	} else {
 		return nil, fmt.Errorf("Could not find secret %s", path)
 	}
