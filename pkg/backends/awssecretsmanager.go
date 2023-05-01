@@ -10,6 +10,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
+const (
+	AWS_CURRENT  string = "AWSCURRENT"
+	AWS_PREVIOUS string = "AWSPREVIOUS"
+)
+
 type AWSSecretsManagerIface interface {
 	GetSecretValue(ctx context.Context,
 		params *secretsmanager.GetSecretValueInput,
@@ -40,7 +45,11 @@ func (a *AWSSecretsManager) GetSecrets(path string, version string, annotations 
 	}
 
 	if version != "" {
-		input.VersionId = aws.String(version)
+		if version == AWS_CURRENT || version == AWS_PREVIOUS {
+			input.VersionStage = aws.String(version)
+		} else {
+			input.VersionId = aws.String(version)
+		}
 	}
 
 	utils.VerboseToStdErr("AWS Secrets Manager getting secret %s at version %s", path, version)
@@ -58,6 +67,11 @@ func (a *AWSSecretsManager) GetSecrets(path string, version string, annotations 
 		if err != nil {
 			return nil, err
 		}
+	} else if result.SecretBinary != nil {
+		utils.VerboseToStdErr("Get binary value for %v", path)
+		dat = make(map[string]interface{})
+		dat["SecretBinary"] = result.SecretBinary
+		return dat, nil
 	} else {
 		return nil, fmt.Errorf("Could not find secret %s", path)
 	}
