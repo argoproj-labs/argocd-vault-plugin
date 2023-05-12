@@ -35,6 +35,7 @@ const (
 	// Backend and Auth Constants
 	VaultBackend                = "vault"
 	IBMSecretsManagerbackend    = "ibmsecretsmanager"
+	AWSSSMParameterStorebackend = "awsssmparameterstore"
 	AWSSecretsManagerbackend    = "awssecretsmanager"
 	GCPSecretManagerbackend     = "gcpsecretmanager"
 	AzureKeyVaultbackend        = "azurekeyvault"
