@@ -20,10 +20,10 @@ func (m *mockSSMParameterStoreClient) GetParameter(ctx context.Context, input *s
 		Parameter: &types.Parameter{},
 	}
 
-	switch *input.Name {
+	// first entry in split is the name, seccond the version
+	split := strings.Split(*input.Name, ":")
+	switch split[0] {
 	case "test":
-		split := strings.Split(*input.Name, ":")
-
 		// verify if version is set
 		if len(split) < 2 {
 			string := "{\"test-secret\":\"current-value\"}"
