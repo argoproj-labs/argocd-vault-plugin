@@ -42,6 +42,14 @@ func replaceInner(
 
 	obj := *node
 	for key, value := range obj {
+		keyReplacement := false
+		if genericPlaceholder.FindString(key) != "" {
+			keyReplacement = true
+			replacement, _ := replacerFunc(key, key, *r)
+			obj[replacement.(string)] = value
+			delete(obj, key)
+		}
+
 		valueType := reflect.ValueOf(value).Kind()
 
 		// Recurse through nested maps
@@ -95,7 +103,7 @@ func replaceInner(
 			if removeKey {
 				utils.VerboseToStdErr("removing key %s due to %s being set on the containing manifest", key, types.AVPRemoveMissingAnnotation)
 				delete(obj, key)
-			} else {
+			} else if keyReplacement == false {
 				obj[key] = replacement
 			}
 		}
