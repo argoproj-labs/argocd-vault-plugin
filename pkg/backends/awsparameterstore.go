@@ -39,9 +39,10 @@ func (a *AWSSSMParameterStore) Login() error {
 }
 
 // GetSecrets gets secrets from aws secrets manager and returns the formatted data
-func (a *AWSSSMParameterStore) GetSecrets(path, version string, annotations map[string]string) (map[string]interface{}, error) {
+func (a *AWSSSMParameterStore) GetParameters(path, version string, annotations map[string]string) (map[string]interface{}, error) {
 	input := &ssm.GetParameterInput{
-		Name: aws.String(path),
+		Name:           aws.String(path),
+		WithDecryption: bool(true),
 	}
 
 	if version != "" {
@@ -74,7 +75,7 @@ func (a *AWSSSMParameterStore) GetSecrets(path, version string, annotations map[
 // For AWS, we only support placeholders replaced from the k/v pairs of a secret which cannot be individually addressed
 // So, we use GetSecrets and extract the specific placeholder we want
 func (a *AWSSSMParameterStore) GetIndividualSecret(kvpath, secret, version string, annotations map[string]string) (interface{}, error) {
-	data, err := a.GetSecrets(kvpath, version, annotations)
+	data, err := a.GetParameters(kvpath, version, annotations)
 	if err != nil {
 		return nil, err
 	}

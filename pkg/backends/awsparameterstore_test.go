@@ -41,7 +41,7 @@ func TestAWSSSMParameterStoreGetSecrets(t *testing.T) {
 	ps := backends.NewAWSSSMParameterStoreBackend(&mockSSMParameterStoreClient{})
 
 	t.Run("Get secrets", func(t *testing.T) {
-		data, err := ps.GetSecrets("test", "", map[string]string{})
+		data, err := ps.GetParameters("test", "", map[string]string{})
 		if err != nil {
 			t.Fatalf("expected 0 errors but got: %s", err)
 		}
@@ -69,7 +69,7 @@ func TestAWSSSMParameterStoreGetSecrets(t *testing.T) {
 	})
 
 	t.Run("Get secrets at specific version", func(t *testing.T) {
-		data, err := ps.GetSecrets("test", "123", map[string]string{})
+		data, err := ps.GetParameters("test", "123", map[string]string{})
 		if err != nil {
 			t.Fatalf("expected 0 errors but got: %s", err)
 		}
@@ -87,7 +87,7 @@ func TestAWSSSMParameterStoreGetSecrets(t *testing.T) {
 func TestAWSSSMParameterStoreEmptyIfNoSecret(t *testing.T) {
 	sm := backends.NewAWSSSMParameterStoreBackend(&mockSSMParameterStoreClient{})
 
-	_, err := sm.GetSecrets("empty", "", map[string]string{})
+	_, err := sm.GetParameters("empty", "", map[string]string{})
 	if err == nil {
 		t.Fatalf("expected an error but got nil")
 	}

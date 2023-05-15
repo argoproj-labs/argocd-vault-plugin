@@ -195,7 +195,7 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 			}
 
 			client := awssm.NewFromConfig(s)
-			backend = backends.NewAWSSSMParameterStoreBackend(client)
+			backend = backends.NewAWSSecretsManagerBackend(client)
 		}
 
 	case types.GCPSecretManagerbackend:
