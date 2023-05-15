@@ -60,7 +60,7 @@ func (a *AWSSSMParameterStore) GetSecrets(path, version string, annotations map[
 
 	data := make(map[string]interface{})
 
-	if result.Parameters != nil {
+	if len(result.Parameters) > 0 {
 		for _, parameter := range result.Parameters {
 			// extract the parameter name from the path
 			split := strings.Split(*parameter.Name, "/")

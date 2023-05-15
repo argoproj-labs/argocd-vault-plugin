@@ -24,7 +24,7 @@ func (m *mockSSMParameterStoreClient) GetParameter(ctx context.Context, input *s
 	// first entry in split is the name, seccond the version
 	split := strings.Split(*input.Name, ":")
 	switch split[0] {
-	case "test":
+	case "test/test-secret":
 		// verify if version is set
 		if len(split) < 2 {
 			string := "{\"test-secret\":\"current-value\"}"
@@ -115,7 +115,7 @@ func TestAWSSSMParameterStoreEmptyIfNoSecret(t *testing.T) {
 		t.Fatalf("expected an error but got nil")
 	}
 
-	if err.Error() != "Could not find secret empty" {
+	if err.Error() != "Could not find secret by path empty" {
 		t.Errorf("expected error: %s, got: %s.", "Could not find secret empty", err.Error())
 	}
 }
