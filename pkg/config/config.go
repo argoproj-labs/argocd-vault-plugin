@@ -23,6 +23,7 @@ import (
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"github.com/aws/aws-sdk-go-v2/config"
 	awssm "github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	awsssm "github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/hashicorp/vault/api"
 	ksm "github.com/keeper-security/secrets-manager-go/core"
 	"github.com/spf13/viper"
@@ -45,6 +46,7 @@ type Config struct {
 var backendPrefixes []string = []string{
 	"vault",
 	"aws",
+	"aws-ssmps",
 	"azure",
 	"google",
 	"sops",
@@ -159,6 +161,25 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 
 			backend = backends.NewIBMSecretsManagerBackend(client)
 		}
+
+	case types.AWSSSMParameterStorebackend:
+		{
+			if !v.IsSet(types.EnvAWSRegion) {
+				utils.VerboseToStdErr("warning: %s env var not set, using AWS region %s", types.EnvAWSRegion, types.AwsDefaultRegion)
+				v.Set(types.EnvAWSRegion, types.AwsDefaultRegion)
+			}
+
+			s, err := config.LoadDefaultConfig(context.TODO(),
+				config.WithRegion(v.GetString(types.EnvAWSRegion)),
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			client := awsssm.NewFromConfig(s)
+			backend = backends.NewAWSSSMParameterStoreBackend(client)
+		}
+
 	case types.AWSSecretsManagerbackend:
 		{
 			if !v.IsSet(types.EnvAWSRegion) {
@@ -176,6 +197,7 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 			client := awssm.NewFromConfig(s)
 			backend = backends.NewAWSSecretsManagerBackend(client)
 		}
+
 	case types.GCPSecretManagerbackend:
 		{
 			ctx := context.Background()

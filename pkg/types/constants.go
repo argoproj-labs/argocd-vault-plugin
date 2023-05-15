@@ -36,6 +36,7 @@ const (
 	VaultBackend                = "vault"
 	IBMSecretsManagerbackend    = "ibmsecretsmanager"
 	AWSSecretsManagerbackend    = "awssecretsmanager"
+	AWSSSMParameterStorebackend = "awsssmparameterstore"
 	GCPSecretManagerbackend     = "gcpsecretmanager"
 	AzureKeyVaultbackend        = "azurekeyvault"
 	Sopsbackend                 = "sops"

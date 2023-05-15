@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	AWS_CURRENT  string = "AWSCURRENT"
-	AWS_PREVIOUS string = "AWSPREVIOUS"
+	AWS_SM_CURRENT  string = "AWSCURRENT"
+	AWS_SM_PREVIOUS string = "AWSPREVIOUS"
 )
 
 type AWSSecretsManagerIface interface {
@@ -21,12 +21,12 @@ type AWSSecretsManagerIface interface {
 		optFns ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error)
 }
 
-// AWSSecretsManager is a struct for working with a AWS Secrets Manager backend
+// AWSSSMParameterStore is a struct for working with a AWS Secrets Manager backend
 type AWSSecretsManager struct {
 	Client AWSSecretsManagerIface
 }
 
-// NewAWSSecretsManagerBackend initializes a new AWS Secrets Manager backend
+// NewAWSSSMParameterStoreBackend initializes a new AWS Secrets Manager backend
 func NewAWSSecretsManagerBackend(client AWSSecretsManagerIface) *AWSSecretsManager {
 	return &AWSSecretsManager{
 		Client: client,
@@ -45,7 +45,7 @@ func (a *AWSSecretsManager) GetSecrets(path string, version string, annotations 
 	}
 
 	if version != "" {
-		if version == AWS_CURRENT || version == AWS_PREVIOUS {
+		if version == AWS_SM_CURRENT || version == AWS_SM_PREVIOUS {
 			input.VersionStage = aws.String(version)
 		} else {
 			input.VersionId = aws.String(version)
