@@ -341,6 +341,92 @@ For cross account access there is the need to configure the correct permissions 
 https://aws.amazon.com/premiumsupport/knowledge-center/secrets-manager-share-between-accounts
 https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples_cross.html
 
+### AWS System Manager Parameter Store
+
+##### AWS Authentication
+Refer to the [AWS SDK for Go V2
+documentation](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials) for
+supplying AWS credentials. Supported credentials and the order in which they are loaded are
+described [here](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials).
+
+These are the parameters for AWS:
+```
+AVP_TYPE: awsssmparameterstore
+AWS_REGION: Your AWS Region (Optional: defaults to us-east-2)
+```
+
+##### Examples
+
+###### Path Annotation
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-ssmps-example
+  annotations:
+    avp.kubernetes.io/path: "test-aws-secret" # The name of your AWS Secret
+stringData:
+  sample-secret: <test-secret>
+type: Opaque
+```
+
+###### Inline Path
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-ssmps-example
+stringData:
+  sample-secret: <path:test-aws-secret#test-secret>
+type: Opaque
+```
+
+###### Versioned secrets
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-ssmps-example
+  annotations:
+    avp.kubernetes.io/path: "some-path/secret"
+    avp.kubernetes.io/secret-version: "123"
+stringData:
+  sample-secret: <test-secret>
+  sample-secret-again: <path:some-path/secret#test-secret#223>
+type: Opaque
+```
+
+###### Secret in the same account
+
+The 'friendly' name of the secret can be used in this case.
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-example
+stringData:
+  sample-secret: <path:test-aws-secret#test-secret>
+type: Opaque
+```
+
+###### Secret in a different account
+
+The arn of the secret needs to be used in this case:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-example
+stringData:
+  sample-secret: <path:arn:aws:secretsmanager:<REGION>:<ACCOUNT_NUMBER>:<SECRET_ID>#<key>>
+type: Opaque
+```
+
 ### GCP Secret Manager
 
 ##### GCP Authentication
