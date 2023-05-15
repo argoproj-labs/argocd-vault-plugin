@@ -365,9 +365,9 @@ kind: Secret
 metadata:
   name: aws-ssmps-example
   annotations:
-    avp.kubernetes.io/path: "test-aws-secret" # The name of your AWS Secret
+    avp.kubernetes.io/path: "test-aws-secret" # The path to your AWS SSM Parameter
 stringData:
-  sample-secret: <test-secret>
+  sample-secret: <test-secret> # name of your AWS SSM Parameter (part after last /)
 type: Opaque
 ```
 
@@ -379,7 +379,7 @@ kind: Secret
 metadata:
   name: aws-ssmps-example
 stringData:
-  sample-secret: <path:test-aws-secret#test-secret>
+  sample-secret: <path:/test-aws-secret#test-secret>
 type: Opaque
 ```
 
@@ -390,12 +390,8 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: aws-ssmps-example
-  annotations:
-    avp.kubernetes.io/path: "some-path/secret"
-    avp.kubernetes.io/secret-version: "123"
 stringData:
-  sample-secret: <test-secret>
-  sample-secret-again: <path:some-path/secret#test-secret#223>
+  sample-secret-again: <path:some-path/secret#test-secret#223> # this is only possible with inline paths
 type: Opaque
 ```
 
