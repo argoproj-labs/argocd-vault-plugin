@@ -25,91 +25,91 @@ func TestMain(t *testing.T) {
 	os.Setenv("AVP_SECRET_ID", secretid)
 	os.Setenv("AVP_ROLE_ID", roleid)
 	os.Setenv("VAULT_SKIP_VERIFY", "true")
-	//
-	//t.Run("will throw an error expecting arguments", func(t *testing.T) {
-	//	args := []string{}
-	//	cmd := NewGenerateCommand()
-	//
-	//	c := bytes.NewBufferString("")
-	//	cmd.SetArgs(args)
-	//	cmd.SetErr(c)
-	//	cmd.SetOut(bytes.NewBufferString(""))
-	//	cmd.Execute()
-	//	out, err := ioutil.ReadAll(c) // Read buffer to bytes
-	//	if err != nil {
-	//		t.Fatal(err)
-	//	}
-	//
-	//	expected := "<path> argument required to generate manifests"
-	//	if !strings.Contains(string(out), expected) {
-	//		t.Fatalf("expected to contain: %s but got %s", expected, out)
-	//	}
-	//})
-	//
-	//t.Run("will return that couldn't find yamls", func(t *testing.T) {
-	//	args := []string{"./fixtures/input/empty/"}
-	//	cmd := NewGenerateCommand()
-	//
-	//	b := bytes.NewBufferString("")
-	//	cmd.SetArgs(args)
-	//	cmd.SetErr(b)
-	//	cmd.SetOut(bytes.NewBufferString(""))
-	//	cmd.Execute()
-	//	out, err := ioutil.ReadAll(b) // Read buffer to bytes
-	//	if err != nil {
-	//		t.Fatal(err)
-	//	}
-	//
-	//	expected := "no YAML or JSON files were found in ./fixtures/input/empty/"
-	//	if !strings.Contains(string(out), expected) {
-	//		t.Fatalf("expected to contain: %s but got %s", expected, out)
-	//	}
-	//})
-	//
-	//t.Run("returns error for empty manifests", func(t *testing.T) {
-	//	// From path
-	//	args := []string{"../fixtures/input/empty/file.yaml"}
-	//	cmd := NewGenerateCommand()
-	//
-	//	b := bytes.NewBufferString("")
-	//	cmd.SetArgs(args)
-	//	cmd.SetErr(b)
-	//	cmd.SetOut(bytes.NewBufferString(""))
-	//	cmd.Execute()
-	//	out, err := ioutil.ReadAll(b) // Read buffer to bytes
-	//	if err != nil {
-	//		t.Fatal(err)
-	//	}
-	//
-	//	expected := ""
-	//	if !strings.Contains(string(out), expected) {
-	//		t.Fatalf("expected to contain: %s but got %s", expected, out)
-	//	}
-	//
-	//	// From stdin
-	//	args = []string{"-"}
-	//	stdin := bytes.NewBufferString("")
-	//	inputBuf, err := ioutil.ReadFile("../fixtures/input/empty/file.yaml")
-	//	if err != nil {
-	//		t.Fatal(err)
-	//	}
-	//	stdin.Write(inputBuf)
-	//
-	//	b = bytes.NewBufferString("")
-	//	cmd.SetIn(stdin)
-	//	cmd.SetArgs(args)
-	//	cmd.SetErr(b)
-	//	cmd.SetOut(bytes.NewBufferString(""))
-	//	cmd.Execute()
-	//	out, err = ioutil.ReadAll(b) // Read buffer to bytes
-	//	if err != nil {
-	//		t.Fatal(err)
-	//	}
-	//
-	//	if !strings.Contains(string(out), expected) {
-	//		t.Fatalf("expected to contain: %s but got %s", expected, out)
-	//	}
-	//})
+
+	t.Run("will throw an error expecting arguments", func(t *testing.T) {
+		args := []string{}
+		cmd := NewGenerateCommand()
+
+		c := bytes.NewBufferString("")
+		cmd.SetArgs(args)
+		cmd.SetErr(c)
+		cmd.SetOut(bytes.NewBufferString(""))
+		cmd.Execute()
+		out, err := ioutil.ReadAll(c) // Read buffer to bytes
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expected := "<path> argument required to generate manifests"
+		if !strings.Contains(string(out), expected) {
+			t.Fatalf("expected to contain: %s but got %s", expected, out)
+		}
+	})
+
+	t.Run("will return that couldn't find yamls", func(t *testing.T) {
+		args := []string{"./fixtures/input/empty/"}
+		cmd := NewGenerateCommand()
+
+		b := bytes.NewBufferString("")
+		cmd.SetArgs(args)
+		cmd.SetErr(b)
+		cmd.SetOut(bytes.NewBufferString(""))
+		cmd.Execute()
+		out, err := ioutil.ReadAll(b) // Read buffer to bytes
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expected := "no YAML or JSON files were found in ./fixtures/input/empty/"
+		if !strings.Contains(string(out), expected) {
+			t.Fatalf("expected to contain: %s but got %s", expected, out)
+		}
+	})
+
+	t.Run("returns error for empty manifests", func(t *testing.T) {
+		// From path
+		args := []string{"../fixtures/input/empty/file.yaml"}
+		cmd := NewGenerateCommand()
+
+		b := bytes.NewBufferString("")
+		cmd.SetArgs(args)
+		cmd.SetErr(b)
+		cmd.SetOut(bytes.NewBufferString(""))
+		cmd.Execute()
+		out, err := ioutil.ReadAll(b) // Read buffer to bytes
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expected := ""
+		if !strings.Contains(string(out), expected) {
+			t.Fatalf("expected to contain: %s but got %s", expected, out)
+		}
+
+		// From stdin
+		args = []string{"-"}
+		stdin := bytes.NewBufferString("")
+		inputBuf, err := ioutil.ReadFile("../fixtures/input/empty/file.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+		stdin.Write(inputBuf)
+
+		b = bytes.NewBufferString("")
+		cmd.SetIn(stdin)
+		cmd.SetArgs(args)
+		cmd.SetErr(b)
+		cmd.SetOut(bytes.NewBufferString(""))
+		cmd.Execute()
+		out, err = ioutil.ReadAll(b) // Read buffer to bytes
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !strings.Contains(string(out), expected) {
+			t.Fatalf("expected to contain: %s but got %s", expected, out)
+		}
+	})
 
 	t.Run("will replace templates from local vault", func(t *testing.T) {
 		args := []string{"../fixtures/input/nonempty"}
