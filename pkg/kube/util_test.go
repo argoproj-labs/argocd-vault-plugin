@@ -356,6 +356,7 @@ func TestGenericReplacement_keyAndValueReplacement(t *testing.T) {
 		TemplateData: map[string]interface{}{
 			"<name>": "default",
 			"tag":    "<tag>",
+			"<tag>":  "<name>",
 		},
 		Data: map[string]interface{}{
 			"namespace": "default",
@@ -371,8 +372,9 @@ func TestGenericReplacement_keyAndValueReplacement(t *testing.T) {
 
 	expected := Resource{
 		TemplateData: map[string]interface{}{
-			"app": "default",
-			"tag": "latest",
+			"app":    "default",
+			"tag":    "latest",
+			"latest": "app",
 		},
 		Data: map[string]interface{}{
 			"namespace": "default",
