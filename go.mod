@@ -17,8 +17,8 @@ require (
 	github.com/Azure/go-autorest/autorest v0.11.27 // indirect
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.11 // indirect
 	github.com/Azure/go-autorest/autorest/azure/cli v0.4.5 // indirect
-	github.com/IBM/go-sdk-core/v5 v5.10.1
-	github.com/IBM/secrets-manager-go-sdk v1.0.44
+	github.com/IBM/go-sdk-core/v5 v5.10.2
+	github.com/IBM/secrets-manager-go-sdk v1.2.0
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/aws/aws-sdk-go-v2 v1.17.5
 	github.com/aws/aws-sdk-go-v2/config v1.18.15
@@ -27,7 +27,6 @@ require (
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-openapi/errors v0.20.2 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
-	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/golang-jwt/jwt/v4 v4.4.1 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.4.0
@@ -43,7 +42,7 @@ require (
 	github.com/spf13/viper v1.12.0
 	github.com/yandex-cloud/go-genproto v0.0.0-20220523093647-071bccd2b16c
 	github.com/yandex-cloud/go-sdk v0.0.0-20220511115426-9feb5f1ee87f
-	go.mongodb.org/mongo-driver v1.9.1 // indirect
+	go.mongodb.org/mongo-driver v1.10.0 // indirect
 	go.mozilla.org/sops/v3 v3.7.2
 	golang.org/x/net v0.7.0
 	golang.org/x/sys v0.5.0 // indirect
@@ -112,7 +111,7 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
 	github.com/go-openapi/jsonreference v0.20.0 // indirect
-	github.com/go-openapi/strfmt v0.21.2 // indirect
+	github.com/go-openapi/strfmt v0.21.3 // indirect
 	github.com/go-openapi/swag v0.21.1 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
