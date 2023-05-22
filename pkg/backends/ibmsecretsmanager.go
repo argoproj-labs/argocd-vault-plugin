@@ -76,6 +76,15 @@ func (m IBMSecretMetadata) GetMetadata() (map[string]string, error) {
 				"type":    *v.SecretType,
 			}, nil
 		}
+	case *ibmsm.KVSecretMetadata:
+		{
+			return map[string]string{
+				"name":    *v.Name,
+				"id":      *v.ID,
+				"groupId": *v.SecretGroupID,
+				"type":    *v.SecretType,
+			}, nil
+		}
 	default:
 		return nil, fmt.Errorf("Unknown secret type %T encountered", v)
 	}
@@ -148,6 +157,10 @@ func (d IBMSecretData) GetSecret() (map[string]interface{}, error) {
 			if v.ApiKey != nil {
 				result["api_key"] = *v.ApiKey
 			}
+		}
+	case *ibmsm.KVSecret:
+		{
+			result["data"] = v.Data
 		}
 	default:
 		{
@@ -237,6 +250,12 @@ func (d IBMVersionedSecretData) GetSecret() (map[string]interface{}, error) {
 				result["api_key"] = *v.ApiKey
 			}
 			return nil, fmt.Errorf("Payload unavailable for secret %s", *v.ID)
+		}
+	case *ibmsm.KVSecretVersion:
+		{
+			if *v.PayloadAvailable {
+				result["data"] = v.Data
+			}
 		}
 	default:
 		{
