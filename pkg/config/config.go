@@ -15,7 +15,7 @@ import (
 	kvauth "github.com/Azure/azure-sdk-for-go/services/keyvault/auth"
 	delineasecretserver "github.com/DelineaXPM/tss-sdk-go/v2/server"
 	"github.com/IBM/go-sdk-core/v5/core"
-	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv1"
+	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/auth/vault"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/kube"
@@ -146,7 +146,7 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				url = v.GetString(types.EnvVaultAddress)
 			}
 
-			client, err := ibmsm.NewSecretsManagerV1(&ibmsm.SecretsManagerV1Options{
+			client, err := ibmsm.NewSecretsManagerV2(&ibmsm.SecretsManagerV2Options{
 				Authenticator: &core.IamAuthenticator{ApiKey: v.GetString(types.EnvAvpIBMAPIKey)},
 				URL:           url,
 			})
