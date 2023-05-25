@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"sync"
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
@@ -14,6 +15,11 @@ import (
 
 type MockIBMSMClient struct {
 	ListSecretsOptionCalledWith []*ibmsm.ListSecretsOptions
+
+	// GetSecretLock prevents false data races caused by unsychronized access to the mock state
+	// It is shared b/w both GetSecret and GetSecretVersion for simplicity, even though each writes to a different field
+	GetSecretLock sync.RWMutex
+
 	GetSecretCalledWith         *ibmsm.GetSecretOptions
 	GetSecretCallCount          int
 	GetSecretVersionCalledWith  *ibmsm.GetSecretVersionOptions
@@ -112,8 +118,10 @@ func (m *MockIBMSMClient) ListSecrets(listAllSecretsOptions *ibmsm.ListSecretsOp
 }
 
 func (m *MockIBMSMClient) GetSecret(getSecretOptions *ibmsm.GetSecretOptions) (result ibmsm.SecretIntf, response *core.DetailedResponse, err error) {
+	m.GetSecretLock.Lock()
 	m.GetSecretCalledWith = getSecretOptions
 	m.GetSecretCallCount += 1
+	m.GetSecretLock.Unlock()
 
 	if *getSecretOptions.ID == "arbitrary" {
 		name := "my-secret"
@@ -148,8 +156,10 @@ func (m *MockIBMSMClient) GetSecret(getSecretOptions *ibmsm.GetSecretOptions) (r
 }
 
 func (m *MockIBMSMClient) GetSecretVersion(getSecretOptions *ibmsm.GetSecretVersionOptions) (result ibmsm.SecretVersionIntf, response *core.DetailedResponse, err error) {
+	m.GetSecretLock.Lock()
 	m.GetSecretVersionCalledWith = getSecretOptions
 	m.GetSecretVersionCallCount += 1
+	m.GetSecretLock.Unlock()
 	data := "dummy"
 	id := "public_cert"
 	yes := true
