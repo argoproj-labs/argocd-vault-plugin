@@ -4,7 +4,7 @@ default: build
 
 quality:
 	go vet github.com/argoproj-labs/argocd-vault-plugin
-	go test -v -coverprofile cover.out ./...
+	go test -race -v -coverprofile cover.out ./...
 
 build:
 	go build -o ${BINARY} .
