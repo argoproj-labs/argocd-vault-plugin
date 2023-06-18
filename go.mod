@@ -31,10 +31,10 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.4.0
 	github.com/hashicorp/go-hclog v1.2.2
-	github.com/hashicorp/vault v1.11.9
+	github.com/hashicorp/vault v1.11.11
 	github.com/hashicorp/vault-plugin-secrets-kv v0.12.1
 	github.com/hashicorp/vault/api v1.7.2
-	github.com/hashicorp/vault/sdk v0.5.3-0.20230302211625-64eff2f9e47c
+	github.com/hashicorp/vault/sdk v0.5.3-0.20230427142536-ef3712b9ace8
 	github.com/keeper-security/secrets-manager-go/core v1.5.0
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
