@@ -258,30 +258,34 @@ data:
 
 Define a sidecar image from a suitable base
 ```Dockerfile
-FROM registry.access.redhat.com/ubi8
+FROM alpine:latest
 
 # Switch to root for the ability to perform install
 USER root
 
 # Install tools needed for your repo-server to retrieve & decrypt secrets, render manifests
 # (e.g. curl, awscli, gpg, sops)
-RUN apt-get update && \
-    apt-get install -y \
+RUN apk update && \
+    apk add --no-cache \
         curl \
-        awscli \
-        gpg && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+        aws-cli \
+        gpg \
+        tini && \
+    rm -rf /var/cache/apk
 
 # Install the AVP plugin (as root so we can copy to /usr/local/bin)
-ENV AVP_VERSION=1.11.0
+ARG AVP_VERSION=1.14.0
 ENV BIN=argocd-vault-plugin
-RUN curl -L -o ${BIN} https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v${AVP_VERSION}/argocd-vault-plugin_${AVP_VERSION}_linux_amd64
-RUN chmod +x ${BIN}
-RUN mv ${BIN} /usr/local/bin
+
+RUN curl -L https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v${AVP_VERSION}/argocd-vault-plugin_${AVP_VERSION}_linux_amd64 -o argocd-vault-plugin && \
+    chmod +x ${BIN} && \
+    mv ${BIN} /usr/local/bin
 
 # Switch back to non-root user
 USER 999
+
+# tini as entrypoint is required to avoid spawning bash zombie processes when using the avp sidecar
+ENTRYPOINT [ "tini" ]
 ```
 
 Patch the argocd-repo-server to define the sidecar
@@ -300,7 +304,8 @@ spec:
           name: cmp-plugin
       containers:
       - name: avp
-        command: [/var/run/argocd/argocd-cmp-server]
+        args:
+          - /var/run/argocd/argocd-cmp-server
         image: your-container-registry/your-custom-image
         securityContext:
           runAsNonRoot: true
