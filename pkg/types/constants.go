@@ -43,6 +43,7 @@ const (
 	DelineaSecretServerbackend  = "delineasecretserver"
 	OnePasswordConnect          = "1passwordconnect"
 	KeeperSecretsManagerBackend = "keepersecretsmanager"
+	KubernetesSecretBackend     = "kubernetessecret"
 	K8sAuth                     = "k8s"
 	ApproleAuth                 = "approle"
 	GithubAuth                  = "github"

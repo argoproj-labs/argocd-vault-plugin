@@ -705,3 +705,73 @@ type: Opaque
 data:
   password: <path:secret-id#key | base64encode>
 ```
+
+### Kubernetes Secret
+
+Inject values from any kubernetes secret
+
+**Note**: The Kubernetes Secret backend does not support versioning
+
+##### Kubernetes Secret Authentication
+
+Backend inherits same in-cluster service-account as the plugin itself
+
+These are the parameters for Kubernetes Secret:
+
+```
+AVP_TYPE: kubernetessecret
+```
+
+##### Examples
+
+###### Path Annotation
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: "my-secret"
+type: Opaque
+data:
+  password: <key>
+```
+
+###### Path Annotation With Namespace
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: "prod:my-secret"
+type: Opaque
+data:
+  password: <key>
+```
+
+###### Inline Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+type: Opaque
+data:
+  password: <path:my-secret#key>
+```
+
+###### Inline Path With Namespace
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+type: Opaque
+data:
+  password: <path:prod:my-secret#key>
+```

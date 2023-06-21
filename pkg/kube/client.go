@@ -32,9 +32,9 @@ func NewClient() (*Client, error) {
 	}, nil
 }
 
-// ReadSecret reads the specified Secret from the defined namespace, otherwise defaults to `argocd`
-// and returns a YAML []byte containing its data, decoded from base64
-func (c *Client) ReadSecret(name string) ([]byte, error) {
+// ReadSecretData reads the specified Secret from the defined namespace, otherwise defaults to `argocd`
+// and returns map[string][]byte containing its data
+func (c *Client) ReadSecretData(name string) (map[string][]byte, error) {
 	secretNamespace, secretName := secretNamespaceName(name)
 
 	utils.VerboseToStdErr("parsed secret name as %s from namespace %s", secretName, secretNamespace)
@@ -43,8 +43,20 @@ func (c *Client) ReadSecret(name string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return s.Data, nil
+}
+
+// ReadSecret reads the specified Secret from the defined namespace, otherwise defaults to `argocd`
+// and returns a YAML []byte containing its data, decoded from base64
+func (c *Client) ReadSecret(name string) ([]byte, error) {
+	data, err := c.ReadSecretData(name)
+	if err != nil {
+		return nil, err
+	}
+
 	decoded := make(map[string]string)
-	for key, value := range s.Data {
+	for key, value := range data {
 		decoded[key] = string(value)
 	}
 	res, err := k8yaml.Marshal(&decoded)
