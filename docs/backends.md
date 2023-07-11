@@ -174,9 +174,7 @@ For IBM Cloud Secret Manager we only support using IAM authentication at this ti
 
 We support all types of secrets that can be retrieved from IBM Cloud Secret Manager. Please note:
 
-- [Only certain types of secrets](https://cloud.ibm.com/apidocs/secrets-manager#get-secret-version-request) support versioning. If a version is specified for a type that doesn't support it (e.g, `arbitrary`), the version is ignored
-
-- Secrets that are JSON data (i.e, non `arbitrary` secrets or an `arbitrary` secret with JSON `payload`) can have the desired key (i.e, the `username` in a `username_password` type secret) interpolated with the [jsonPath](./howitworks.md#jsonPath) modifier. Refer to the [IBM Cloud Secret Manager API docs](https://cloud.ibm.com/apidocs/secrets-manager#get-secret) for more details
+- Secrets that are JSON data (i.e, non `arbitrary` secrets or an `arbitrary` secret with JSON `payload`) can have the select keys (i.e, the `username` in a `username_password` type secret) interpolated with the [jsonPath](./howitworks.md#jsonPath) modifier. Not all keys are available for extraction with `jsonPath`. Refer to the [IBM Cloud Secret Manager API docs](https://cloud.ibm.com/apidocs/secrets-manager#get-secret) for more details
 
 ##### IAM Authentication
 For IAM Authentication, these are the required parameters:
@@ -242,6 +240,10 @@ Refer to the [AWS SDK for Go V2
 documentation](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials) for
 supplying AWS credentials. Supported credentials and the order in which they are loaded are
 described [here](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials).
+
+**Note About Region**
+If you provide the full AWS ARN as the secret path, ex. `arn:aws:secretsmanager:us-east-1:123123123:secret:some-secret`, 
+the region from the ARN (us-east-1) in this example, will take precedents over the AWS_REGION environment variable listed below. 
 
 These are the parameters for AWS:
 ```

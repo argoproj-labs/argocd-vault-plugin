@@ -3,12 +3,10 @@ kind: Kustomization
 
 images:
   - name: quay.io/argoproj/argocd
-    newTag: v2.4.0
+    newTag: v2.7.5
 
-# Note: Versions below 2.4.0 will not always work if trying to use AVP with Helm
-# Fixed in https://github.com/argoproj/argo-cd/pull/9319
 resources:
-- https://github.com/argoproj/argo-cd//manifests/cluster-install?ref=v2.4.0
+- https://github.com/argoproj/argo-cd//manifests/cluster-install?ref=v2.7.5
 - cmp-plugin.yaml
 
 patchesStrategicMerge:

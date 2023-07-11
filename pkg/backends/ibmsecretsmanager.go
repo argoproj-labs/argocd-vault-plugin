@@ -6,19 +6,278 @@ import (
 	"sync"
 
 	"github.com/IBM/go-sdk-core/v5/core"
-	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv1"
+	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 )
 
 var IBMPath, _ = regexp.Compile(`ibmcloud/(?P<type>.+)/secrets/groups/(?P<groupId>.+)`)
 
+// IBMSecretMetadata wraps the SecretMetadataIntf provided by the SDK
+// It provides a generic method for accessing the metadata regardless of secret type
+type IBMSecretMetadata struct {
+	inner ibmsm.SecretMetadataIntf
+}
+
+// GetMetadata returns the metadata for any supported secret type
+func (m IBMSecretMetadata) GetMetadata() (map[string]string, error) {
+	switch v := m.inner.(type) {
+	case *ibmsm.ArbitrarySecretMetadata:
+		{
+			return map[string]string{
+				"name":    *v.Name,
+				"id":      *v.ID,
+				"groupId": *v.SecretGroupID,
+				"type":    *v.SecretType,
+			}, nil
+		}
+	case *ibmsm.UsernamePasswordSecretMetadata:
+		{
+			return map[string]string{
+				"name":    *v.Name,
+				"id":      *v.ID,
+				"groupId": *v.SecretGroupID,
+				"type":    *v.SecretType,
+			}, nil
+		}
+	case *ibmsm.ImportedCertificateMetadata:
+		{
+			return map[string]string{
+				"name":    *v.Name,
+				"id":      *v.ID,
+				"groupId": *v.SecretGroupID,
+				"type":    *v.SecretType,
+			}, nil
+		}
+	case *ibmsm.PublicCertificateMetadata:
+		{
+			return map[string]string{
+				"name":    *v.Name,
+				"id":      *v.ID,
+				"groupId": *v.SecretGroupID,
+				"type":    *v.SecretType,
+			}, nil
+		}
+	case *ibmsm.PrivateCertificateMetadata:
+		{
+			return map[string]string{
+				"name":    *v.Name,
+				"id":      *v.ID,
+				"groupId": *v.SecretGroupID,
+				"type":    *v.SecretType,
+			}, nil
+		}
+	case *ibmsm.IAMCredentialsSecretMetadata:
+		{
+			return map[string]string{
+				"name":    *v.Name,
+				"id":      *v.ID,
+				"groupId": *v.SecretGroupID,
+				"type":    *v.SecretType,
+			}, nil
+		}
+	case *ibmsm.KVSecretMetadata:
+		{
+			return map[string]string{
+				"name":    *v.Name,
+				"id":      *v.ID,
+				"groupId": *v.SecretGroupID,
+				"type":    *v.SecretType,
+			}, nil
+		}
+	default:
+		return nil, fmt.Errorf("Unknown secret type %T encountered", v)
+	}
+}
+
+// NewIBMSecretMetadata constructs a new IBMSecretMetdata
+func NewIBMSecretMetadata(m ibmsm.SecretMetadataIntf) *IBMSecretMetadata {
+	return &IBMSecretMetadata{
+		inner: m,
+	}
+}
+
+// IBMSecretData wraps the SecretDataIntf provided by the SDK
+// It provides a generic method for accessing the secret's payload regardless of secret type
+type IBMSecretData struct {
+	inner ibmsm.SecretIntf
+}
+
+// GetSecret returns the data for any supported secret type
+func (d IBMSecretData) GetSecret() (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+
+	switch v := d.inner.(type) {
+	case *ibmsm.ArbitrarySecret:
+		{
+			if v.Payload != nil {
+				result["payload"] = *v.Payload
+			}
+		}
+	case *ibmsm.UsernamePasswordSecret:
+		{
+			result["username"] = *v.Username
+			result["password"] = *v.Password
+		}
+	case *ibmsm.ImportedCertificate:
+		{
+			result["certificate"] = *v.Certificate
+			if v.PrivateKey != nil {
+				result["private_key"] = *v.PrivateKey
+			}
+			if v.Intermediate != nil {
+				result["intermediate"] = *v.Intermediate
+			}
+		}
+	case *ibmsm.PublicCertificate:
+		{
+			if v.Certificate != nil {
+				result["certificate"] = *v.Certificate
+			}
+			if v.PrivateKey != nil {
+				result["private_key"] = *v.PrivateKey
+			}
+			if v.Intermediate != nil {
+				result["intermediate"] = *v.Intermediate
+			}
+		}
+	case *ibmsm.PrivateCertificate:
+		{
+			result["certificate"] = *v.Certificate
+			result["private_key"] = *v.PrivateKey
+			if v.IssuingCa != nil {
+				result["issuing_ca"] = *v.IssuingCa
+			}
+			if v.CaChain != nil {
+				result["ca_chain"] = v.CaChain
+			}
+		}
+	case *ibmsm.IAMCredentialsSecret:
+		{
+			if v.ApiKey != nil {
+				result["api_key"] = *v.ApiKey
+			}
+		}
+	case *ibmsm.KVSecret:
+		{
+			result["data"] = v.Data
+		}
+	default:
+		{
+			return nil, fmt.Errorf("Unsupported secret type %T encountered. This should be impossible", v)
+		}
+	}
+	return result, nil
+}
+
+// NewIBMSecretData constructs a new IBMSecretData
+func NewIBMSecretData(m ibmsm.SecretIntf) *IBMSecretData {
+	return &IBMSecretData{
+		inner: m,
+	}
+}
+
+// IBMVersionedSecretData wraps the SecretVersionIntf provided by the SDK
+// It provides a generic method for accessing the versioned secret's payload regardless of secret type
+type IBMVersionedSecretData struct {
+	inner ibmsm.SecretVersionIntf
+}
+
+// GetSecret returns the data for any supported versioned secret type
+func (d IBMVersionedSecretData) GetSecret() (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+
+	switch v := d.inner.(type) {
+	case *ibmsm.ArbitrarySecretVersion:
+		{
+			if *v.PayloadAvailable {
+				if v.Payload != nil {
+					result["payload"] = *v.Payload
+				}
+			}
+		}
+	case *ibmsm.UsernamePasswordSecretVersion:
+		{
+			if *v.PayloadAvailable {
+				result["username"] = *v.Username
+				result["password"] = *v.Password
+			}
+		}
+	case *ibmsm.ImportedCertificateVersion:
+		{
+			if *v.PayloadAvailable {
+				result["certificate"] = *v.Certificate
+				if v.PrivateKey != nil {
+					result["private_key"] = *v.PrivateKey
+				}
+				if v.Intermediate != nil {
+					result["intermediate"] = *v.Intermediate
+				}
+			}
+		}
+	case *ibmsm.PublicCertificateVersion:
+		{
+			if *v.PayloadAvailable {
+				if v.Certificate != nil {
+					result["certificate"] = *v.Certificate
+				}
+				if v.PrivateKey != nil {
+					result["private_key"] = *v.PrivateKey
+				}
+				if v.Intermediate != nil {
+					result["intermediate"] = *v.Intermediate
+				}
+			}
+		}
+	case *ibmsm.PrivateCertificateVersion:
+		{
+			if *v.PayloadAvailable {
+				result["certificate"] = *v.Certificate
+				if v.PrivateKey != nil {
+					result["private_key"] = *v.PrivateKey
+				}
+				if v.IssuingCa != nil {
+					result["issuing_ca"] = *v.IssuingCa
+				}
+				if v.CaChain != nil {
+					result["ca_chain"] = v.CaChain
+				}
+			}
+		}
+	case *ibmsm.IAMCredentialsSecretVersion:
+		{
+			if *v.PayloadAvailable {
+				result["api_key"] = *v.ApiKey
+			}
+			return nil, fmt.Errorf("Payload unavailable for secret %s", *v.ID)
+		}
+	case *ibmsm.KVSecretVersion:
+		{
+			if *v.PayloadAvailable {
+				result["data"] = v.Data
+			}
+		}
+	default:
+		{
+			return nil, fmt.Errorf("Unsupported secret type %T encountered. This should be impossible", v)
+		}
+	}
+	return result, nil
+}
+
+// NewIBMVersionedSecretData constructs a new IBMVersionedSecretData
+func NewIBMVersionedSecretData(m ibmsm.SecretVersionIntf) *IBMVersionedSecretData {
+	return &IBMVersionedSecretData{
+		inner: m,
+	}
+}
+
 // IBMSecretsManagerClient is an interface for any client to the IBM Secrets Manager
 // These are only the methods we need
 type IBMSecretsManagerClient interface {
-	ListAllSecrets(listAllSecretsOptions *ibmsm.ListAllSecretsOptions) (result *ibmsm.ListSecrets, response *core.DetailedResponse, err error)
-	GetSecret(getSecretOptions *ibmsm.GetSecretOptions) (result *ibmsm.GetSecret, response *core.DetailedResponse, err error)
-	GetSecretVersion(getSecretOptions *ibmsm.GetSecretVersionOptions) (result *ibmsm.GetSecretVersion, response *core.DetailedResponse, err error)
+	ListSecrets(listAllSecretsOptions *ibmsm.ListSecretsOptions) (result *ibmsm.SecretMetadataPaginatedCollection, response *core.DetailedResponse, err error)
+	GetSecret(getSecretOptions *ibmsm.GetSecretOptions) (result ibmsm.SecretIntf, response *core.DetailedResponse, err error)
+	GetSecretVersion(getSecretOptions *ibmsm.GetSecretVersionOptions) (result ibmsm.SecretVersionIntf, response *core.DetailedResponse, err error)
 }
 
 // Used as the key into the several caches for IBM SM API calls
@@ -32,11 +291,11 @@ type cacheKey struct {
 type IBMSecretsManager struct {
 	Client IBMSecretsManagerClient
 
-	// Cache for storing *ibmsm.SecretResource's from listing the secrets of a group
+	// Cache for storing *ibmsm.SecretMetadata's from listing the secrets of a group
 	// Organized as:
-	// [groupId]: { [secretType]: { [secretName]: &ibmsm.SecretResource } }
+	// [groupId]: { [secretType]: { [secretName]: &ibmsm.SecretMetadata } }
 	// Only read/written to by the main goroutine, no synchronized access needed
-	listAllSecretsCache map[cacheKey]map[string]*ibmsm.SecretResource
+	listAllSecretsCache map[cacheKey]map[string]*IBMSecretMetadata
 
 	// Cache for storing payloads (interface{}) of secrets
 	// Organized as:
@@ -57,7 +316,7 @@ type IBMSecretsManager struct {
 func NewIBMSecretsManagerBackend(client IBMSecretsManagerClient) *IBMSecretsManager {
 	ibmSecretsManager := &IBMSecretsManager{
 		Client:              client,
-		listAllSecretsCache: make(map[cacheKey]map[string]*ibmsm.SecretResource),
+		listAllSecretsCache: make(map[cacheKey]map[string]*IBMSecretMetadata),
 		getSecretsCache:     make(map[cacheKey]map[string]interface{}),
 		retrievedAllSecrets: make(map[cacheKey]bool),
 	}
@@ -97,54 +356,48 @@ func (i *IBMSecretsManager) Login() error {
 	return nil
 }
 
-// getSecretVersionedOrNot will ultimately return the payload of a secret from IBM SM:
-// - `secret_data` map for arbitrary secrets
-// - `api_key` k/v pair for IAM credential secrets
-// - `certificate`, `private_key`, etc. k/v pairs for versioned certificate secrets
-// API calls and their responses depend on the whether the secret "can be" versioned or not
-func (i *IBMSecretsManager) getSecretVersionedOrNot(secret *ibmsm.SecretResource, version string) (map[string]interface{}, error) {
+// getSecretVersionedOrNot will ultimately return the payload of a secret from IBM SM
+// See IBM SM docs for what fields are extractable for each secret type
+func (i *IBMSecretsManager) getSecretVersionedOrNot(id, stype, version string) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
 
-	// Only certificate secrets are versioned in IBM SM
-	if version != "" && (*secret.SecretType == types.IBMImportedCertType || *secret.SecretType == types.IBMPublicCertType) {
+	if version != "" {
 		opts := &ibmsm.GetSecretVersionOptions{
-			SecretType: secret.SecretType,
-			ID:         secret.ID,
-			VersionID:  &version,
+			SecretID: &id,
+			ID:       &version,
 		}
 
 		secretVersion, httpResponse, err := i.Client.GetSecretVersion(opts)
 		if err != nil {
-			return nil, fmt.Errorf("Could not retrieve secret %s: %s", *secret.ID, err)
+			return nil, fmt.Errorf("Could not retrieve secret %s: %s", id, err)
 		}
 		if secretVersion == nil {
-			return nil, fmt.Errorf("Could not retrieve secret %s after %d retries, statuscode %d", *secret.ID, types.IBMMaxRetries, httpResponse.GetStatusCode())
+			return nil, fmt.Errorf("Could not retrieve secret %s after %d retries, statuscode %d", id, types.IBMMaxRetries, httpResponse.GetStatusCode())
 		}
 
-		utils.VerboseToStdErr("IBM Cloud Secrets Manager get versioned secret %s HTTP response: %v", *secret.ID, httpResponse)
+		utils.VerboseToStdErr("IBM Cloud Secrets Manager get versioned secret %s HTTP response: %v", id, httpResponse)
 
-		result = (secretVersion.Resources[0].(*ibmsm.SecretVersion)).SecretData.(map[string]interface{})
+		result, err = NewIBMVersionedSecretData(secretVersion).GetSecret()
+		if err != nil {
+			return nil, fmt.Errorf("Extract versioned secret payload: %s", err)
+		}
+
 	} else {
 		secretRes, httpResponse, err := i.Client.GetSecret(&ibmsm.GetSecretOptions{
-			SecretType: secret.SecretType,
-			ID:         secret.ID,
+			ID: &id,
 		})
 		if err != nil {
-			return nil, fmt.Errorf("Could not retrieve secret %s: %s", *secret.ID, err)
+			return nil, fmt.Errorf("Could not retrieve secret %s: %s", id, err)
 		}
 		if secretRes == nil {
-			return nil, fmt.Errorf("Could not retrieve secret %s after %d retries, statuscode %d", *secret.ID, types.IBMMaxRetries, httpResponse.GetStatusCode())
+			return nil, fmt.Errorf("Could not retrieve secret %s after %d retries, statuscode %d", id, types.IBMMaxRetries, httpResponse.GetStatusCode())
 		}
 
-		utils.VerboseToStdErr("IBM Cloud Secrets Manager get unversioned secret %s HTTP response: %v", *secret.ID, httpResponse)
+		utils.VerboseToStdErr("IBM Cloud Secrets Manager get unversioned secret %s HTTP response: %v", id, httpResponse)
 
-		// APIKey secrets don't come from `SecretData`
-		if *secret.SecretType == types.IBMIAMCredentialsType {
-			result = map[string]interface{}{
-				"api_key": *secretRes.Resources[0].(*ibmsm.SecretResource).APIKey,
-			}
-		} else {
-			result = secretRes.Resources[0].(*ibmsm.SecretResource).SecretData.(map[string]interface{})
+		result, err = NewIBMSecretData(secretRes).GetSecret()
+		if err != nil {
+			return nil, fmt.Errorf("Extract secret payload: %s", err)
 		}
 	}
 
@@ -156,19 +409,22 @@ func (i *IBMSecretsManager) getSecretVersionedOrNot(secret *ibmsm.SecretResource
 // `err` is set if there is an error getting the secret
 // `payload` is the secrets `payload` and is set if successful
 // The goroutine only terminates once IBMMaxRetries or fewer attempts are made
-func (i *IBMSecretsManager) getSecret(secret *ibmsm.SecretResource, version string, response chan map[string]interface{}, wg *sync.WaitGroup) {
+func (i *IBMSecretsManager) getSecret(secret *IBMSecretMetadata, version string, response chan map[string]interface{}, wg *sync.WaitGroup) {
 	result := make(map[string]interface{})
-	result["name"] = *secret.Name
-
-	var groupId string
-	if secret.SecretGroupID == nil {
-		groupId = "default"
-	} else {
-		groupId = *(secret.SecretGroupID)
+	data, err := secret.GetMetadata()
+	if err != nil {
+		result["err"] = err
+		response <- result
+		wg.Done()
+		return
 	}
 
-	secretType := *(secret.SecretType)
-	secretName := *(secret.Name)
+	secretName := data["name"]
+	secretID := data["id"]
+	secretType := data["type"]
+	groupId := data["groupId"]
+
+	result["name"] = secretName
 
 	i.getSecretsCacheLock.RLock()
 	cacheResult := i.readSecretFromCache(groupId, secretType, secretName)
@@ -180,7 +436,7 @@ func (i *IBMSecretsManager) getSecret(secret *ibmsm.SecretResource, version stri
 		result["payload"] = cacheResult
 	} else {
 		utils.VerboseToStdErr("IBM Cloud Secrets Manager get secret: getting secret %s of type %s from group %s", secretName, secretType, groupId)
-		secretData, err := i.getSecretVersionedOrNot(secret, version)
+		secretData, err := i.getSecretVersionedOrNot(secretID, secretType, version)
 		var payload interface{}
 		if err != nil {
 			result["err"] = err
@@ -213,7 +469,7 @@ func (i *IBMSecretsManager) getSecret(secret *ibmsm.SecretResource, version stri
 
 // Enumerate the secret names and their ids for the secrets of type secretType in group groupId,
 // caching results into listAllSecretsCache
-func (i *IBMSecretsManager) listSecretsInGroup(groupId, secretType string) (map[string]*ibmsm.SecretResource, error) {
+func (i *IBMSecretsManager) listSecretsInGroup(groupId, secretType string) (map[string]*IBMSecretMetadata, error) {
 	ckey := cacheKey{groupId, secretType}
 	cachedData := i.listAllSecretsCache[ckey]
 	if cachedData != nil {
@@ -224,7 +480,7 @@ func (i *IBMSecretsManager) listSecretsInGroup(groupId, secretType string) (map[
 	var offset int64 = 0
 	for {
 		utils.VerboseToStdErr("IBM Cloud Secrets Manager listing secrets of from group %s starting at offset %d", groupId, offset)
-		res, details, err := i.Client.ListAllSecrets(&ibmsm.ListAllSecretsOptions{
+		res, details, err := i.Client.ListSecrets(&ibmsm.ListSecretsOptions{
 			Groups: []string{groupId},
 			Offset: &offset,
 		})
@@ -237,22 +493,29 @@ func (i *IBMSecretsManager) listSecretsInGroup(groupId, secretType string) (map[
 
 		utils.VerboseToStdErr("IBM Cloud Secrets Manager list secrets in group HTTP response: %v", details)
 
-		for _, secret := range res.Resources {
-			name := *(secret.(*ibmsm.SecretResource).Name)
-			ttype := *(secret.(*ibmsm.SecretResource).SecretType)
-			ckey := cacheKey{groupId, ttype}
+		for _, secret := range res.Secrets {
+			var name, ttype string
+			v := NewIBMSecretMetadata(secret)
 
+			data, err := v.GetMetadata()
+			if err != nil {
+				utils.VerboseToStdErr("Skipping a secret in group %s: %s", groupId, err)
+			}
+
+			name = data["name"]
+			ttype = data["type"]
+			ckey := cacheKey{groupId, ttype}
 			if i.listAllSecretsCache[ckey] != nil {
-				i.listAllSecretsCache[ckey][name] = secret.(*ibmsm.SecretResource)
+				i.listAllSecretsCache[ckey][name] = v
 			} else {
-				i.listAllSecretsCache[ckey] = map[string]*ibmsm.SecretResource{
-					name: secret.(*ibmsm.SecretResource),
+				i.listAllSecretsCache[ckey] = map[string]*IBMSecretMetadata{
+					name: v,
 				}
 			}
 		}
 
 		// The IBM SM API returns a max of MAX_PER_PAGE results, so if we get that many on the first request, there might be more secrets
-		if len(res.Resources) < types.IBMMaxPerPage {
+		if len(res.Secrets) < types.IBMMaxPerPage {
 			break
 		}
 		offset += int64(types.IBMMaxPerPage)
@@ -349,7 +612,7 @@ func (i *IBMSecretsManager) GetIndividualSecret(kvpath, secretName, version stri
 		return i.getSecretsCache[ckey][secretName], nil
 	}
 
-	// Grab the *ibmsm.SecretResource corresponding to the secret
+	// Grab the *ibmsm.SecretMetadata corresponding to the secret
 	secretResources, err := i.listSecretsInGroup(groupId, secretType)
 	if err != nil {
 		return nil, err

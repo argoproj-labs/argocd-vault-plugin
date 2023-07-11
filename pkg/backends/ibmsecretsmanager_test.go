@@ -5,86 +5,92 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"sync"
 
 	"github.com/IBM/go-sdk-core/v5/core"
-	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv1"
+	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 )
 
 type MockIBMSMClient struct {
-	ListAllSecretsOptionCalledWith []*ibmsm.ListAllSecretsOptions
-	GetSecretCalledWith            *ibmsm.GetSecretOptions
-	GetSecretCallCount             int
-	GetSecretVersionCalledWith     *ibmsm.GetSecretVersionOptions
+	ListSecretsOptionCalledWith []*ibmsm.ListSecretsOptions
+
+	// GetSecretLock prevents false data races caused by unsychronized access to the mock state
+	// It is shared b/w both GetSecret and GetSecretVersion for simplicity, even though each writes to a different field
+	GetSecretLock sync.RWMutex
+
+	GetSecretCalledWith         *ibmsm.GetSecretOptions
+	GetSecretCallCount          int
+	GetSecretVersionCalledWith  *ibmsm.GetSecretVersionOptions
+	GetSecretVersionCallCount   int
 }
 
 var BIG_GROUP_LEN int = types.IBMMaxPerPage + 1
 
-// This is used to take deep copies of struct fields passed as pointers in ListAllSecretsOptions
+// This is used to take deep copies of struct fields passed as pointers in ListSecretsOptions
 // so we can make assertions about the values later
-func deepCopy(listAllSecretsOptions *ibmsm.ListAllSecretsOptions) *ibmsm.ListAllSecretsOptions {
+func deepCopy(listAllSecretsOptions *ibmsm.ListSecretsOptions) *ibmsm.ListSecretsOptions {
 	var offset int64 = *listAllSecretsOptions.Offset
-	return &ibmsm.ListAllSecretsOptions{
+	return &ibmsm.ListSecretsOptions{
 		Groups: listAllSecretsOptions.Groups,
 		Offset: &offset,
 	}
 }
 
-func (m *MockIBMSMClient) ListAllSecrets(listAllSecretsOptions *ibmsm.ListAllSecretsOptions) (result *ibmsm.ListSecrets, response *core.DetailedResponse, err error) {
-	m.ListAllSecretsOptionCalledWith = append(m.ListAllSecretsOptionCalledWith, deepCopy(listAllSecretsOptions))
+func (m *MockIBMSMClient) ListSecrets(listAllSecretsOptions *ibmsm.ListSecretsOptions) (result *ibmsm.SecretMetadataPaginatedCollection, response *core.DetailedResponse, err error) {
+	m.ListSecretsOptionCalledWith = append(m.ListSecretsOptionCalledWith, deepCopy(listAllSecretsOptions))
 
 	// A big secret group
 	bigGroup := "big-group"
 	stype := "arbitrary"
-	bigGroupSecrets := make([]ibmsm.SecretResourceIntf, BIG_GROUP_LEN)
+	bigGroupSecrets := make([]ibmsm.SecretMetadataIntf, BIG_GROUP_LEN)
 	for id := 0; id < BIG_GROUP_LEN; id += 1 {
 		name := fmt.Sprintf("my-secret-%d", id)
-		bigGroupSecrets[id] = &ibmsm.SecretResource{
+		bigGroupSecrets[id] = &ibmsm.ArbitrarySecretMetadata{
 			Name:          &name,
 			SecretType:    &stype,
 			SecretGroupID: &bigGroup,
-			ID:            &name,
+			ID:            &stype,
 		}
 	}
 
 	// A small secret  group
 	smallGroup := "small-group"
 	name := "my-secret"
-	id := "123"
 	otype := "username_password"
 	ctype := "public_cert"
 	itype := "iam_credentials"
-	smallGroupSecrets := []ibmsm.SecretResourceIntf{
-		&ibmsm.SecretResource{
+	smallGroupSecrets := []ibmsm.SecretMetadataIntf{
+		&ibmsm.ArbitrarySecretMetadata{
 			Name:          &name,
 			SecretType:    &stype,
 			SecretGroupID: &smallGroup,
-			ID:            &id,
+			ID:            &stype,
 		},
-		&ibmsm.SecretResource{
+		&ibmsm.UsernamePasswordSecretMetadata{
 			Name:          &name,
 			SecretType:    &otype,
 			SecretGroupID: &smallGroup,
-			ID:            &id,
+			ID:            &otype,
 		},
-		&ibmsm.SecretResource{
+		&ibmsm.PublicCertificateMetadata{
 			Name:          &name,
 			SecretType:    &ctype,
 			SecretGroupID: &smallGroup,
-			ID:            &id,
+			ID:            &ctype,
 		},
-		&ibmsm.SecretResource{
+		&ibmsm.IAMCredentialsSecretMetadata{
 			Name:          &name,
 			SecretType:    &itype,
 			SecretGroupID: &smallGroup,
-			ID:            &id,
+			ID:            &itype,
 		},
 	}
 
 	// Empty secret group
 	emptyGroup := "empty-group"
-	emptyGroupSecrets := []ibmsm.SecretResourceIntf{}
+	emptyGroupSecrets := []ibmsm.SecretMetadataIntf{}
 
 	if listAllSecretsOptions.Groups[0] == bigGroup {
 		// Emulate a 2-page paginated response
@@ -95,85 +101,74 @@ func (m *MockIBMSMClient) ListAllSecrets(listAllSecretsOptions *ibmsm.ListAllSec
 			end = BIG_GROUP_LEN
 		}
 
-		return &ibmsm.ListSecrets{
-			Resources: bigGroupSecrets[offset:end],
+		return &ibmsm.SecretMetadataPaginatedCollection{
+			Secrets: bigGroupSecrets[offset:end],
 		}, nil, nil
 	} else if listAllSecretsOptions.Groups[0] == smallGroup {
-		return &ibmsm.ListSecrets{
-			Resources: smallGroupSecrets,
+		return &ibmsm.SecretMetadataPaginatedCollection{
+			Secrets: smallGroupSecrets,
 		}, nil, nil
 	} else if listAllSecretsOptions.Groups[0] == emptyGroup {
-		return &ibmsm.ListSecrets{
-			Resources: emptyGroupSecrets,
+		return &ibmsm.SecretMetadataPaginatedCollection{
+			Secrets: emptyGroupSecrets,
 		}, nil, nil
 	} else {
 		return nil, nil, fmt.Errorf("No such group %s", listAllSecretsOptions.Groups[0])
 	}
 }
 
-func (m *MockIBMSMClient) GetSecret(getSecretOptions *ibmsm.GetSecretOptions) (result *ibmsm.GetSecret, response *core.DetailedResponse, err error) {
+func (m *MockIBMSMClient) GetSecret(getSecretOptions *ibmsm.GetSecretOptions) (result ibmsm.SecretIntf, response *core.DetailedResponse, err error) {
+	m.GetSecretLock.Lock()
 	m.GetSecretCalledWith = getSecretOptions
 	m.GetSecretCallCount += 1
+	m.GetSecretLock.Unlock()
 
-	if *getSecretOptions.SecretType == "arbitrary" {
+	if *getSecretOptions.ID == "arbitrary" {
 		name := "my-secret"
-		id := "123"
+		id := "arbitrary"
 		payload := "password"
-		return &ibmsm.GetSecret{
-			Resources: []ibmsm.SecretResourceIntf{
-				&ibmsm.SecretResource{
-					Name: &name,
-					ID:   &id,
-					SecretData: map[string]interface{}{
-						"payload": payload,
-					},
-				},
-			},
+		return &ibmsm.ArbitrarySecret{
+			Name:    &name,
+			ID:      &id,
+			Payload: &payload,
 		}, nil, nil
-	} else if *getSecretOptions.SecretType == "iam_credentials" {
+	} else if *getSecretOptions.ID == "iam_credentials" {
 		name := "my-secret"
-		id := "123"
+		id := "iam_credentials"
 		payload := "password"
-		return &ibmsm.GetSecret{
-			Resources: []ibmsm.SecretResourceIntf{
-				&ibmsm.SecretResource{
-					Name:   &name,
-					ID:     &id,
-					APIKey: &payload,
-				},
-			},
+		return &ibmsm.IAMCredentialsSecret{
+			Name:   &name,
+			ID:     &id,
+			ApiKey: &payload,
 		}, nil, nil
 	} else {
 		name := "my-secret"
-		id := "123"
-		return &ibmsm.GetSecret{
-			Resources: []ibmsm.SecretResourceIntf{
-				&ibmsm.SecretResource{
-					Name: &name,
-					ID:   &id,
-					SecretData: map[string]interface{}{
-						"username": "user",
-						"password": "pass",
-					},
-				},
-			},
+		id := "username_password"
+		user := "user"
+		pass := "pass"
+		return &ibmsm.UsernamePasswordSecret{
+			Name:     &name,
+			ID:       &id,
+			Username: &user,
+			Password: &pass,
 		}, nil, nil
 	}
 }
 
-func (m *MockIBMSMClient) GetSecretVersion(getSecretOptions *ibmsm.GetSecretVersionOptions) (result *ibmsm.GetSecretVersion, response *core.DetailedResponse, err error) {
+func (m *MockIBMSMClient) GetSecretVersion(getSecretOptions *ibmsm.GetSecretVersionOptions) (result ibmsm.SecretVersionIntf, response *core.DetailedResponse, err error) {
+	m.GetSecretLock.Lock()
 	m.GetSecretVersionCalledWith = getSecretOptions
+	m.GetSecretVersionCallCount += 1
+	m.GetSecretLock.Unlock()
 	data := "dummy"
-	id := "123"
-	return &ibmsm.GetSecretVersion{
-		Resources: []ibmsm.SecretVersionIntf{
-			&ibmsm.SecretVersion{
-				ID: &id,
-				SecretData: map[string]interface{}{
-					"certificate": data,
-				},
-			},
-		},
+	id := "public_cert"
+	yes := true
+	return &ibmsm.PublicCertificateVersion{
+		ID:               &id,
+		PayloadAvailable: &yes,
+		Certificate:      &data,
+		PrivateKey:       &data,
+		Intermediate:     &data,
 	}, nil, nil
 }
 
@@ -189,26 +184,27 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 
 		// Properly calls ListSecrets the right number of times
 		var offset int64 = 0
-		expectedListArgs := &ibmsm.ListAllSecretsOptions{
+		expectedListArgs := &ibmsm.ListSecretsOptions{
 			Groups: []string{"small-group"},
 			Offset: &offset,
 		}
-		if !reflect.DeepEqual(mock.ListAllSecretsOptionCalledWith[0], expectedListArgs) {
-			t.Errorf("expectedListArgs: %s, got: %s.", expectedListArgs.Groups, mock.ListAllSecretsOptionCalledWith[0].Groups)
+		if !reflect.DeepEqual(mock.ListSecretsOptionCalledWith[0], expectedListArgs) {
+			t.Errorf("expectedListArgs: %s, got: %s.", expectedListArgs.Groups, mock.ListSecretsOptionCalledWith[0].Groups)
 		}
-		if len(mock.ListAllSecretsOptionCalledWith) > 1 {
-			t.Errorf("ListAllSecrets should be called %d times got %d", 1, len(mock.ListAllSecretsOptionCalledWith))
+		if len(mock.ListSecretsOptionCalledWith) > 1 {
+			t.Errorf("ListSecrets should be called %d times got %d", 1, len(mock.ListSecretsOptionCalledWith))
 		}
 
 		// Properly calls GetSecret
-		id := "123"
-		stype := "arbitrary"
+		id := "arbitrary"
 		expectedGetArgs := &ibmsm.GetSecretOptions{
-			ID:         &id,
-			SecretType: &stype,
+			ID: &id,
+		}
+		if mock.GetSecretCallCount != 1 {
+			t.Errorf("GetSecret should be called %d times got %d", 1, mock.GetSecretCallCount)
 		}
 		if !reflect.DeepEqual(mock.GetSecretCalledWith, expectedGetArgs) {
-			t.Errorf("Retrieved ID and SecretType do not match expected")
+			t.Errorf("Retrieved ID does not match expected, %s %s", *mock.GetSecretCalledWith.ID, *expectedGetArgs.ID)
 		}
 
 		// Correct data
@@ -232,23 +228,23 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 		// Properly calls ListSecrets
 		var offset int64 = 0
 		var offset2 int64 = 200
-		expectedListArgs := []*ibmsm.ListAllSecretsOptions{
-			&ibmsm.ListAllSecretsOptions{
+		expectedListArgs := []*ibmsm.ListSecretsOptions{
+			&ibmsm.ListSecretsOptions{
 				Groups: []string{"big-group"},
 				Offset: &offset,
 			},
-			&ibmsm.ListAllSecretsOptions{
+			&ibmsm.ListSecretsOptions{
 				Groups: []string{"big-group"},
 				Offset: &offset2,
 			},
 		}
-		if len(mock.ListAllSecretsOptionCalledWith) != 2 {
-			t.Fatalf("ListAllSecrets should be called %d times got %d", 2, len(mock.ListAllSecretsOptionCalledWith))
+		if len(mock.ListSecretsOptionCalledWith) != 2 {
+			t.Fatalf("ListSecrets should be called %d times got %d", 2, len(mock.ListSecretsOptionCalledWith))
 		}
-		if !reflect.DeepEqual(mock.ListAllSecretsOptionCalledWith, expectedListArgs) {
-			t.Errorf("ListAllSecrets was not called with the right arguments")
-			t.Errorf("%d", *mock.ListAllSecretsOptionCalledWith[0].Offset)
-			t.Errorf("%d", *mock.ListAllSecretsOptionCalledWith[1].Offset)
+		if !reflect.DeepEqual(mock.ListSecretsOptionCalledWith, expectedListArgs) {
+			t.Errorf("ListSecrets was not called with the right arguments")
+			t.Errorf("%d", *mock.ListSecretsOptionCalledWith[0].Offset)
+			t.Errorf("%d", *mock.ListSecretsOptionCalledWith[1].Offset)
 		}
 		if len(res) != BIG_GROUP_LEN {
 			t.Fatalf("GetSecrets did not retrieve all the secrets")
@@ -296,23 +292,21 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 
 		// Properly calls ListSecrets
 		var offset int64 = 0
-		expectedListArgs := &ibmsm.ListAllSecretsOptions{
+		expectedListArgs := &ibmsm.ListSecretsOptions{
 			Groups: []string{"small-group"},
 			Offset: &offset,
 		}
-		if !reflect.DeepEqual(mock.ListAllSecretsOptionCalledWith[0], expectedListArgs) {
-			t.Errorf("expectedListArgs: %s, got: %s.", expectedListArgs.Groups, mock.ListAllSecretsOptionCalledWith[0].Groups)
+		if !reflect.DeepEqual(mock.ListSecretsOptionCalledWith[0], expectedListArgs) {
+			t.Errorf("expectedListArgs: %s, got: %s.", expectedListArgs.Groups, mock.ListSecretsOptionCalledWith[0].Groups)
 		}
-		if len(mock.ListAllSecretsOptionCalledWith) > 1 {
-			t.Errorf("ListAllSecrets should be called %d times got %d", 1, len(mock.ListAllSecretsOptionCalledWith))
+		if len(mock.ListSecretsOptionCalledWith) > 1 {
+			t.Errorf("ListSecrets should be called %d times got %d", 1, len(mock.ListSecretsOptionCalledWith))
 		}
 
 		// Properly calls GetSecret
-		id := "123"
-		stype := "username_password"
+		id := "username_password"
 		expectedGetArgs := &ibmsm.GetSecretOptions{
-			ID:         &id,
-			SecretType: &stype,
+			ID: &id,
 		}
 		if !reflect.DeepEqual(mock.GetSecretCalledWith, expectedGetArgs) {
 			t.Errorf("Retrieved ID and SecretType do not match expected")
@@ -341,23 +335,21 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 
 		// Properly calls ListSecrets
 		var offset int64 = 0
-		expectedListArgs := &ibmsm.ListAllSecretsOptions{
+		expectedListArgs := &ibmsm.ListSecretsOptions{
 			Groups: []string{"small-group"},
 			Offset: &offset,
 		}
-		if !reflect.DeepEqual(mock.ListAllSecretsOptionCalledWith[0], expectedListArgs) {
-			t.Errorf("expectedListArgs: %s, got: %s.", expectedListArgs.Groups, mock.ListAllSecretsOptionCalledWith[0].Groups)
+		if !reflect.DeepEqual(mock.ListSecretsOptionCalledWith[0], expectedListArgs) {
+			t.Errorf("expectedListArgs: %s, got: %s.", expectedListArgs.Groups, mock.ListSecretsOptionCalledWith[0].Groups)
 		}
-		if len(mock.ListAllSecretsOptionCalledWith) > 1 {
-			t.Errorf("ListAllSecrets should be called %d times got %d", 1, len(mock.ListAllSecretsOptionCalledWith))
+		if len(mock.ListSecretsOptionCalledWith) > 1 {
+			t.Errorf("ListSecrets should be called %d times got %d", 1, len(mock.ListSecretsOptionCalledWith))
 		}
 
 		// Properly calls GetSecret
-		id := "123"
-		stype := "iam_credentials"
+		id := "iam_credentials"
 		expectedGetArgs := &ibmsm.GetSecretOptions{
-			ID:         &id,
-			SecretType: &stype,
+			ID: &id,
 		}
 		if !reflect.DeepEqual(mock.GetSecretCalledWith, expectedGetArgs) {
 			t.Errorf("Retrieved ID and SecretType do not match expected")
@@ -385,25 +377,23 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 
 		// Properly calls ListSecrets
 		var offset int64 = 0
-		expectedListArgs := &ibmsm.ListAllSecretsOptions{
+		expectedListArgs := &ibmsm.ListSecretsOptions{
 			Groups: []string{"small-group"},
 			Offset: &offset,
 		}
-		if !reflect.DeepEqual(mock.ListAllSecretsOptionCalledWith[0], expectedListArgs) {
-			t.Errorf("expectedListArgs: %s, got: %s.", expectedListArgs.Groups, mock.ListAllSecretsOptionCalledWith[0].Groups)
+		if !reflect.DeepEqual(mock.ListSecretsOptionCalledWith[0], expectedListArgs) {
+			t.Errorf("expectedListArgs: %s, got: %s.", expectedListArgs.Groups, mock.ListSecretsOptionCalledWith[0].Groups)
 		}
-		if len(mock.ListAllSecretsOptionCalledWith) > 1 {
-			t.Errorf("ListAllSecrets should be called %d times got %d", 1, len(mock.ListAllSecretsOptionCalledWith))
+		if len(mock.ListSecretsOptionCalledWith) > 1 {
+			t.Errorf("ListSecrets should be called %d times got %d", 1, len(mock.ListSecretsOptionCalledWith))
 		}
 
 		// Properly calls GetSecretVersion
-		id := "123"
-		stype := "public_cert"
+		id := "public_cert"
 		version := "321"
 		expectedGetArgs := &ibmsm.GetSecretVersionOptions{
-			ID:         &id,
-			SecretType: &stype,
-			VersionID:  &version,
+			SecretID: &id,
+			ID:       &version,
 		}
 		if !reflect.DeepEqual(mock.GetSecretVersionCalledWith, expectedGetArgs) {
 			t.Errorf("Retrieved ID and SecretType do not match expected")
@@ -412,7 +402,9 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 		// Correct data
 		expected := map[string]interface{}{
 			"my-secret": map[string]interface{}{
-				"certificate": "dummy",
+				"certificate":  "dummy",
+				"private_key":  "dummy",
+				"intermediate": "dummy",
 			},
 		}
 		if !reflect.DeepEqual(res, expected) {
@@ -430,15 +422,15 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 			t.Fatalf("%s", err)
 		}
 		var offset int64 = 0
-		expectedListArgs := &ibmsm.ListAllSecretsOptions{
+		expectedListArgs := &ibmsm.ListSecretsOptions{
 			Groups: []string{"small-group"},
 			Offset: &offset,
 		}
-		if !reflect.DeepEqual(mock.ListAllSecretsOptionCalledWith[0], expectedListArgs) {
-			t.Errorf("expectedListArgs: %s, got: %s.", expectedListArgs.Groups, mock.ListAllSecretsOptionCalledWith[0].Groups)
+		if !reflect.DeepEqual(mock.ListSecretsOptionCalledWith[0], expectedListArgs) {
+			t.Errorf("expectedListArgs: %s, got: %s.", expectedListArgs.Groups, mock.ListSecretsOptionCalledWith[0].Groups)
 		}
-		if len(mock.ListAllSecretsOptionCalledWith) != 1 {
-			t.Errorf("ListAllSecrets should be called %d times got %d", 1, len(mock.ListAllSecretsOptionCalledWith))
+		if len(mock.ListSecretsOptionCalledWith) != 1 {
+			t.Errorf("ListSecrets should be called %d times got %d", 1, len(mock.ListSecretsOptionCalledWith))
 		}
 
 		// Serve from cache since populated for groupId small-group
@@ -446,8 +438,8 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s", err)
 		}
-		if len(mock.ListAllSecretsOptionCalledWith) != 1 {
-			t.Errorf("ListAllSecrets should be called %d times got %d", 1, len(mock.ListAllSecretsOptionCalledWith))
+		if len(mock.ListSecretsOptionCalledWith) != 1 {
+			t.Errorf("ListSecrets should be called %d times got %d", 1, len(mock.ListSecretsOptionCalledWith))
 		}
 
 		// Call API again since no cached data for groupId empty-group
@@ -455,8 +447,8 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s", err)
 		}
-		if len(mock.ListAllSecretsOptionCalledWith) != 2 {
-			t.Errorf("ListAllSecrets should be called %d times got %d", 2, len(mock.ListAllSecretsOptionCalledWith))
+		if len(mock.ListSecretsOptionCalledWith) != 2 {
+			t.Errorf("ListSecrets should be called %d times got %d", 2, len(mock.ListSecretsOptionCalledWith))
 		}
 	})
 
@@ -515,29 +507,29 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 		sm := backends.NewIBMSecretsManagerBackend(&mock)
 
 		// Call API since no cached data for small-group v2
-		_, err := sm.GetSecrets("ibmcloud/arbitrary/secrets/groups/small-group", "v2", nil)
+		_, err := sm.GetSecrets("ibmcloud/public_cert/secrets/groups/small-group", "v2", nil)
 		if err != nil {
 			t.Fatalf("%s", err)
 		}
-		if mock.GetSecretCallCount != 1 {
-			t.Errorf("GetSecret should be called %d times got %d", 1, mock.GetSecretCallCount)
+		if mock.GetSecretVersionCallCount != 1 {
+			t.Errorf("GetSecret should be called %d times got %d", 1, mock.GetSecretVersionCallCount)
 		}
 
 		// Bypass cache again b/c specific version requested
-		_, err = sm.GetSecrets("ibmcloud/arbitrary/secrets/groups/small-group", "v2", nil)
+		_, err = sm.GetSecrets("ibmcloud/public_cert/secrets/groups/small-group", "v2", nil)
 		if err != nil {
 			t.Fatalf("%s", err)
 		}
-		if mock.GetSecretCallCount != 2 {
-			t.Errorf("GetSecret should be called %d times got %d", 2, mock.GetSecretCallCount)
+		if mock.GetSecretVersionCallCount != 2 {
+			t.Errorf("GetSecret should be called %d times got %d", 2, mock.GetSecretVersionCallCount)
 		}
 
 		// Bypass cache again b/c specific version requested
-		_, err = sm.GetIndividualSecret("ibmcloud/arbitrary/secrets/groups/small-group", "my-secret", "v2", nil)
+		_, err = sm.GetIndividualSecret("ibmcloud/public_cert/secrets/groups/small-group", "my-secret", "v2", nil)
 		if err != nil {
 			t.Fatalf("%s", err)
 		}
-		if mock.GetSecretCallCount != 3 {
+		if mock.GetSecretVersionCallCount != 3 {
 			t.Errorf("GetIndividualSecret should be called %d times got %d", 3, mock.GetSecretCallCount)
 		}
 	})
