@@ -49,6 +49,7 @@ var backendPrefixes []string = []string{
 	"google",
 	"sops",
 	"op_connect",
+	"k8s_secret",
 }
 
 // New returns a new Config struct
@@ -277,6 +278,10 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				return nil, err
 			}
 			backend = backends.NewDelineaSecretServerBackend(tss)
+		}
+	case types.KubernetesSecretBackend:
+		{
+			backend = backends.NewKubernetesSecret()
 		}
 	default:
 		return nil, fmt.Errorf("Must provide a supported Vault Type, received %s", v.GetString(types.EnvAvpType))

@@ -219,6 +219,12 @@ fDGt+yaf3RaZbVwHSVLzxiXGsu1WQJde3uJeNh5c6z+5
 			},
 			"*backends.DelineaSecretServer",
 		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE": "kubernetessecret",
+			},
+			"*backends.KubernetesSecret",
+		},
 	}
 	for _, tc := range testCases {
 		for k, v := range tc.environment {
