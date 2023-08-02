@@ -17,6 +17,14 @@ extra_javascript:
 extra_css:
 - assets/versions.css
 
+# adds syntax highlighting
+# ref: https://squidfunk.github.io/mkdocs-material/setup/extensions/python-markdown-extensions/#highlight
+markdown_extensions:
+  - pymdownx.highlight:
+      use_pygments: true
+      auto_title: true
+  - pymdownx.superfences
+
 nav:
   - Overview: index.md
   - How it Works: howitworks.md
