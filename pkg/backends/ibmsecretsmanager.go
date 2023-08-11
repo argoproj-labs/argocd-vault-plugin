@@ -160,7 +160,9 @@ func (d IBMSecretData) GetSecret() (map[string]interface{}, error) {
 		}
 	case *ibmsm.KVSecret:
 		{
-			result["data"] = v.Data
+			for k,v := range(v.Data) {
+				result[k] = v
+			}
 		}
 	default:
 		{
@@ -254,7 +256,9 @@ func (d IBMVersionedSecretData) GetSecret() (map[string]interface{}, error) {
 	case *ibmsm.KVSecretVersion:
 		{
 			if *v.PayloadAvailable {
-				result["data"] = v.Data
+				for k,v := range(v.Data) {
+					result[k] = v
+				}
 			}
 		}
 	default:

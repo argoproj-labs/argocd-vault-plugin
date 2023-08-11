@@ -61,6 +61,7 @@ func (m *MockIBMSMClient) ListSecrets(listAllSecretsOptions *ibmsm.ListSecretsOp
 	otype := "username_password"
 	ctype := "public_cert"
 	itype := "iam_credentials"
+	ktype := "kv"
 	smallGroupSecrets := []ibmsm.SecretMetadataIntf{
 		&ibmsm.ArbitrarySecretMetadata{
 			Name:          &name,
@@ -85,6 +86,12 @@ func (m *MockIBMSMClient) ListSecrets(listAllSecretsOptions *ibmsm.ListSecretsOp
 			SecretType:    &itype,
 			SecretGroupID: &smallGroup,
 			ID:            &itype,
+		},
+		&ibmsm.KVSecretMetadata{
+			Name:          &name,
+			SecretType:    &ktype,
+			SecretGroupID: &smallGroup,
+			ID:            &ktype,
 		},
 	}
 
@@ -140,6 +147,17 @@ func (m *MockIBMSMClient) GetSecret(getSecretOptions *ibmsm.GetSecretOptions) (r
 			Name:   &name,
 			ID:     &id,
 			ApiKey: &payload,
+		}, nil, nil
+	} else if *getSecretOptions.ID == "kv" {
+		name := "my-secret"
+		id := "kv"
+		payload := map[string]interface{}{
+			"hello": "there",
+		}
+		return &ibmsm.KVSecret{
+			Name:   &name,
+			ID:     &id,
+			Data: payload,
 		}, nil, nil
 	} else {
 		name := "my-secret"
@@ -359,6 +377,48 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 		expected := map[string]interface{}{
 			"my-secret": map[string]interface{}{
 				"api_key": "password",
+			},
+		}
+		if !reflect.DeepEqual(res, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, res)
+		}
+	})
+
+	t.Run("Retrieves payload of KV secrets", func(t *testing.T) {
+		mock := MockIBMSMClient{}
+		sm := backends.NewIBMSecretsManagerBackend(&mock)
+
+		res, err := sm.GetSecrets("ibmcloud/kv/secrets/groups/small-group", "", nil)
+		if err != nil {
+			t.Fatalf("%s", err)
+		}
+
+		// Properly calls ListSecrets
+		var offset int64 = 0
+		expectedListArgs := &ibmsm.ListSecretsOptions{
+			Groups: []string{"small-group"},
+			Offset: &offset,
+		}
+		if !reflect.DeepEqual(mock.ListSecretsOptionCalledWith[0], expectedListArgs) {
+			t.Errorf("expectedListArgs: %s, got: %s.", expectedListArgs.Groups, mock.ListSecretsOptionCalledWith[0].Groups)
+		}
+		if len(mock.ListSecretsOptionCalledWith) > 1 {
+			t.Errorf("ListSecrets should be called %d times got %d", 1, len(mock.ListSecretsOptionCalledWith))
+		}
+
+		// Properly calls GetSecret
+		id := "kv"
+		expectedGetArgs := &ibmsm.GetSecretOptions{
+			ID: &id,
+		}
+		if !reflect.DeepEqual(mock.GetSecretCalledWith, expectedGetArgs) {
+			t.Errorf("Retrieved ID and SecretType do not match expected")
+		}
+
+		// Correct data
+		expected := map[string]interface{}{
+			"my-secret": map[string]interface{}{
+				"hello": "there",
 			},
 		}
 		if !reflect.DeepEqual(res, expected) {
