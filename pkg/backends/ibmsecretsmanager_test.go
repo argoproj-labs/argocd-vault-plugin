@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"testing"
 	"sync"
+	"testing"
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
@@ -20,10 +20,10 @@ type MockIBMSMClient struct {
 	// It is shared b/w both GetSecret and GetSecretVersion for simplicity, even though each writes to a different field
 	GetSecretLock sync.RWMutex
 
-	GetSecretCalledWith         *ibmsm.GetSecretOptions
-	GetSecretCallCount          int
-	GetSecretVersionCalledWith  *ibmsm.GetSecretVersionOptions
-	GetSecretVersionCallCount   int
+	GetSecretCalledWith        *ibmsm.GetSecretOptions
+	GetSecretCallCount         int
+	GetSecretVersionCalledWith *ibmsm.GetSecretVersionOptions
+	GetSecretVersionCallCount  int
 }
 
 var BIG_GROUP_LEN int = types.IBMMaxPerPage + 1
@@ -155,8 +155,8 @@ func (m *MockIBMSMClient) GetSecret(getSecretOptions *ibmsm.GetSecretOptions) (r
 			"hello": "there",
 		}
 		return &ibmsm.KVSecret{
-			Name:   &name,
-			ID:     &id,
+			Name: &name,
+			ID:   &id,
 			Data: payload,
 		}, nil, nil
 	} else {
