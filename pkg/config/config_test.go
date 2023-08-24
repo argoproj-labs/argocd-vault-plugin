@@ -55,7 +55,7 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"AVP_TYPE":      "vault",
+				"AVP_TYPE":      "vault\n",
 				"AVP_AUTH_TYPE": "k8s",
 				"AVP_K8S_ROLE":  "role",
 			},
