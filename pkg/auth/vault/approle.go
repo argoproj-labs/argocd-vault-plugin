@@ -33,6 +33,13 @@ func NewAppRoleAuth(roleID, secretID, mountPath string) *AppRoleAuth {
 
 // Authenticate authenticates with Vault using App Role and returns a token
 func (a *AppRoleAuth) Authenticate(vaultClient *api.Client) error {
+	err := utils.CheckExistingToken(vaultClient)
+	if err != nil {
+		utils.VerboseToStdErr("Hashicorp Vault cannot retrieve cached token: %v. Generating a new one", err)
+	} else {
+		return nil
+	}
+
 	payload := map[string]interface{}{
 		"role_id":   a.RoleID,
 		"secret_id": a.SecretID,

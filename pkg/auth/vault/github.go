@@ -32,6 +32,13 @@ func NewGithubAuth(token, mountPath string) *GithubAuth {
 
 // Authenticate authenticates with Vault and returns a token
 func (g *GithubAuth) Authenticate(vaultClient *api.Client) error {
+	err := utils.CheckExistingToken(vaultClient)
+	if err != nil {
+		utils.VerboseToStdErr("Hashicorp Vault cannot retrieve cached token: %v. Generating a new one", err)
+	} else {
+		return nil
+	}
+
 	payload := map[string]interface{}{
 		"token": g.AccessToken,
 	}
