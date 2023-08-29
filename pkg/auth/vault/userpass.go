@@ -33,6 +33,13 @@ func NewUserPassAuth(username, password, mountPath string) *UserPassAuth {
 
 // Authenticate authenticates with Vault using userpass and returns a token
 func (a *UserPassAuth) Authenticate(vaultClient *api.Client) error {
+	err := utils.CheckExistingToken(vaultClient)
+	if err != nil {
+		utils.VerboseToStdErr("Hashicorp Vault cannot retrieve cached token: %v. Generating a new one", err)
+	} else {
+		return nil
+	}
+
 	payload := map[string]interface{}{
 		"password": a.Password,
 	}
