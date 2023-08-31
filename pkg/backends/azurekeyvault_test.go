@@ -1,286 +1,246 @@
 package backends_test
 
 import (
-	"fmt"
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/keyvault"
+	"context"
+	"errors"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
-	"io"
-	"net/http"
-	"net/url"
 	"reflect"
-	"strings"
 	"testing"
 )
 
-type mockSender struct {
-	DoFunc func(r *http.Request) (*http.Response, error)
+const secretNamePrefix = "https://myvaultname.vault.azure.net/keys/"
+
+type mockClientProxy struct {
+	simulateError string
 }
 
-func (m mockSender) Do(r *http.Request) (*http.Response, error) {
-	return m.DoFunc(r)
+func makeSecretProperties(id azsecrets.ID, enable bool) *azsecrets.SecretProperties {
+	return &azsecrets.SecretProperties{
+		ID: &id,
+		Attributes: &azsecrets.SecretAttributes{
+			Enabled: &enable,
+		},
+	}
 }
 
-func TestAzureKeyVault_GetSecrets(t *testing.T) {
-	// secrets: list of key vault secrets (where foo and bar is present)
-	// foo: is a secret with a secret value
-	// bar: is a secret with a secret value
-	tt := map[string]struct {
-		Body       string
-		StatusCode int
-	}{
-		"secrets": {
-			Body: `
-					{
-						"value": [
-							{
-								"contentType": "foobar",
-								"id": "https://test.vault.azure.net/secrets/foo",
-								"attributes": {
-									"enabled": true,
-									"created": 1629833926,
-									"updated": 1629833926,
-									"recoveryLevel": "Recoverable+Purgeable"
-								},
-								"tags": {}
-							},
-							{
-								"id": "https://test.vault.azure.net/secrets/bar",
-								"attributes": {
-									"enabled": true,
-									"created": 1629813653,
-									"updated": 1629813653,
-									"recoveryLevel": "Recoverable+Purgeable"
-								},
-								"tags": {
-									"file-encoding": "utf-8"
-								}
-							}
-						],
-						"nextLink": null
-					}`,
-			StatusCode: 200,
+func makeResponse(id azsecrets.ID, value string, err error) (azsecrets.GetSecretResponse, error) {
+	return azsecrets.GetSecretResponse{
+		Secret: azsecrets.Secret{
+			ID:    &id,
+			Value: &value,
 		},
-		"foo": {
-			Body: `
-					{
-						"value": "bar",
-						"contentType": "foobar",
-						"id": "https://test.vault.azure.net.test/secrets/foo/8f8da2e06c8240808ee439ff093803b5",
-						"attributes": {
-							"enabled": true,
-							"created": 1629833926,
-							"updated": 1629833926,
-							"recoveryLevel": "Recoverable+Purgeable"
-						},
-						"tags": {}
-					}`,
-			StatusCode: 200,
-		},
-		"bar": {
-			Body: `
-					{
-						"value": "baz",
-						"id": "https://test.vault.azure.net.test/secrets/bar/33740fc26214497f8904d93f20f7db6d",
-						"attributes": {
-							"enabled": true,
-							"created": 1629813653,
-							"updated": 1629813653,
-							"recoveryLevel": "Recoverable+Purgeable"
-						},
-						"tags": {
-							"file-encoding": "utf-8"
-						}
-					}`,
-			StatusCode: 200,
-		},
-		"bar_version": {
-			Body: `
-					{
-						"value": "baz-version",
-						"id": "https://test.vault.azure.net.test/secrets/bar/33740fc26214497f8904d93f20f7db6c",
-						"attributes": {
-							"enabled": true,
-							"created": 1629813653,
-							"updated": 1629813653,
-							"recoveryLevel": "Recoverable+Purgeable"
-						},
-						"tags": {
-							"file-encoding": "utf-8"
-						}
-					}`,
-			StatusCode: 200,
-		},
-		"bar_disabled": {
-			Body: `
-					{
-						"value": "baz-disabled",
-						"id": "https://test.vault.azure.net.test/secrets/bar/33740fc26214497f8904d93f20f7db6b",
-						"attributes": {
-							"enabled": false,
-							"created": 1629813653,
-							"updated": 1629813653,
-							"recoveryLevel": "Recoverable+Purgeable"
-						},
-						"tags": {
-							"file-encoding": "utf-8"
-						}
-					}`,
-			StatusCode: 200,
-		},
-		"foobar": {
-			Body: `
-					{
-						"value": [
-							{
-								"value": "bar",
-								"id": "https://test.vault.azure.net.test/secrets/bar/33740fc26214497f8904d93f20f7db6d",
-								"attributes": {
-									"enabled": true,
-									"created": 1629813653,
-									"updated": 1629813653,
-									"recoveryLevel": "Recoverable+Purgeable"
-								},
-								"tags": {
-									"file-encoding": "utf-8"
-								}
-							},
-							{
-								"value": "bar",
-								"id": "https://test.vault.azure.net.test/secrets/bar/33740fc26214497f8904d93f20f7db6c",
-								"attributes": {
-									"enabled": true,
-									"created": 1629813653,
-									"updated": 1629813653,
-									"recoveryLevel": "Recoverable+Purgeable"
-								},
-								"tags": {
-									"file-encoding": "utf-8"
-								}
-							},
-							{
-								"value": "bar",
-								"id": "https://test.vault.azure.net.test/secrets/bar/33740fc26214497f8904d93f20f7db6b",
-								"attributes": {
-									"enabled": false,
-									"created": 1629813653,
-									"updated": 1629813653,
-									"recoveryLevel": "Recoverable+Purgeable"
-								},
-								"tags": {
-									"file-encoding": "utf-8"
-								}
-							}
-						],
-						"nextLink": null
-					}`,
-			StatusCode: 200,
+	}, err
+}
+
+func newAzureKeyVaultBackendMock(simulateError string) *backends.AzureKeyVault {
+	return &backends.AzureKeyVault{
+		Credential: nil,
+		ClientBuilder: func(vaultURL string, credential azcore.TokenCredential, options *azsecrets.ClientOptions) (backends.AzSecretsClient, error) {
+			return &mockClientProxy{
+				simulateError: simulateError,
+			}, nil
 		},
 	}
+}
 
-	// Setup client and mock Sender
-	sender := &mockSender{}
-	basicClient := keyvault.New()
-	basicClient.Sender = sender
+func (c *mockClientProxy) NewListSecretPropertiesPager(options *azsecrets.ListSecretPropertiesOptions) *runtime.Pager[azsecrets.ListSecretPropertiesResponse] {
+	var pageCount = 0
+	pager := runtime.NewPager(runtime.PagingHandler[azsecrets.ListSecretPropertiesResponse]{
+		More: func(current azsecrets.ListSecretPropertiesResponse) bool {
+			return pageCount == 0
+		},
+		Fetcher: func(ctx context.Context, current *azsecrets.ListSecretPropertiesResponse) (azsecrets.ListSecretPropertiesResponse, error) {
+			pageCount++
+			var a []*azsecrets.SecretProperties
+			if c.simulateError == "fetch_error" {
+				return azsecrets.ListSecretPropertiesResponse{}, errors.New("fetch error")
+			} else if c.simulateError == "get_secret_error" {
+				a = append(a, makeSecretProperties(secretNamePrefix+"invalid/v2", true))
+			}
+			a = append(a, makeSecretProperties(secretNamePrefix+"simple/v2", true))
+			a = append(a, makeSecretProperties(secretNamePrefix+"second/v2", true))
+			a = append(a, makeSecretProperties(secretNamePrefix+"disabled/v2", false))
+			return azsecrets.ListSecretPropertiesResponse{
+				SecretPropertiesListResult: azsecrets.SecretPropertiesListResult{
+					Value: a,
+				},
+			}, nil
+		},
+	})
+	return pager
+}
 
-	// DoFunc returns our mocked data when Do is called
-	sender.DoFunc = func(r *http.Request) (*http.Response, error) {
-		u, err := url.Parse(fmt.Sprintf("%s", r.URL))
-		if err != nil {
-			t.Fatalf("expected 0 errors but got: %s", err)
-		}
-		if fmt.Sprintf("%s", u.Path) == "/secrets" {
-			return &http.Response{
-				StatusCode: tt["secrets"].StatusCode,
-				Body:       io.NopCloser(strings.NewReader(tt["secrets"].Body)),
-			}, nil
-		} else if fmt.Sprintf("%s", u.Path) == "/secrets/bar/versions" {
-			return &http.Response{
-				StatusCode: tt["foobar"].StatusCode,
-				Body:       io.NopCloser(strings.NewReader(tt["foobar"].Body)),
-			}, nil
-		} else if fmt.Sprintf("%s", u.Path) == "/secrets/bar/33740fc26214497f8904d93f20f7db6c" {
-			return &http.Response{
-				StatusCode: tt["bar_version"].StatusCode,
-				Body:       io.NopCloser(strings.NewReader(tt["bar_version"].Body)),
-			}, nil
-		} else if fmt.Sprintf("%s", u.Path) == "/secrets/bar/33740fc26214497f8904d93f20f7db6b" {
-			return &http.Response{
-				StatusCode: tt["bar_disabled"].StatusCode,
-				Body:       io.NopCloser(strings.NewReader(tt["bar_disabled"].Body)),
-			}, nil
-		} else {
-			s := strings.Split(u.Path, "/")[2]
-			return &http.Response{
-				StatusCode: tt[s].StatusCode,
-				Body:       io.NopCloser(strings.NewReader(tt[s].Body)),
-			}, nil
-		}
+func (c *mockClientProxy) GetSecret(ctx context.Context, name string, version string, options *azsecrets.GetSecretOptions) (azsecrets.GetSecretResponse, error) {
+	if name == "simple" && (version == "" || version == "v1") {
+		return makeResponse(secretNamePrefix+"simple/v1", "a_value_v1", nil)
+	} else if name == "simple" && version == "v2" {
+		return makeResponse(secretNamePrefix+"simple/v2", "a_value_v2", nil)
+	} else if name == "second" && (version == "" || version == "v2") {
+		return makeResponse(secretNamePrefix+"second/v2", "a_second_value_v2", nil)
 	}
+	return makeResponse("", "", errors.New("secret not found"))
+}
 
-	kv := backends.NewAzureKeyVaultBackend(basicClient)
+func TestAzLogin(t *testing.T) {
+	var keyVault = newAzureKeyVaultBackendMock("")
+	var err = keyVault.Login()
+	if err != nil {
+		t.Fatalf("expected 0 errors but got: %s", err)
+	}
+}
 
-	t.Run("Azure retrieve secrets no version", func(t *testing.T) {
+func TestAzGetSecret(t *testing.T) {
+	var keyVault = newAzureKeyVaultBackendMock("")
+	var data, err = keyVault.GetIndividualSecret("keyvault", "simple", "", nil)
+	if err != nil {
+		t.Fatalf("expected 0 errors but got: %s", err)
+	}
+	expected := "a_value_v1"
+	if !reflect.DeepEqual(expected, data) {
+		t.Errorf("expected: %s, got: %s.", expected, data)
+	}
+}
 
-		secretList, err := kv.GetSecrets("test", "", map[string]string{})
-		if err != nil {
-			t.Fatalf("expected 0 errors but got: %s", err)
-		}
+func TestAzGetSecretWithVersion(t *testing.T) {
+	var keyVault = newAzureKeyVaultBackendMock("")
+	var data, err = keyVault.GetIndividualSecret("keyvault", "simple", "v2", nil)
+	if err != nil {
+		t.Fatalf("expected 0 errors but got: %s", err)
+	}
+	expected := "a_value_v2"
+	if !reflect.DeepEqual(expected, data) {
+		t.Errorf("expected: %s, got: %s.", expected, data)
+	}
+}
 
-		expected := map[string]interface{}{
-			"foo": "bar",
-			"bar": "baz",
-		}
+func TestAzGetSecretWithWrongVersion(t *testing.T) {
+	var keyVault = newAzureKeyVaultBackendMock("")
+	var _, err = keyVault.GetIndividualSecret("keyvault", "simple", "v3", nil)
+	if err == nil {
+		t.Fatalf("expected 1 errors but got nil")
+	}
+	expected := errors.New("secret not found")
+	if !reflect.DeepEqual(err, expected) {
+		t.Errorf("expected err: %s, got: %s.", expected, err)
+	}
+}
 
-		if !reflect.DeepEqual(expected, secretList) {
-			t.Errorf("expected: %s, got: %s.", expected, secretList)
-		}
+func TestAzGetSecretNotExist(t *testing.T) {
+	var keyVault = newAzureKeyVaultBackendMock("")
+	var _, err = keyVault.GetIndividualSecret("keyvault", "not_existing", "", nil)
+	if err == nil {
+		t.Fatalf("expected 1 errors but got nil")
+	}
+	expected := errors.New("secret not found")
+	if !reflect.DeepEqual(err, expected) {
+		t.Errorf("expected err: %s, got: %s.", expected, err)
+	}
+}
 
-	})
+func TestAzGetSecretBuilderError(t *testing.T) {
+	var keyVault = &backends.AzureKeyVault{
+		Credential: nil,
+		ClientBuilder: func(vaultURL string, credential azcore.TokenCredential, options *azsecrets.ClientOptions) (backends.AzSecretsClient, error) {
+			return nil, errors.New("boom")
+		},
+	}
+	var _, err = keyVault.GetIndividualSecret("keyvault", "not_existing", "", nil)
+	if err == nil {
+		t.Fatalf("expected 1 errors but got nil")
+	}
+	expected := errors.New("boom")
+	if !reflect.DeepEqual(err, expected) {
+		t.Errorf("expected err: %s, got: %s.", expected, err)
+	}
+}
 
-	t.Run("Azure retrieve secrets with version", func(t *testing.T) {
+func TestAzGetSecrets(t *testing.T) {
+	var keyVault = newAzureKeyVaultBackendMock("")
+	var res, err = keyVault.GetSecrets("keyvault", "", nil)
 
-		// test version
-		secretList, err := kv.GetSecrets("test", "33740fc26214497f8904d93f20f7db6c", map[string]string{})
-		if err != nil {
-			t.Fatalf("expected 0 errors but got: %s", err)
-		}
+	if err != nil {
+		t.Fatalf("expected 0 errors but got: %s", err)
+	}
+	expected := map[string]interface{}{
+		"simple": "a_value_v1",
+		"second": "a_second_value_v2",
+	}
+	if !reflect.DeepEqual(res, expected) {
+		t.Errorf("expected: %s, got: %s.", expected, res)
+	}
+}
 
-		expected := map[string]interface{}{
-			"bar": "baz-version",
-		}
+func TestAzGetSecretsWithError(t *testing.T) {
+	var keyVault = newAzureKeyVaultBackendMock("fetch_error")
+	var _, err = keyVault.GetSecrets("keyvault", "", nil)
+	if err == nil {
+		t.Fatalf("expected 1 errors but got nil")
+	}
+	expected := errors.New("fetch error")
+	if !reflect.DeepEqual(err, expected) {
+		t.Errorf("expected err: %s, got: %s.", expected, err)
+	}
+}
 
-		if !reflect.DeepEqual(expected, secretList) {
-			t.Errorf("expected: %s, got: %s.", expected, secretList)
-		}
+func TestAzGetSecretsWithErrorOnGetSecret(t *testing.T) {
+	var keyVault = newAzureKeyVaultBackendMock("get_secret_error")
+	var _, err = keyVault.GetSecrets("keyvault", "", nil)
+	if err == nil {
+		t.Fatalf("expected 1 errors but got nil")
+	}
+	expected := errors.New("secret not found")
+	if !reflect.DeepEqual(err, expected) {
+		t.Errorf("expected err: %s, got: %s.", expected, err)
+	}
+}
 
-	})
+func TestAzGetSecretsBuilderError(t *testing.T) {
+	var keyVault = &backends.AzureKeyVault{
+		Credential: nil,
+		ClientBuilder: func(vaultURL string, credential azcore.TokenCredential, options *azsecrets.ClientOptions) (backends.AzSecretsClient, error) {
+			return nil, errors.New("boom")
+		},
+	}
+	var _, err = keyVault.GetSecrets("keyvault", "", nil)
+	if err == nil {
+		t.Fatalf("expected 1 errors but got nil")
+	}
+	expected := errors.New("boom")
+	if !reflect.DeepEqual(err, expected) {
+		t.Errorf("expected err: %s, got: %s.", expected, err)
+	}
+}
 
-	t.Run("Azure GetIndividualSecret", func(t *testing.T) {
-		secret, err := kv.GetIndividualSecret("test", "bar", "33740fc26214497f8904d93f20f7db6c", map[string]string{})
-		if err != nil {
-			t.Fatalf("expected 0 errors but got: %s", err)
-		}
+func TestAzGetSecretsVersionV1(t *testing.T) {
+	var keyVault = newAzureKeyVaultBackendMock("")
+	var res, err = keyVault.GetSecrets("keyvault", "v1", nil)
 
-		expected := "baz-version"
+	if err != nil {
+		t.Fatalf("expected 0 errors but got: %s", err)
+	}
+	expected := map[string]interface{}{
+		"simple": "a_value_v1",
+	}
+	if !reflect.DeepEqual(res, expected) {
+		t.Errorf("expected: %s, got: %s.", expected, res)
+	}
+}
 
-		if !reflect.DeepEqual(expected, secret) {
-			t.Errorf("expected: %s, got: %s.", expected, secret)
-		}
-	})
+func TestAzGetSecretsVersionV2(t *testing.T) {
+	var keyVault = newAzureKeyVaultBackendMock("")
+	var res, err = keyVault.GetSecrets("keyvault", "v2", nil)
 
-	t.Run("Azure retrieve secrets with version disabled", func(t *testing.T) {
-
-		// test disabled secret
-		secretList, err := kv.GetSecrets("test", "33740fc26214497f8904d93f20f7db6b", map[string]string{})
-		if err != nil {
-			t.Fatalf("expected 0 errors but got: %s", err)
-		}
-
-		expected := map[string]interface{}{}
-
-		if !reflect.DeepEqual(expected, secretList) {
-			t.Errorf("expected: %s, got: %s.", expected, secretList)
-		}
-
-	})
+	if err != nil {
+		t.Fatalf("expected 0 errors but got: %s", err)
+	}
+	expected := map[string]interface{}{
+		"simple": "a_value_v2",
+		"second": "a_second_value_v2",
+	}
+	if !reflect.DeepEqual(res, expected) {
+		t.Errorf("expected: %s, got: %s.", expected, res)
+	}
 }
