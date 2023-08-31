@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"os"
 	"strconv"
 	"strings"
@@ -11,8 +12,7 @@ import (
 
 	gcpsm "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/1Password/connect-sdk-go/connect"
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/keyvault"
-	kvauth "github.com/Azure/azure-sdk-for-go/services/keyvault/auth"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	delineasecretserver "github.com/DelineaXPM/tss-sdk-go/v2/server"
 	"github.com/IBM/go-sdk-core/v5/core"
 	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
@@ -190,14 +190,12 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 		}
 	case types.AzureKeyVaultbackend:
 		{
-			authorizer, err := kvauth.NewAuthorizerFromEnvironment()
+			cred, err := azidentity.NewDefaultAzureCredential(nil)
 			if err != nil {
 				return nil, err
 			}
 
-			basicClient := keyvault.New()
-			basicClient.Authorizer = authorizer
-			backend = backends.NewAzureKeyVaultBackend(basicClient)
+			backend = backends.NewAzureKeyVaultBackend(cred, azsecrets.NewClient)
 		}
 	case types.Sopsbackend:
 		{
