@@ -3,22 +3,31 @@ package backends
 import (
 	"context"
 	"fmt"
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/keyvault"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
-	"path"
-	"strings"
 	"time"
 )
 
 // AzureKeyVault is a struct for working with an Azure Key Vault backend
 type AzureKeyVault struct {
-	Client keyvault.BaseClient
+	Credential    azcore.TokenCredential
+	ClientBuilder func(vaultURL string, credential azcore.TokenCredential, options *azsecrets.ClientOptions) (AzSecretsClient, error)
+}
+
+type AzSecretsClient interface {
+	GetSecret(ctx context.Context, name string, version string, options *azsecrets.GetSecretOptions) (azsecrets.GetSecretResponse, error)
+	NewListSecretPropertiesPager(options *azsecrets.ListSecretPropertiesOptions) *runtime.Pager[azsecrets.ListSecretPropertiesResponse]
 }
 
 // NewAzureKeyVaultBackend initializes a new Azure Key Vault backend
-func NewAzureKeyVaultBackend(client keyvault.BaseClient) *AzureKeyVault {
+func NewAzureKeyVaultBackend(credential azcore.TokenCredential, clientBuilder func(vaultURL string, credential azcore.TokenCredential, options *azsecrets.ClientOptions) (*azsecrets.Client, error)) *AzureKeyVault {
 	return &AzureKeyVault{
-		Client: client,
+		Credential: credential,
+		ClientBuilder: func(vaultURL string, credential azcore.TokenCredential, options *azsecrets.ClientOptions) (AzSecretsClient, error) {
+			return clientBuilder(vaultURL, credential, options)
+		},
 	}
 }
 
@@ -29,59 +38,55 @@ func (a *AzureKeyVault) Login() error {
 
 // GetSecrets gets secrets from Azure Key Vault and returns the formatted data
 // For Azure Key Vault, `kvpath` is the unique name of your vault
+// For Azure use the version here not make really sens as each secret have a different version but let support it
 func (a *AzureKeyVault) GetSecrets(kvpath string, version string, _ map[string]string) (map[string]interface{}, error) {
 	kvpath = fmt.Sprintf("https://%s.vault.azure.net", kvpath)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	data := make(map[string]interface{})
+	verboseOptionalVersion("Azure Key Vault list all secrets from vault %s", version, kvpath)
 
-	utils.VerboseToStdErr("Azure Key Vault listing secrets in vault %v", kvpath)
-	secretList, err := a.Client.GetSecretsComplete(ctx, kvpath, nil)
+	client, err := a.ClientBuilder(kvpath, a.Credential, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	utils.VerboseToStdErr("Azure Key Vault list secrets response %v", secretList)
-	// Gather all secrets in Key Vault
+	data := make(map[string]interface{})
 
-	for ; secretList.NotDone(); secretList.NextWithContext(ctx) {
-		secret := path.Base(*secretList.Value().ID)
-		if version == "" {
-			utils.VerboseToStdErr("Azure Key Vault getting secret %s from vault %s", secret, kvpath)
-			secretResp, err := a.Client.GetSecret(ctx, kvpath, secret, "")
-			if err != nil {
-				return nil, err
-			}
-
-			utils.VerboseToStdErr("Azure Key Vault get unversioned secret response %v", secretResp)
-			data[secret] = *secretResp.Value
-			continue
+	pager := client.NewListSecretPropertiesPager(nil)
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
+		if err != nil {
+			return nil, err
 		}
-		// In Azure Key Vault the versions of a secret is first shown after running GetSecretVersions. So we need
-		// to loop through the versions for each secret in order to find the secret that has the specific version.
-		secretVersions, _ := a.Client.GetSecretVersionsComplete(ctx, kvpath, secret, nil)
-		for ; secretVersions.NotDone(); secretVersions.NextWithContext(ctx) {
-			secretVersion := secretVersions.Value()
+		for _, secretVersion := range page.Value {
 			// Azure Key Vault has ability to enable/disable a secret, so lets honour that
 			if !*secretVersion.Attributes.Enabled {
 				continue
 			}
-			// Secret version matched given version
-			if strings.Contains(*secretVersion.ID, version) {
-				utils.VerboseToStdErr("Azure Key Vault getting secret %s from vault %s at version %s", secret, kvpath, version)
-				secretResp, err := a.Client.GetSecret(ctx, kvpath, secret, version)
+			name := secretVersion.ID.Name()
+			// Secret version matched given version ?
+			if version == "" || secretVersion.ID.Version() == version {
+				verboseOptionalVersion("Azure Key Vault getting secret %s from vault %s", version, name, kvpath)
+				secret, err := client.GetSecret(ctx, name, version, nil)
 				if err != nil {
 					return nil, err
 				}
-
-				utils.VerboseToStdErr("Azure Key Vault get versioned secret response %v", secretResp)
-				data[secret] = *secretResp.Value
+				utils.VerboseToStdErr("Azure Key Vault get secret response %v", secret)
+				data[name] = *secret.Value
+			} else {
+				verboseOptionalVersion("Azure Key Vault getting secret %s from vault %s", version, name, kvpath)
+				secret, err := client.GetSecret(ctx, name, version, nil)
+				if err != nil || !*secretVersion.Attributes.Enabled {
+					utils.VerboseToStdErr("Azure Key Vault get versioned secret not found %s", err)
+					continue
+				}
+				utils.VerboseToStdErr("Azure Key Vault get versioned secret response %v", secret)
+				data[name] = *secret.Value
 			}
 		}
 	}
-
 	return data, nil
 }
 
@@ -92,15 +97,28 @@ func (a *AzureKeyVault) GetIndividualSecret(kvpath, secret, version string, anno
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	utils.VerboseToStdErr("Azure Key Vault getting secret %s from vault %s at version %s", secret, kvpath, version)
+	verboseOptionalVersion("Azure Key Vault getting individual secret %s from vault %s", version, secret, kvpath)
 
 	kvpath = fmt.Sprintf("https://%s.vault.azure.net", kvpath)
-	data, err := a.Client.GetSecret(ctx, kvpath, secret, version)
+	client, err := a.ClientBuilder(kvpath, a.Credential, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	utils.VerboseToStdErr("Azure Key Vault get versioned secret response %v", data)
+	data, err := client.GetSecret(ctx, secret, version, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	utils.VerboseToStdErr("Azure Key Vault get individual secret response %v", data)
 
 	return *data.Value, nil
+}
+
+func verboseOptionalVersion(format string, version string, message ...interface{}) {
+	if version == "" {
+		utils.VerboseToStdErr(format, message...)
+	} else {
+		utils.VerboseToStdErr(format+" at version %s", append(message, version)...)
+	}
 }
