@@ -62,7 +62,7 @@ func TestCheckExistingToken(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err = utils.CheckExistingToken(client)
+		err = utils.LoginWithCachedToken(client)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -78,11 +78,11 @@ func TestCheckExistingToken(t *testing.T) {
 		}
 	})
 
-	t.Run("will throw an error if no toekn", func(t *testing.T) {
+	t.Run("will throw an error if no token", func(t *testing.T) {
 		ln, client, _ := helpers.CreateTestVault(t)
 		defer ln.Close()
 
-		err := utils.CheckExistingToken(client)
+		err := utils.LoginWithCachedToken(client)
 		if err == nil {
 			t.Fatal(err)
 		}

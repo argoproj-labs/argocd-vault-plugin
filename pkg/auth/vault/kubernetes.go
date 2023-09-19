@@ -39,7 +39,7 @@ func NewK8sAuth(role, mountPath, tokenPath string) *K8sAuth {
 
 // Authenticate authenticates with Vault via K8s and returns a token
 func (k *K8sAuth) Authenticate(vaultClient *api.Client) error {
-	err := utils.CheckExistingToken(vaultClient)
+	err := utils.LoginWithCachedToken(vaultClient)
 	if err != nil {
 		utils.VerboseToStdErr("Hashicorp Vault cannot retrieve cached token: %v. Generating a new one", err)
 	} else {
