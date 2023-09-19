@@ -15,28 +15,37 @@ import (
 	"github.com/spf13/viper"
 )
 
-// CheckExistingToken takes a VaultType interface and logs in, while writting the config file
-// And setting the token in the client
-func CheckExistingToken(vaultClient *api.Client) error {
+func ReadExistingToken() ([]byte, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	avpConfigPath := filepath.Join(home, ".avp", "config.json")
 	if _, err := os.Stat(avpConfigPath); err != nil {
-		return err
+		return nil, err
 	}
 
 	// Open our jsonFile
 	jsonFile, err := os.Open(avpConfigPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// defer the closing of our jsonFile so that we can parse it later on
 	defer jsonFile.Close()
 
 	byteValue, err := io.ReadAll(jsonFile)
+	if err != nil {
+		return nil, err
+	}
+
+	return byteValue, nil
+}
+
+// LoginWithCachedToken takes a VaultType interface and tries to log in with the previously cached token,
+// And sets the token in the client
+func LoginWithCachedToken(vaultClient *api.Client) error {
+	byteValue, err := ReadExistingToken()
 	if err != nil {
 		return err
 	}
