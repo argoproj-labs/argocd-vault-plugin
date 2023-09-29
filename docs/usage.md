@@ -79,7 +79,12 @@ For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [ad
 ```
 
 ##### With additional Helm arguments
-If you want to use Helm along with argocd-vault-plugin and use additional helm args,
+
+Use this option if you want to use Helm along with argocd-vault-plugin and use additional helm args.
+
+**IMPORTANT**: passing `${ARGOCD_ENV_HELM_ARGS}` effectively allows users to run arbitrary code in the Argo CD 
+repo-server (or, if using a sidecar, in the plugin sidecar). Only use this when the users are completely trusted. If  
+possible, determine which Helm arguments are needed by your users and explicitly pass only those arguments.
 
 For `argocd-cm` ConfigMap configured plugins, add this to `argod-cm` ConfigMap:
 ```yaml
@@ -90,7 +95,7 @@ configManagementPlugins: |
       args: ["helm dependency build"]
     generate:
       command: ["sh", "-c"]
-      args: ["helm template $ARGOCD_APP_NAME ${helm_args} . --include-crds | argocd-vault-plugin generate -"]
+      args: ["helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE ${ARGOCD_ENV_HELM_ARGS} . --include-crds | argocd-vault-plugin generate -"]
 ```
 For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [add a sidecar to run it](../installation#initcontainer-and-configuration-via-sidecar):
 ```yaml
@@ -125,7 +130,7 @@ Helm args must be defined in the application manifest:
     plugin:
       name: argocd-vault-plugin-helm
       env:
-        - name: helm_args
+        - name: HELM_ARGS
           value: -f values-dev.yaml -f values-dev-tag.yaml
 ```
 
@@ -140,7 +145,7 @@ configManagementPlugins: |
   - name: argocd-vault-plugin-helm
     generate:
       command: ["bash", "-c"]
-      args: ['helm template "$ARGOCD_APP_NAME" -f <(echo "$HELM_VALUES") . | argocd-vault-plugin generate -']
+      args: ['helm template "$ARGOCD_APP_NAME" -f <(echo "$ARGOCD_ENV_HELM_VALUES") . | argocd-vault-plugin generate -']
 ```
 For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [add a sidecar to run it](../installation#initcontainer-and-configuration-via-sidecar):
 ```yaml
@@ -273,7 +278,7 @@ If you want to load in a new value from your Secret Manager without making any n
 
 <img src="https://github.com/argoproj-labs/argocd-vault-plugin/raw/main/assets/hard-refresh.png" width="300">  
 
-You can also use the `argocd app diff` command passing the `--hard-refresh` flag. This will run argocd-vault-plugin again and pull in the new values from you Secret Manager and then you can either have Auto Sync setup or Sync manually to apply the new values.
+You can also use the `argocd app diff` command passing the `--hard-refresh` flag. This will run argocd-vault-plugin again and pull in the new values from your Secret Manager and then you can either have Auto Sync setup or Sync manually to apply the new values.
 
 ### Caveats
 

@@ -80,7 +80,7 @@ spec:
         # Note the lack of the `v` prefix unlike the git tag
         env:
           - name: AVP_VERSION
-            value: "1.7.0"
+            value: "1.16.1"
         args:
           - >-
             wget -O argocd-vault-plugin
@@ -115,7 +115,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install the AVP plugin (as root so we can copy to /usr/local/bin)
-ENV AVP_VERSION=0.2.2
+ENV AVP_VERSION=1.16.1
 ENV BIN=argocd-vault-plugin
 RUN curl -L -o ${BIN} https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v${AVP_VERSION}/argocd-vault-plugin_${AVP_VERSION}_linux_amd64
 RUN chmod +x ${BIN}
@@ -193,7 +193,7 @@ spec:
           runAsUser: 999
         env:
           - name: AVP_VERSION
-            value: 1.11.0
+            value: 1.16.1
         command: [sh, -c]
         args:
           - >-
@@ -276,7 +276,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install the AVP plugin (as root so we can copy to /usr/local/bin)
-ENV AVP_VERSION=1.11.0
+ENV AVP_VERSION=1.16.1
 ENV BIN=argocd-vault-plugin
 RUN curl -L -o ${BIN} https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v${AVP_VERSION}/argocd-vault-plugin_${AVP_VERSION}_linux_amd64
 RUN chmod +x ${BIN}
@@ -336,3 +336,17 @@ mv argocd-vault-plugin /usr/local/bin
 ```
 brew install argocd-vault-plugin
 ```
+
+## Security considerations
+
+The Argo CD Vault Plugin injects secrets into Kubernetes manifests generated inside the Argo CD repo-server component.
+Those manifests, and the secrets they contain, are cached in the Redis instance used by Argo CD. So they are available
+to anyone with direct access to the Redis instance. The manifests are also accessible to anyone with direct access to 
+the repo-server.
+
+Mitigations:
+1. Set up network policies to prevent direct access to Argo CD components (Redis and the repo-server). Make sure your 
+   cluster supports those network policies and can actually enforce them.
+2. Consider running Argo CD on its own cluster, with no other applications running on it.
+3. [Enable password authentication on the Redis instance](https://github.com/argoproj/argo-cd/issues/3130) (currently
+   only supported for non-HA Argo CD installations).

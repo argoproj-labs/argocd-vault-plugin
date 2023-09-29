@@ -1,5 +1,5 @@
 ### HashiCorp Vault
-We support AppRole and Github Auth Method for getting secrets from Vault.
+We support AppRole, Token, Github, Kubernetes and Userpass Auth Method for getting secrets from Vault.
 
 We currently support retrieving secrets from KV-V1 and KV-V2 backends.
 
@@ -38,63 +38,64 @@ AVP_GITHUB_TOKEN: Your Github Personal Access Token
 ##### Kubernetes Authentication
 In order to use Kubernetes Authentication a couple of things are required.
 
-1. Configuring Argo CD
-    You can either use your own Service Account or the default Argo CD service account. To use the default Argo CD service account all you need to do is set `automountServiceAccountToken` to true in the `argocd-repo-server`.
+###### 1. Configuring Argo CD
+You can either use your own Service Account or the default Argo CD service account. To use the default Argo CD service account all you need to do is set `automountServiceAccountToken` to true in the `argocd-repo-server`.
 
-    ```yaml
-    kind: Deployment
-    apiVersion: apps/v1
-    metadata:
-      name: argocd-repo-server
+```yaml
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: argocd-repo-server
+spec:
+  template:
     spec:
-      template:
-        spec:
-          automountServiceAccountToken: true
-    ```
+      automountServiceAccountToken: true
+```
 
-    This will put the Service Account token in the default path of `/var/run/secrets/kubernetes.io/serviceaccount/token`.
+This will put the Service Account token in the default path of `/var/run/secrets/kubernetes.io/serviceaccount/token`.
 
-    If you want to use your own Service Account, you would first create the Service Account.
-    `kubectl create serviceaccount your-service-account`.
+If you want to use your own Service Account, you would first create the Service Account.
+`kubectl create serviceaccount your-service-account`.
 
-    <b>*Note*</b>: The service account that you use must have access to the Kubernetes TokenReview API. You can find the Vault documentation on configuring Kubernetes [here](https://www.vaultproject.io/docs/auth/kubernetes#configuring-kubernetes).
+<b>*Note*</b>: The service account that you use must have access to the Kubernetes TokenReview API. You can find the Vault documentation on configuring Kubernetes [here](https://www.vaultproject.io/docs/auth/kubernetes#configuring-kubernetes).
 
-    And then you will update the `argocd-repo-server` to use that service account.
+And then you will update the `argocd-repo-server` to use that service account.
 
-    ```yaml
-    kind: Deployment
-    apiVersion: apps/v1
-    metadata:
-      name: argocd-repo-server
+```yaml
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: argocd-repo-server
+spec:
+  template:
     spec:
-      template:
-        spec:
-          serviceAccount: your-service-account
-          automountServiceAccountToken: true
-    ```
+      serviceAccount: your-service-account
+      automountServiceAccountToken: true
+```
 
-2. Configuring Kubernetes
-    Use the /config endpoint to configure Vault to talk to Kubernetes. Use `kubectl cluster-info` to validate the Kubernetes host address and TCP port. For the list of available configuration options, please see the [API documentation](https://www.vaultproject.io/api/auth/kubernetes).
+###### 2. Configuring Kubernetes
+Use the /config endpoint to configure Vault to talk to Kubernetes. Use `kubectl cluster-info` to validate the Kubernetes host address and TCP port. For the list of available configuration options, please see the [API documentation](https://www.vaultproject.io/api/auth/kubernetes).
 
-    ```
-    $ vault write auth/kubernetes/config \
-        token_reviewer_jwt="<your service account JWT>" \
-        kubernetes_host=https://192.168.99.100:<your TCP port or blank for 443> \
-        kubernetes_ca_cert=@ca.crt
-    ```
+```
+$ vault write auth/kubernetes/config \
+    token_reviewer_jwt="<your service account JWT>" \
+    kubernetes_host=https://192.168.99.100:<your TCP port or blank for 443> \
+    kubernetes_ca_cert=@ca.crt
+```
 
-    And then create a named role:
-    ```
-    vault write auth/kubernetes/role/argocd \
-        bound_service_account_names=your-service-account \
-        bound_service_account_namespaces=argocd \
-        policies=argocd \
-        ttl=1h
-    ```
-    This role authorizes the "vault-auth" service account in the default namespace and it gives it the default policy.
+And then create a named role:
+```
+vault write auth/kubernetes/role/argocd \
+    bound_service_account_names=your-service-account \
+    bound_service_account_namespaces=argocd \
+    policies=argocd \
+    ttl=1h
+```
+This role authorizes the "vault-auth" service account in the default namespace and it gives it the default policy.
 
-    You can find the full documentation on configuring Kubernetes Authentication [Here](vaultproject.io/docs/auth/kubernetes#configuration).
+You can find the full documentation on configuring Kubernetes Authentication [here](https://www.vaultproject.io/docs/auth/kubernetes#configuration).
 
+--- 
 
 Once Argo CD and Kubernetes are configured, you can then set the required environment variables for the plugin:
 ```
@@ -104,6 +105,16 @@ AVP_AUTH_TYPE: k8s
 AVP_K8S_MOUNT_PATH: Mount Path of your kubernetes Auth (optional)
 AVP_K8S_ROLE: Your Kuberetes Auth Role
 AVP_K8S_TOKEN_PATH: Path to JWT (optional)
+```
+
+##### Userpass Authentication
+For Userpass Authentication, these are the required parameters:
+```
+VAULT_ADDR: Your HashiCorp Vault Address
+AVP_TYPE: vault
+AVP_AUTH_TYPE: userpass
+AVP_USERNAME: Your Username
+AVP_PASSWORD: Your Password
 ```
 
 ##### Examples
@@ -163,9 +174,7 @@ For IBM Cloud Secret Manager we only support using IAM authentication at this ti
 
 We support all types of secrets that can be retrieved from IBM Cloud Secret Manager. Please note:
 
-- [Only certain types of secrets](https://cloud.ibm.com/apidocs/secrets-manager#get-secret-version-request) support versioning. If a version is specified for a type that doesn't support it (e.g, `arbitrary`), the version is ignored
-
-- Secrets that are JSON data (i.e, non `arbitrary` secrets or an `arbitrary` secret with JSON `payload`) can have the desired key (i.e, the `username` in a `username_password` type secret) interpolated with the [jsonPath](./howitworks.md#jsonPath) modifier. Refer to the [IBM Cloud Secret Manager API docs](https://cloud.ibm.com/apidocs/secrets-manager#get-secret) for more details
+- Secrets that are JSON data (i.e, non `arbitrary` secrets or an `arbitrary` secret with JSON `payload`) can have the select keys (i.e, the `username` in a `username_password` type secret) interpolated with the [jsonPath](./howitworks.md#jsonPath) modifier. Not all keys are available for extraction with `jsonPath`. Refer to the [IBM Cloud Secret Manager API docs](https://cloud.ibm.com/apidocs/secrets-manager#get-secret) for more details
 
 ##### IAM Authentication
 For IAM Authentication, these are the required parameters:
@@ -227,8 +236,14 @@ stringData:
 ### AWS Secrets Manager
 
 ##### AWS Authentication
-Refer to the [AWS go SDK README](https://github.com/aws/aws-sdk-go#configuring-credentials) for supplying AWS credentials.
-Supported credentials and the order in which they are loaded are described [here](https://github.com/aws/aws-sdk-go/blob/v1.38.62/aws/session/doc.go#L22).
+Refer to the [AWS SDK for Go V2
+documentation](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials) for
+supplying AWS credentials. Supported credentials and the order in which they are loaded are
+described [here](https://aws.github.io/aws-sdk-go-v2/docs/configuring-sdk/#specifying-credentials).
+
+**Note About Region**
+If you provide the full AWS ARN as the secret path, ex. `arn:aws:secretsmanager:us-east-1:123123123:secret:some-secret`, 
+the region from the ARN (us-east-1) in this example, will take precedents over the AWS_REGION environment variable listed below. 
 
 These are the parameters for AWS:
 ```
@@ -309,10 +324,24 @@ stringData:
 type: Opaque
 ```
 
+###### Retrieving of binary data
+
+Since there is no way to set a key for binary type in AWS Secret Manager, set the `<key>` part to `SecretBinary` to retrieve binary data:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-example
+stringData:
+  sample-secret: <path:arn:aws:secretsmanager:<REGION>:<ACCOUNT_NUMBER>:<SECRET_ID>#SecretBinary>
+type: Opaque
+```
+
 **NOTE**
 For cross account access there is the need to configure the correct permissions between accounts, please check:
-https://aws.amazon.com/premiumsupport/knowledge-center/secrets-manager-share-between-accounts  
-https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples_cross.html  
+https://aws.amazon.com/premiumsupport/knowledge-center/secrets-manager-share-between-accounts
+https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_examples_cross.html
 
 ### GCP Secret Manager
 
@@ -588,4 +617,161 @@ metadata:
 type: Opaque
 data:
   password: <path:vaults/vault-uuid/items/item-uuid#key>
+```
+
+### Keeper Secrets Manager
+
+**Note**: The Keeper Secrets Manager backend does not support versioning, or annotations. It does not support injecting attached files.
+
+#### Keeper Authentication
+
+These are the parameters for Keeper:
+```
+AVP_TYPE: keepersecretsmanager
+AVP_KEEPER_CONFIG_PATH: the path to the keeper configuration file on disk.
+```
+
+##### Examples
+Examples assume that the secrets are not saved base64 encoded in the Secret Server.
+
+###### Path Annotation
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: "secret-id"
+type: Opaque
+stringData:
+  password: <key>
+```
+
+###### Inline Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+type: Opaque
+data:
+  password: <path:secret-id#key | base64encode>
+```
+
+### Delinea Secret Server
+
+**Note**: The Delinea Secret Server backend does not support versioning.
+
+##### Delinea Authentication
+Refer to the [REST API documentation on your Delinea Secret Server](https://your-delinea-server/SecretServer/Documents/restapi/) for API authentication.
+
+These are the parameters for Delinea:
+```
+AVP_TYPE: delineasecretserver
+AVP_DELINEA_URL: The URL of the Dilenea Secret Server
+AVP_DELINEA_USER: The account for authentication
+AVP_DELINEA_PASSWORD: The password for authentication
+
+Optional:
+AVP_DELINEA_DOMAIN: The authentication domain (e.g. the Active Directory domain)
+```
+##### Examples
+Examples assume that the secrets are not saved base64 encoded in the Secret Server.
+
+###### Path Annotation
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: "secret-id"
+type: Opaque
+stringData:
+  password: <key>
+```
+
+###### Inline Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+type: Opaque
+data:
+  password: <path:secret-id#key | base64encode>
+```
+
+### Kubernetes Secret
+
+Inject values from any kubernetes secret
+
+**Note**: The Kubernetes Secret backend does not support versioning
+
+##### Kubernetes Secret Authentication
+
+Backend inherits same in-cluster service-account as the plugin itself
+
+These are the parameters for Kubernetes Secret:
+
+```
+AVP_TYPE: kubernetessecret
+```
+
+##### Examples
+
+###### Path Annotation
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: "my-secret"
+type: Opaque
+data:
+  password: <key>
+```
+
+###### Path Annotation With Namespace
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: "prod:my-secret"
+type: Opaque
+data:
+  password: <key>
+```
+
+###### Inline Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+type: Opaque
+data:
+  password: <path:my-secret#key>
+```
+
+###### Inline Path With Namespace
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+type: Opaque
+data:
+  password: <path:prod:my-secret#key>
 ```

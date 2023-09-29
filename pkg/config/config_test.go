@@ -81,6 +81,25 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "userpass",
+				"AVP_USERNAME":  "username",
+				"AVP_PASSWORD":  "password",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":       "vault",
+				"AVP_AUTH_TYPE":  "userpass",
+				"AVP_MOUNT_PATH": "mount_path",
+				"AVP_USERNAME":   "username",
+				"AVP_PASSWORD":   "password",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
 				"AVP_TYPE":             "ibmsecretsmanager",
 				"AVP_IBM_API_KEY":      "token",
 				"AVP_IBM_INSTANCE_URL": "http://ibm",
@@ -182,6 +201,29 @@ fDGt+yaf3RaZbVwHSVLzxiXGsu1WQJde3uJeNh5c6z+5
 				"ARGOCD_ENV_AVP_GITHUB_TOKEN": "token",
 			},
 			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":               "keepersecretsmanager",
+				"AVP_KEEPER_CONFIG_PATH": "/mnt/foobar",
+			},
+			"*backends.KeeperSecretsManager",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":             "delineasecretserver",
+				"AVP_AUTH_TYPE":        "userpass",
+				"AVP_DELINEA_URL":      "http://my-delinea-server",
+				"AVP_DELINEA_USER":     "username",
+				"AVP_DELINEA_PASSWORD": "password",
+			},
+			"*backends.DelineaSecretServer",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE": "kubernetessecret",
+			},
+			"*backends.KubernetesSecret",
 		},
 	}
 	for _, tc := range testCases {
@@ -333,6 +375,29 @@ func TestNewConfigMissingParameter(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "userpass",
+				"AVP_USERNAME":  "username",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "userpass",
+				"AVP_PASSWORD":  "password",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":      "vault",
+				"AVP_AUTH_TYPE": "userpass",
+			},
+			"*backends.Vault",
+		},
+		{
+			map[string]interface{}{
 				"AVP_TYPE":        "ibmsecretsmanager",
 				"AVP_IAM_API_KEY": "token",
 			},
@@ -375,6 +440,56 @@ func TestNewConfigMissingParameter(t *testing.T) {
 				"OP_CONNECT_TOKEN": "token",
 			},
 			"*backends.OnePasswordConnect",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":         "delineasecretserver",
+				"AVP_AUTH_TYPE":    "userpass",
+				"AVP_DELINEA_URL":  "http://my-delinea-server",
+				"AVP_DELINEA_USER": "username",
+			},
+			"*backends.DelineaSecretServer",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":             "delineasecretserver",
+				"AVP_AUTH_TYPE":        "userpass",
+				"AVP_DELINEA_URL":      "http://my-delinea-server",
+				"AVP_DELINEA_PASSWORD": "password",
+			},
+			"*backends.DelineaSecretServer",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":             "delineasecretserver",
+				"AVP_AUTH_TYPE":        "userpass",
+				"AVP_DELINEA_USER":     "username",
+				"AVP_DELINEA_PASSWORD": "password",
+			},
+			"*backends.DelineaSecretServer",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":         "delineasecretserver",
+				"AVP_AUTH_TYPE":    "userpass",
+				"AVP_DELINEA_USER": "username",
+			},
+			"*backends.DelineaSecretServer",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":             "delineasecretserver",
+				"AVP_AUTH_TYPE":        "userpass",
+				"AVP_DELINEA_PASSWORD": "password",
+			},
+			"*backends.DelineaSecretServer",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":      "delineasecretserver",
+				"AVP_AUTH_TYPE": "userpass",
+			},
+			"*backends.DelineaSecretServer",
 		},
 	}
 	for _, tc := range testCases {

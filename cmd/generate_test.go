@@ -224,10 +224,37 @@ func TestMain(t *testing.T) {
 		}
 	})
 
+	t.Run("will return that path validation env is not valid", func(t *testing.T) {
+		args := []string{"../fixtures/input/nonempty"}
+		cmd := NewGenerateCommand()
+
+		// set specific env and register cleanup func
+		os.Setenv("AVP_PATH_VALIDATION", `^\/(?!\/)(.*?)`)
+		t.Cleanup(func() {
+			os.Unsetenv("AVP_PATH_VALIDATION")
+		})
+
+		b := bytes.NewBufferString("")
+		cmd.SetArgs(args)
+		cmd.SetErr(b)
+		cmd.SetOut(bytes.NewBufferString(""))
+		cmd.Execute()
+		out, err := ioutil.ReadAll(b) // Read buffer to bytes
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		expected := "^\\/(?!\\/)(.*?) is not a valid regular expression: error parsing regexp: invalid or unsupported Perl syntax: `(?!`"
+		if !strings.Contains(string(out), expected) {
+			t.Fatalf("expected to contain: %s but got %s", expected, out)
+		}
+	})
+
 	os.Unsetenv("AVP_TYPE")
 	os.Unsetenv("VAULT_ADDR")
 	os.Unsetenv("AVP_AUTH_TYPE")
 	os.Unsetenv("AVP_SECRET_ID")
 	os.Unsetenv("AVP_ROLE_ID")
 	os.Unsetenv("VAULT_SKIP_VERIFY")
+	os.Unsetenv("AVP_PATH_VALIDATION")
 }

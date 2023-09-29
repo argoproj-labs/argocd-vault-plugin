@@ -13,17 +13,18 @@ import (
 	"github.com/1Password/connect-sdk-go/connect"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/keyvault/keyvault"
 	kvauth "github.com/Azure/azure-sdk-for-go/services/keyvault/auth"
+	delineasecretserver "github.com/DelineaXPM/tss-sdk-go/v2/server"
 	"github.com/IBM/go-sdk-core/v5/core"
-	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv1"
+	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/auth/vault"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/kube"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	awssm "github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/config"
+	awssm "github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/hashicorp/vault/api"
+	ksm "github.com/keeper-security/secrets-manager-go/core"
 	"github.com/spf13/viper"
 	ycsdk "github.com/yandex-cloud/go-sdk"
 	"github.com/yandex-cloud/go-sdk/iamkey"
@@ -48,6 +49,7 @@ var backendPrefixes []string = []string{
 	"google",
 	"sops",
 	"op_connect",
+	"k8s_secret",
 }
 
 // New returns a new Config struct
@@ -121,6 +123,12 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				} else {
 					return nil, fmt.Errorf("%s for token authentication cannot be empty", api.EnvVaultToken)
 				}
+			case types.UserPass:
+				if v.IsSet(types.EnvAvpUsername) && v.IsSet(types.EnvAvpPassword) {
+					auth = vault.NewUserPassAuth(v.GetString(types.EnvAvpUsername), v.GetString(types.EnvAvpPassword), v.GetString(types.EnvAvpMountPath))
+				} else {
+					return nil, fmt.Errorf("%s and %s for userpass authentication cannot be empty", types.EnvAvpUsername, types.EnvAvpPassword)
+				}
 			default:
 				return nil, fmt.Errorf("Must provide a supported Authentication Type, received %s", authType)
 			}
@@ -139,7 +147,7 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				url = v.GetString(types.EnvVaultAddress)
 			}
 
-			client, err := ibmsm.NewSecretsManagerV1(&ibmsm.SecretsManagerV1Options{
+			client, err := ibmsm.NewSecretsManagerV2(&ibmsm.SecretsManagerV2Options{
 				Authenticator: &core.IamAuthenticator{ApiKey: v.GetString(types.EnvAvpIBMAPIKey)},
 				URL:           url,
 			})
@@ -159,14 +167,14 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				v.Set(types.EnvAWSRegion, types.AwsDefaultRegion)
 			}
 
-			s, err := session.NewSession(&aws.Config{
-				Region: aws.String(v.GetString(types.EnvAWSRegion)),
-			})
+			s, err := config.LoadDefaultConfig(context.TODO(),
+				config.WithRegion(v.GetString(types.EnvAWSRegion)),
+			)
 			if err != nil {
 				return nil, err
 			}
 
-			client := awssm.New(s)
+			client := awssm.NewFromConfig(s)
 			backend = backends.NewAWSSecretsManagerBackend(client)
 		}
 	case types.GCPSecretManagerbackend:
@@ -230,6 +238,50 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 			}
 
 			backend = backends.NewOnePasswordConnectBackend(client)
+		}
+	case types.KeeperSecretsManagerBackend:
+		{
+			if !v.IsSet(types.EnvAvpKSMConfigPath) {
+				return nil, fmt.Errorf("%s is required for Keeper Secrets Manager", types.EnvAvpKSMConfigPath)
+			}
+
+			client := ksm.NewSecretsManager(&ksm.ClientOptions{
+				Config: ksm.NewFileKeyValueStorage(
+					v.GetString(types.EnvAvpKSMConfigPath),
+				),
+			})
+
+			backend = backends.NewKeeperSecretsManagerBackend(client)
+		}
+	case types.DelineaSecretServerbackend:
+		{
+			// Get required Delinea specific env variables
+			if !v.IsSet(types.EnvAvpDelineaURL) ||
+				!v.IsSet(types.EnvAvpDelineaUser) ||
+				!v.IsSet(types.EnvAvpDelineaPassword) {
+				return nil, fmt.Errorf("%s, %s and %s are required for Delinea Secret Server",
+					types.EnvAvpDelineaURL,
+					types.EnvAvpDelineaUser,
+					types.EnvAvpDelineaPassword,
+				)
+			}
+
+			tss, _ := delineasecretserver.New(delineasecretserver.Configuration{
+				Credentials: delineasecretserver.UserCredential{
+					Username: v.GetString(types.EnvAvpDelineaUser),
+					Password: v.GetString(types.EnvAvpDelineaPassword),
+					Domain:   v.GetString(types.EnvAvpDelineaDomain),
+				},
+				ServerURL: v.GetString(types.EnvAvpDelineaURL),
+			})
+			if err != nil {
+				return nil, err
+			}
+			backend = backends.NewDelineaSecretServerBackend(tss)
+		}
+	case types.KubernetesSecretBackend:
+		{
+			backend = backends.NewKubernetesSecret()
 		}
 	default:
 		return nil, fmt.Errorf("Must provide a supported Vault Type, received %s", v.GetString(types.EnvAvpType))

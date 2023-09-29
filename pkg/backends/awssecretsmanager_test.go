@@ -1,19 +1,19 @@
 package backends_test
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
-	"github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
 type mockSecretsManagerClient struct {
-	secretsmanageriface.SecretsManagerAPI
+	backends.AWSSecretsManagerIface
 }
 
-func (m *mockSecretsManagerClient) GetSecretValue(input *secretsmanager.GetSecretValueInput) (*secretsmanager.GetSecretValueOutput, error) {
+func (m *mockSecretsManagerClient) GetSecretValue(ctx context.Context, input *secretsmanager.GetSecretValueInput, options ...func(*secretsmanager.Options)) (*secretsmanager.GetSecretValueOutput, error) {
 	data := &secretsmanager.GetSecretValueOutput{}
 
 	switch *input.SecretId {
@@ -25,6 +25,8 @@ func (m *mockSecretsManagerClient) GetSecretValue(input *secretsmanager.GetSecre
 			string := "{\"test-secret\":\"previous-value\"}"
 			data.SecretString = &string
 		}
+	case "test-binary":
+		data.SecretBinary = []byte("binary-data")
 	}
 
 	return data, nil
@@ -73,6 +75,21 @@ func TestAWSSecretManagerGetSecrets(t *testing.T) {
 
 		if !reflect.DeepEqual(expected, data) {
 			t.Errorf("expected: %s, got: %s.", expected, data)
+		}
+	})
+
+	t.Run("Get binary secret", func(t *testing.T) {
+		data, err := sm.GetSecrets("test-binary", "", map[string]string{})
+		if err != nil {
+			t.Fatalf("expected 0 errors but got: %s", err)
+		}
+
+		expected := map[string]interface{}{
+			"SecretBinary": []byte("binary-data"),
+		}
+
+		if !reflect.DeepEqual(expected, data) {
+			t.Errorf("expected: %v, got: %v.", expected, data)
 		}
 	})
 }
