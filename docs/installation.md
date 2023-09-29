@@ -197,10 +197,8 @@ spec:
         command: [sh, -c]
         args:
           - >-
-            cd $(mktemp -d) &&
-            curl -L https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v$(AVP_VERSION)/argocd-vault-plugin_$(AVP_VERSION)_linux_amd64 -o argocd-vault-plugin &&
-            chmod +x argocd-vault-plugin &&
-            mv argocd-vault-plugin /custom-tools/
+            curl -L https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v$(AVP_VERSION)/argocd-vault-plugin_$(AVP_VERSION)_linux_amd64 -o /custom-tools/argocd-vault-plugin &&
+            chmod +x /custom-tools/argocd-vault-plugin
         volumeMounts:
           - mountPath: /custom-tools
             name: custom-tools
