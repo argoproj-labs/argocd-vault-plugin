@@ -16,7 +16,7 @@ jobs:
 
       - name: Set Tag
         id: tag
-        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+        run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
 
       - name: Set up Go
         uses: actions/setup-go@v4
