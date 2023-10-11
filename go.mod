@@ -44,8 +44,8 @@ require (
 	github.com/yandex-cloud/go-sdk v0.0.0-20220511115426-9feb5f1ee87f
 	go.mongodb.org/mongo-driver v1.10.0 // indirect
 	go.mozilla.org/sops/v3 v3.7.2
-	golang.org/x/net v0.7.0
-	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/net v0.17.0
+	golang.org/x/sys v0.13.0 // indirect
 	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f
 	google.golang.org/grpc v1.53.0
 	k8s.io/apimachinery v0.24.1
@@ -246,11 +246,11 @@ require (
 	go.mozilla.org/gopgagent v0.0.0-20170926210634-4d7ea76ff71a // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	golang.org/x/crypto v0.6.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/oauth2 v0.4.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/term v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
 	google.golang.org/api v0.103.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
