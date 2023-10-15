@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -30,7 +29,7 @@ func listFiles(root string) ([]string, error) {
 
 func readFilesAsManifests(paths []string) (result []unstructured.Unstructured, errs []error) {
 	for _, path := range paths {
-		rawdata, err := ioutil.ReadFile(path)
+		rawdata, err := os.ReadFile(path)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("could not read file: %s from disk: %s", path, err))
 		}

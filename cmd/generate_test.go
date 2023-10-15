@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 	"testing"
@@ -34,7 +34,7 @@ func TestMain(t *testing.T) {
 		cmd.SetErr(c)
 		cmd.SetOut(bytes.NewBufferString(""))
 		cmd.Execute()
-		out, err := ioutil.ReadAll(c) // Read buffer to bytes
+		out, err := io.ReadAll(c) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -54,7 +54,7 @@ func TestMain(t *testing.T) {
 		cmd.SetErr(b)
 		cmd.SetOut(bytes.NewBufferString(""))
 		cmd.Execute()
-		out, err := ioutil.ReadAll(b) // Read buffer to bytes
+		out, err := io.ReadAll(b) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -75,7 +75,7 @@ func TestMain(t *testing.T) {
 		cmd.SetErr(b)
 		cmd.SetOut(bytes.NewBufferString(""))
 		cmd.Execute()
-		out, err := ioutil.ReadAll(b) // Read buffer to bytes
+		out, err := io.ReadAll(b) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -88,7 +88,7 @@ func TestMain(t *testing.T) {
 		// From stdin
 		args = []string{"-"}
 		stdin := bytes.NewBufferString("")
-		inputBuf, err := ioutil.ReadFile("../fixtures/input/empty/file.yaml")
+		inputBuf, err := os.ReadFile("../fixtures/input/empty/file.yaml")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -100,7 +100,7 @@ func TestMain(t *testing.T) {
 		cmd.SetErr(b)
 		cmd.SetOut(bytes.NewBufferString(""))
 		cmd.Execute()
-		out, err = ioutil.ReadAll(b) // Read buffer to bytes
+		out, err = io.ReadAll(b) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -120,16 +120,16 @@ func TestMain(t *testing.T) {
 		cmd.SetOut(b)
 		cmd.SetErr(e)
 		cmd.Execute()
-		out, err := ioutil.ReadAll(b) // Read buffer to bytes
+		out, err := io.ReadAll(b) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
 		}
-		stderr, err := ioutil.ReadAll(e) // Read buffer to bytes
+		stderr, err := io.ReadAll(e) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		buf, err := ioutil.ReadFile("../fixtures/output/all.yaml")
+		buf, err := os.ReadFile("../fixtures/output/all.yaml")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -148,12 +148,12 @@ func TestMain(t *testing.T) {
 		cmd.SetArgs(args)
 		cmd.SetOut(b)
 		cmd.Execute()
-		out, err := ioutil.ReadAll(b) // Read buffer to bytes
+		out, err := io.ReadAll(b) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		buf, err := ioutil.ReadFile("../fixtures/output/ignored-secret.yaml")
+		buf, err := os.ReadFile("../fixtures/output/ignored-secret.yaml")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -166,7 +166,7 @@ func TestMain(t *testing.T) {
 
 	t.Run("will read from STDIN", func(t *testing.T) {
 		stdin := bytes.NewBufferString("")
-		inputBuf, err := ioutil.ReadFile("../fixtures/input/nonempty/full.yaml")
+		inputBuf, err := os.ReadFile("../fixtures/input/nonempty/full.yaml")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -180,12 +180,12 @@ func TestMain(t *testing.T) {
 		cmd.SetOut(stdout)
 		cmd.SetIn(stdin)
 		cmd.Execute()
-		out, err := ioutil.ReadAll(stdout) // Read buffer to bytes
+		out, err := io.ReadAll(stdout) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		buf, err := ioutil.ReadFile("../fixtures/output/stdin-full.yaml")
+		buf, err := os.ReadFile("../fixtures/output/stdin-full.yaml")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -198,7 +198,7 @@ func TestMain(t *testing.T) {
 
 	t.Run("will return invalid yaml error from STDIN", func(t *testing.T) {
 		stdin := bytes.NewBufferString("")
-		inputBuf, err := ioutil.ReadFile("../fixtures/input/invalid.yaml")
+		inputBuf, err := os.ReadFile("../fixtures/input/invalid.yaml")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -213,7 +213,7 @@ func TestMain(t *testing.T) {
 		cmd.SetOut(bytes.NewBufferString(""))
 		cmd.SetIn(stdin)
 		cmd.Execute()
-		out, err := ioutil.ReadAll(stderr) // Read buffer to bytes
+		out, err := io.ReadAll(stderr) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -239,7 +239,7 @@ func TestMain(t *testing.T) {
 		cmd.SetErr(b)
 		cmd.SetOut(bytes.NewBufferString(""))
 		cmd.Execute()
-		out, err := ioutil.ReadAll(b) // Read buffer to bytes
+		out, err := io.ReadAll(b) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
 		}

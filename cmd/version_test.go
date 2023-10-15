@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"strings"
 	"testing"
 
@@ -22,7 +22,7 @@ func TestVersion(t *testing.T) {
 		cmd.SetArgs(args)
 		cmd.SetOut(c)
 		cmd.Execute()
-		out, err := ioutil.ReadAll(c) // Read buffer to bytes
+		out, err := io.ReadAll(c) // Read buffer to bytes
 		if err != nil {
 			t.Fatal(err)
 		}

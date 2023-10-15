@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -27,7 +26,7 @@ func writeToken(token string) error {
 		"vault_token": token,
 	}
 	file, _ := json.MarshalIndent(data, "", " ")
-	err = ioutil.WriteFile(filepath.Join(path, "config.json"), file, 0644)
+	err = os.WriteFile(filepath.Join(path, "config.json"), file, 0644)
 	if err != nil {
 		return err
 	}
@@ -47,7 +46,7 @@ func removeToken() error {
 func readToken() interface{} {
 	home, _ := os.UserHomeDir()
 	path := filepath.Join(home, ".avp", "config.json")
-	dat, _ := ioutil.ReadFile(path)
+	dat, _ := os.ReadFile(path)
 	var result map[string]interface{}
 	json.Unmarshal([]byte(dat), &result)
 	return result["vault_token"]

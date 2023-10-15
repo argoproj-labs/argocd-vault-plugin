@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -36,7 +36,7 @@ func CheckExistingToken(vaultClient *api.Client) error {
 	// defer the closing of our jsonFile so that we can parse it later on
 	defer jsonFile.Close()
 
-	byteValue, err := ioutil.ReadAll(jsonFile)
+	byteValue, err := io.ReadAll(jsonFile)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func SetToken(vaultClient *api.Client, token string) error {
 	if err != nil {
 		return fmt.Errorf("Could not marshal token data: %s", err.Error())
 	}
-	err = ioutil.WriteFile(filepath.Join(path, "config.json"), file, 0644)
+	err = os.WriteFile(filepath.Join(path, "config.json"), file, 0644)
 	if err != nil {
 		return fmt.Errorf("Could not write token to file, will need to login to Vault on subsequent runs: %s", err.Error())
 	}
