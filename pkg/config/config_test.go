@@ -3,7 +3,6 @@ package config_test
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -534,7 +533,7 @@ var expectedEnvVars = map[string]string{
 func TestExternalConfigAWS(t *testing.T) {
 	// Test setting AWS_* env variables from external AVP config, note setting
 	// env vars is necessary to pass AVP config entries to the AWS golang SDK
-	tmpFile, err := ioutil.TempFile("", "avpConfig.*.yaml")
+	tmpFile, err := os.CreateTemp("", "avpConfig.*.yaml")
 	if err != nil {
 		t.Errorf("Cannot create temporary file %s", err)
 	}
@@ -576,7 +575,7 @@ SOPS_AGE_KEY_FILE: age`
 
 	// Test setting SOPS_* env variables from external AVP config, note setting
 	// env vars is necessary to pass AVP config entries to SOPS
-	tmpFile, err := ioutil.TempFile("", "avpSOPSConfig.*.yaml")
+	tmpFile, err := os.CreateTemp("", "avpSOPSConfig.*.yaml")
 	if err != nil {
 		t.Errorf("Cannot create temporary file %s", err)
 	}

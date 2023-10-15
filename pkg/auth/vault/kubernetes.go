@@ -2,7 +2,7 @@ package vault
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
@@ -83,7 +83,7 @@ func (k *K8sAuth) getJWT() (string, error) {
 	}
 	defer f.Close()
 
-	contentBytes, err := ioutil.ReadAll(f)
+	contentBytes, err := io.ReadAll(f)
 	if err != nil {
 		return "", err
 	}
