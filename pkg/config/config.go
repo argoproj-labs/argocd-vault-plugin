@@ -72,12 +72,14 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 		utils.VerboseToStdErr("%s: %s\n", k, viperValue)
 	}
 
-	authType := v.GetString(types.EnvAvpAuthType)
+	authType := strings.TrimSpace(v.GetString(types.EnvAvpAuthType)) // strip whitespace and newlines
 
 	var auth types.AuthType
 	var backend types.Backend
 
-	switch v.GetString(types.EnvAvpType) {
+	backendType := strings.TrimSpace(v.GetString(types.EnvAvpType)) // strip whitespace and newlines
+
+	switch backendType {
 	case types.VaultBackend:
 		{
 			apiClient, err := api.NewClient(api.DefaultConfig())
