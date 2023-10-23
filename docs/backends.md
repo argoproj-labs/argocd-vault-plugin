@@ -601,7 +601,7 @@ apiVersion: v1
 metadata:
   name: test-secret
   annotations:
-    avp.kubernetes.io/path: "vaults/vault-uuid/items/item-uuid"
+    avp.kubernetes.io/path: "vaults/vault-uuid-or-title/items/item-uuid-or-title"
 type: Opaque
 data:
   password: <key>
@@ -616,7 +616,7 @@ metadata:
   name: test-secret
 type: Opaque
 data:
-  password: <path:vaults/vault-uuid/items/item-uuid#key>
+  password: <path:vaults/vault-uuid-or-title/items/item-uuid-or-title#key>
 ```
 
 ### Keeper Secrets Manager
