@@ -1,7 +1,7 @@
 package kube
 
 import (
-	"io/ioutil"
+	"os"
 	"reflect"
 	"regexp"
 	"strings"
@@ -125,7 +125,7 @@ func TestToYAML_RemoveMissing(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	expectedData, err := ioutil.ReadFile("../../fixtures/output/secret-remove-missing.yaml")
+	expectedData, err := os.ReadFile("../../fixtures/output/secret-remove-missing.yaml")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -530,7 +530,7 @@ func TestToYAML_Deployment(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-deployment.yaml")
+	expectedData, err := os.ReadFile("../../fixtures/output/small-deployment.yaml")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -586,7 +586,7 @@ func TestToYAML_Service(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-service.yaml")
+	expectedData, err := os.ReadFile("../../fixtures/output/small-service.yaml")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -638,7 +638,7 @@ func TestToYAML_Secret_PlaceholderedData(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-secret.yaml")
+	expectedData, err := os.ReadFile("../../fixtures/output/small-secret.yaml")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -692,7 +692,7 @@ func TestToYAML_CRD_PlaceholderedData(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-custom-resource.yaml")
+	expectedData, err := os.ReadFile("../../fixtures/output/small-custom-resource.yaml")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -738,7 +738,7 @@ func TestToYAML_CRD_FakePlaceholders(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-custom-resource-fake-placeholders.yaml")
+	expectedData, err := os.ReadFile("../../fixtures/output/small-custom-resource-fake-placeholders.yaml")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -784,7 +784,7 @@ func TestToYAML_Secret_HardcodedData(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-secret4.yaml")
+	expectedData, err := os.ReadFile("../../fixtures/output/small-secret4.yaml")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -835,7 +835,7 @@ func TestToYAML_Secret_MixedData(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-secret3.yaml")
+	expectedData, err := os.ReadFile("../../fixtures/output/small-secret3.yaml")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -886,7 +886,7 @@ func TestToYAML_Secret_PlaceholderedStringData(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-secret2.yaml")
+	expectedData, err := os.ReadFile("../../fixtures/output/small-secret2.yaml")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -937,7 +937,7 @@ func TestToYAML_ConfigMap(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-configmap.yaml")
+	expectedData, err := os.ReadFile("../../fixtures/output/small-configmap.yaml")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -994,7 +994,7 @@ func TestToYAML_Ingress(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-ingress.yaml")
+	expectedData, err := os.ReadFile("../../fixtures/output/small-ingress.yaml")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -1056,7 +1056,7 @@ func TestToYAML_CronJob(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-cronjob.yaml")
+	expectedData, err := os.ReadFile("../../fixtures/output/small-cronjob.yaml")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -1113,7 +1113,7 @@ func TestToYAML_Job(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
-	expectedData, err := ioutil.ReadFile("../../fixtures/output/small-job.yaml")
+	expectedData, err := os.ReadFile("../../fixtures/output/small-job.yaml")
 	if err != nil {
 		t.Fatalf(err.Error())
 	}

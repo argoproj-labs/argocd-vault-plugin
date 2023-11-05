@@ -2,7 +2,6 @@ package vault_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -20,7 +19,7 @@ func writeK8sToken() error {
 	}
 
 	data := []byte("123456")
-	err = ioutil.WriteFile(filepath.Join(saPath, "token"), data, 0644)
+	err = os.WriteFile(filepath.Join(saPath, "token"), data, 0644)
 	if err != nil {
 		return err
 	}
