@@ -7,7 +7,7 @@ quality:
 	go test -race -v -coverprofile cover.out ./...
 
 build:
-	go build -o ${BINARY} .
+	go build -buildvcs=false -o ${BINARY} .
 
 install: build
 
