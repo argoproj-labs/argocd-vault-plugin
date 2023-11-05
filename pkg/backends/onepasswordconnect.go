@@ -26,13 +26,13 @@ func (a *OnePasswordConnect) Login() error {
 
 // GetSecrets gets secrets from 1Password Connect server and returns the formatted data
 func (a *OnePasswordConnect) GetSecrets(path string, version string, annotations map[string]string) (map[string]interface{}, error) {
-	// Format we expect is vaults/<vaultUUID>/items/<secret_UUID>
+	// Format we expect is vaults/<vault>/items/<item>
 	splits := strings.Split(path, "/")
-	vaultUUID := splits[1]
-	itemUUID := splits[3]
+	vault := splits[1]
+	item := strings.Join(splits[3:], "/")
 
-	utils.VerboseToStdErr("OnePassword Connect getting item %s from vault %s", itemUUID, vaultUUID)
-	result, err := a.Client.GetItem(itemUUID, vaultUUID)
+	utils.VerboseToStdErr("OnePassword Connect getting item %s from vault %s", item, vault)
+	result, err := a.Client.GetItem(item, vault)
 	if err != nil {
 		return nil, err
 	}
