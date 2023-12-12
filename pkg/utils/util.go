@@ -24,15 +24,15 @@ func GetConfigFileName() (string) {
 	var config_addr_name = ""
 
 	addr, addr_set := os.LookupEnv("VAULT_ADDR")
-	ns, ns_set := os.LookupEnv("VAULT_NAMESPACE")
+	vault_ns, vault_ns_set := os.LookupEnv("VAULT_NAMESPACE")
 
 	if addr_set {
 		hasher := sha1.New()
     	hasher.Write([]byte(addr))
-		config_addr_name = base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+		config_addr_name = "_" + base64.URLEncoding.EncodeToString(hasher.Sum(nil))
 	}
-	if ns_set {
-		config_name = ns
+	if vault_ns_set {
+		config_name = "_" + vault_ns
 	}
 
 	config := config_prefix + config_addr_name + config_name + config_ext
