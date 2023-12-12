@@ -11,11 +11,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hashicorp/vault/api"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/helpers"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 )
 
-func writeToken(token string) error {
+func writeToken(token string, client *api.Client) error {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
@@ -28,7 +29,7 @@ func writeToken(token string) error {
 		"vault_token": token,
 	}
 	file, _ := json.MarshalIndent(data, "", " ")
-	err = os.WriteFile(filepath.Join(path, utils.GetConfigFileName()), file, 0644)
+	err = os.WriteFile(filepath.Join(path, utils.GetConfigFileName(client)), file, 0644)
 	if err != nil {
 		return err
 	}
@@ -45,9 +46,9 @@ func removeToken() error {
 	return nil
 }
 
-func readToken() interface{} {
+func readToken(client *api.Client) interface{} {
 	home, _ := os.UserHomeDir()
-	path := filepath.Join(home, ".avp", utils.GetConfigFileName())
+	path := filepath.Join(home, ".avp", utils.GetConfigFileName(client))
 	dat, _ := os.ReadFile(path)
 	var result map[string]interface{}
 	json.Unmarshal([]byte(dat), &result)
@@ -59,7 +60,7 @@ func TestCheckExistingToken(t *testing.T) {
 	defer ln.Close()
 
 	t.Run("will set token if valid", func(t *testing.T) {
-		err := writeToken(roottoken)
+		err := writeToken(roottoken, client)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -90,7 +91,7 @@ func TestCheckExistingToken(t *testing.T) {
 		}
 
 		dir, _ := os.UserHomeDir()
-		expected := fmt.Sprintf("stat %s/.avp/%s: no such file or directory", dir, utils.GetConfigFileName())
+		expected := fmt.Sprintf("stat %s/.avp/%s: no such file or directory", dir, utils.GetConfigFileName(client))
 		if err.Error() != expected {
 			t.Errorf("expected: %s, got: %s.", expected, err.Error())
 		}
