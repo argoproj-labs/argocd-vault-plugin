@@ -23,10 +23,12 @@ func writeToken(token string) error {
 	path := filepath.Join(home, ".avp")
 	os.Mkdir(path, 0755)
 	data := map[string]interface{}{
+		"vault_addr": os.Getenv("VAULT_ADDR"),
+		"vault_namespace": os.Getenv("VAULT_NAMESPACE"),
 		"vault_token": token,
 	}
 	file, _ := json.MarshalIndent(data, "", " ")
-	err = os.WriteFile(filepath.Join(path, "config.json"), file, 0644)
+	err = os.WriteFile(filepath.Join(path, utils.GetConfigFileName()), file, 0644)
 	if err != nil {
 		return err
 	}
@@ -45,7 +47,7 @@ func removeToken() error {
 
 func readToken() interface{} {
 	home, _ := os.UserHomeDir()
-	path := filepath.Join(home, ".avp", "config.json")
+	path := filepath.Join(home, ".avp", utils.GetConfigFileName())
 	dat, _ := os.ReadFile(path)
 	var result map[string]interface{}
 	json.Unmarshal([]byte(dat), &result)
@@ -88,7 +90,7 @@ func TestCheckExistingToken(t *testing.T) {
 		}
 
 		dir, _ := os.UserHomeDir()
-		expected := fmt.Sprintf("stat %s/.avp/config.json: no such file or directory", dir)
+		expected := fmt.Sprintf("stat %s/.avp/%s: no such file or directory", dir, utils.GetConfigFileName())
 		if err.Error() != expected {
 			t.Errorf("expected: %s, got: %s.", expected, err.Error())
 		}

@@ -10,18 +10,43 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"crypto/sha1"
+    "encoding/base64"
 
 	"github.com/hashicorp/vault/api"
 	"github.com/spf13/viper"
 )
+
+func GetConfigFileName() (string) {
+	var config_prefix = "config"
+	var config_ext = ".json"
+	var config_name = ""
+	var config_addr_name = ""
+
+	addr, addr_set := os.LookupEnv("VAULT_ADDR")
+	ns, ns_set := os.LookupEnv("VAULT_NAMESPACE")
+
+	if addr_set {
+		hasher := sha1.New()
+    	hasher.Write([]byte(addr))
+		config_addr_name = base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+	}
+	if ns_set {
+		config_name = ns
+	}
+
+	config := config_prefix + config_addr_name + config_name + config_ext
+	return config
+}
 
 func ReadExistingToken() ([]byte, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
 	}
+	
 
-	avpConfigPath := filepath.Join(home, ".avp", "config.json")
+	avpConfigPath := filepath.Join(home, ".avp", GetConfigFileName())
 	if _, err := os.Stat(avpConfigPath); err != nil {
 		return nil, err
 	}
@@ -86,13 +111,15 @@ func SetToken(vaultClient *api.Client, token string) error {
 	}
 
 	data := map[string]interface{}{
+		"vault_addr": os.Getenv("VAULT_ADDR"),
+		"vault_namespace": os.Getenv("VAULT_NAMESPACE"),
 		"vault_token": token,
 	}
 	file, err := json.MarshalIndent(data, "", " ")
 	if err != nil {
 		return fmt.Errorf("Could not marshal token data: %s", err.Error())
 	}
-	err = os.WriteFile(filepath.Join(path, "config.json"), file, 0644)
+	err = os.WriteFile(filepath.Join(path, GetConfigFileName()), file, 0644)
 	if err != nil {
 		return fmt.Errorf("Could not write token to file, will need to login to Vault on subsequent runs: %s", err.Error())
 	}
