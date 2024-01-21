@@ -225,6 +225,20 @@ type: Opaque
 ---
 apiVersion: v1
 data:
+  SECRET_KEY: dGVzdC1wYXNzd29yZA==
+  dGVzdC1wYXNzd29yZA==: SECRET_VAL
+  dGVzdC1wYXNzd29yZDI=: dGVzdC1wYXNzd29yZA==
+kind: Secret
+metadata:
+  annotations:
+    avp.kubernetes.io/kv-version: "1"
+    avp.kubernetes.io/path: secret/testing
+  name: example-secret-key-value-annotation-path
+  namespace: test-namespace
+type: Opaque
+---
+apiVersion: v1
+data:
   SECRET_VAR: dGVzdC1wYXNzd29yZA==
 kind: Secret
 metadata:
@@ -242,6 +256,19 @@ metadata:
   annotations:
     avp.kubernetes.io/kv-version: "1"
   name: example-secret-base64-substring
+  namespace: default
+type: Opaque
+---
+apiVersion: v1
+data:
+  SECRET_KEY: dGVzdC1wYXNzd29yZA==
+  dGVzdC1wYXNzd29yZA==: SECRET_VAL
+  dGVzdC1wYXNzd29yZDI=: dGVzdC1wYXNzd29yZA==
+kind: Secret
+metadata:
+  annotations:
+    avp.kubernetes.io/kv-version: "1"
+  name: example-secret-key-value
   namespace: default
 type: Opaque
 ---
