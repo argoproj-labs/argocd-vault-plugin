@@ -283,7 +283,7 @@ You can also use the `argocd app diff` command passing the `--hard-refresh` flag
 ### Caveats
 
 #### Caching the Hashicorp Vault Token
-The plugin tries to cache the Vault token obtained from logging into Vault on the `argocd-repo-server`'s container's disk, at `~/.avp/config.json` for the duration of the token's lifetime. This of course requires that the container user is able to write to that path. Some environments, like Openshift, will force a random user for containers to run with; therefore this feature will not work, and the plugin will attempt to login to Vault on every run. This can be fixed by ensuring the `argocd-repo-server`'s container runs with the user `argocd`.
+The plugin tries to cache the Vault token obtained from logging into Vault on the `argocd-repo-server`'s container's disk, at `~/.avp/config[_<vault addr hash>][_<vault_namespace>].json` for the duration of the token's lifetime. This of course requires that the container user is able to write to that path. Some environments, like Openshift, will force a random user for containers to run with; therefore this feature will not work, and the plugin will attempt to login to Vault on every run. This can be fixed by ensuring the `argocd-repo-server`'s container runs with the user `argocd`.
 
 #### Running argocd-vault-plugin in a sidecar container
 As mentioned in the [Installation page](../installation), Argo CD has a newer method of installing custom plugins via sidecar containers to the `argocd-repo-server` deployment. Here are some caveats with running in this configuration:
