@@ -34,8 +34,10 @@ spec:
   project: default
 ```
 
-3. Or you can pass the config-management-plugin flag to the Argo CD CLI app create command:  
+3. Or you can pass the config-management-plugin flag to the Argo CD CLI app create command:
 `argocd app create you-app-name --config-management-plugin argocd-vault-plugin`
+
+**WARNING**: it is extremely important that the `command` used in the plugin definition produces a non-zero exit code if *any* errors occurs. Otherwise, Argo CD will treat partial or empty output as valid and start deleting or modifying resources. Thus it is **strongly recommended** to use the `pipefail`, `errexit` and `nounset` shell options, see also [Writing Safe Shell Scripts](https://sipb.mit.edu/doc/safe-shell/).
 
 #### With Helm
 If you want to use Helm along with argocd-vault-plugin, use the instructions matching your [plugin installation method](../installation).
@@ -46,10 +48,10 @@ For `argocd-cm` ConfigMap configured plugins, add this to `argod-cm` ConfigMap:
 configManagementPlugins: |
   - name: argocd-vault-plugin-helm
     init:
-      command: [sh, -c]
+      command: ["/bin/sh", "-c"]
       args: ["helm dependency build"]
     generate:
-      command: ["sh", "-c"]
+      command: ["/bin/bash", "-o", "pipefail", "-c"]
       args: ["helm template $ARGOCD_APP_NAME . --include-crds | argocd-vault-plugin generate -"]
 ```
 For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [add a sidecar to run it](../installation#initcontainer-and-configuration-via-sidecar):
@@ -65,12 +67,14 @@ For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [ad
       discover:
         find:
           command:
-            - sh
+            - "/bin/sh"
             - "-c"
             - "find . -name 'Chart.yaml' && find . -name 'values.yaml'"
       generate:
         command:
-          - sh
+          - "/bin/bash"
+          - "-o"
+          - "pipefail" # exit with non-zero code if any command in pipeline fails
           - "-c"
           - |
             helm template $ARGOCD_APP_NAME --include-crds . |
@@ -82,8 +86,8 @@ For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [ad
 
 Use this option if you want to use Helm along with argocd-vault-plugin and use additional helm args.
 
-**IMPORTANT**: passing `${ARGOCD_ENV_HELM_ARGS}` effectively allows users to run arbitrary code in the Argo CD 
-repo-server (or, if using a sidecar, in the plugin sidecar). Only use this when the users are completely trusted. If  
+**IMPORTANT**: passing `${ARGOCD_ENV_HELM_ARGS}` effectively allows users to run arbitrary code in the Argo CD
+repo-server (or, if using a sidecar, in the plugin sidecar). Only use this when the users are completely trusted. If
 possible, determine which Helm arguments are needed by your users and explicitly pass only those arguments.
 
 For `argocd-cm` ConfigMap configured plugins, add this to `argod-cm` ConfigMap:
@@ -91,10 +95,10 @@ For `argocd-cm` ConfigMap configured plugins, add this to `argod-cm` ConfigMap:
 configManagementPlugins: |
   - name: argocd-vault-plugin-helm
     init:
-      command: [sh, -c]
+      command: ["/bin/sh", "-c"]
       args: ["helm dependency build"]
     generate:
-      command: ["sh", "-c"]
+      command: ["/bin/bash", "-o", "pipefail", "-c"]
       args: ["helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE ${ARGOCD_ENV_HELM_ARGS} . --include-crds | argocd-vault-plugin generate -"]
 ```
 For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [add a sidecar to run it](../installation#initcontainer-and-configuration-via-sidecar):
@@ -110,12 +114,14 @@ For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [ad
       discover:
         find:
           command:
-            - sh
+            - "/bin/sh"
             - "-c"
             - "find . -name 'Chart.yaml' && find . -name 'values.yaml'"
       generate:
         command:
-          - sh
+          - "/bin/bash"
+          - "-o"
+          - "pipefail" # exit with non-zero code if any command in pipeline fails
           - "-c"
           - |
             helm template $ARGOCD_APP_NAME --include-crds -n $ARGOCD_APP_NAMESPACE ${ARGOCD_ENV_HELM_ARGS} . |
@@ -134,7 +140,7 @@ Helm args must be defined in the application manifest:
           value: -f values-dev.yaml -f values-dev-tag.yaml
 ```
 
-**Note: Bypassing the parameters like this can be dangerous in a multi-tenant environment as it could allow for malicious injection of arbitrary commands. So be cautious when doing something like in a production environment. Ensuring proper permissions and protections is very important when doing something like this.** 
+**NOTE**: Bypassing the parameters like this can be dangerous in a multi-tenant environment as it could allow for malicious injection of arbitrary commands. So be cautious when doing something like in a production environment. Ensuring proper permissions and protections is very important when doing something like this.
 
 ##### With an inline values file
 Alternatively, if you'd like to use values inline in your application manifest (similar to the ArgoCD CLI's `--values-literal-file` option), you can create a plugin like this (note the use of `bash` instead of `sh` here):
@@ -144,7 +150,7 @@ For `argocd-cm` ConfigMap configured plugins, add this to `argod-cm` ConfigMap:
 configManagementPlugins: |
   - name: argocd-vault-plugin-helm
     generate:
-      command: ["bash", "-c"]
+      command: ["/bin/bash", "-o", "pipefail", "-c"]
       args: ['helm template "$ARGOCD_APP_NAME" -f <(echo "$ARGOCD_ENV_HELM_VALUES") . | argocd-vault-plugin generate -']
 ```
 For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [add a sidecar to run it](../installation#initcontainer-and-configuration-via-sidecar):
@@ -160,12 +166,14 @@ For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [ad
       discover:
         find:
           command:
-            - sh
+            - "/bin/sh"
             - "-c"
             - "find . -name 'Chart.yaml' && find . -name 'values.yaml'"
       generate:
         command:
-          - bash
+          - "/bin/bash"
+          - "-o"
+          - "pipefail"
           - "-c"
           - |
             helm template $ARGOCD_APP_NAME -n $ARGOCD_APP_NAMESPACE -f <(echo "$ARGOCD_ENV_HELM_VALUES") . |
@@ -205,7 +213,7 @@ For `argocd-cm` ConfigMap configured plugins, add this to `argod-cm` ConfigMap:
 configManagementPlugins: |
   - name: argocd-vault-plugin-kustomize
     generate:
-      command: ["sh", "-c"]
+      command: ["/bin/bash" , "-o", "pipefail", "-c"]
       args: ["kustomize build . | argocd-vault-plugin generate -"]
 ```
 For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [add a sidecar to run it](../installation#initcontainer-and-configuration-via-sidecar):
@@ -227,7 +235,9 @@ For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [ad
             - kustomization.yaml
       generate:
         command:
-          - sh
+          - "/bin/bash"
+          - "-o"
+          - "pipefail"
           - "-c"
           - "kustomize build . | argocd-vault-plugin generate -"
       lockRepo: false
@@ -276,7 +286,7 @@ The plugin will work with both YAML and JSON output from jsonnet.
 #### Refreshing values from Secrets Managers
 If you want to load in a new value from your Secret Manager without making any new code changes you must use the Hard-Refresh concept in Argo CD. This can be done in two ways. You can either use the UI and select the `Hard Refresh` button which is located within the `Refresh Button`.
 
-<img src="https://github.com/argoproj-labs/argocd-vault-plugin/raw/main/assets/hard-refresh.png" width="300">  
+<img src="https://github.com/argoproj-labs/argocd-vault-plugin/raw/main/assets/hard-refresh.png" width="300">
 
 You can also use the `argocd app diff` command passing the `--hard-refresh` flag. This will run argocd-vault-plugin again and pull in the new values from your Secret Manager and then you can either have Auto Sync setup or Sync manually to apply the new values.
 
