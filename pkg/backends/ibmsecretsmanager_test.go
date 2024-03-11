@@ -24,9 +24,14 @@ type MockIBMSMClient struct {
 	GetSecretCallCount         int
 	GetSecretVersionCalledWith *ibmsm.GetSecretVersionOptions
 	GetSecretVersionCallCount  int
+
+	ListSecretGroupsCallCount int
 }
 
 var BIG_GROUP_LEN int = types.IBMMaxPerPage + 1
+
+var TEST_GROUP_NAME = "testGroup"
+var TEST_GROUP_ID = "e6ffb033-8806-a856-7f62-964a80128aac"
 
 // This is used to take deep copies of struct fields passed as pointers in ListSecretsOptions
 // so we can make assertions about the values later
@@ -36,6 +41,47 @@ func deepCopy(listAllSecretsOptions *ibmsm.ListSecretsOptions) *ibmsm.ListSecret
 		Groups: listAllSecretsOptions.Groups,
 		Offset: &offset,
 	}
+}
+
+func (m *MockIBMSMClient) ListSecretGroups(listSecretGroupsOptions *ibmsm.ListSecretGroupsOptions) (result *ibmsm.SecretGroupCollection, response *core.DetailedResponse, err error) {
+	m.GetSecretLock.Lock()
+	m.ListSecretGroupsCallCount += 1
+	m.GetSecretLock.Unlock()
+	defaultGroup := "default"
+	smallGroup := "small-group"
+	bigGroup := "big-group"
+	emptyGroup := "empty-group"
+
+	groups := []ibmsm.SecretGroup{
+		ibmsm.SecretGroup{
+			Name: &defaultGroup,
+			ID:   &defaultGroup,
+		},
+		ibmsm.SecretGroup{
+			Name: &smallGroup,
+			ID:   &smallGroup,
+		},
+		ibmsm.SecretGroup{
+			Name: &bigGroup,
+			ID:   &bigGroup,
+		},
+		ibmsm.SecretGroup{
+			Name: &emptyGroup,
+			ID:   &emptyGroup,
+		},
+		ibmsm.SecretGroup{
+			Name: &TEST_GROUP_NAME,
+			ID:   &TEST_GROUP_ID,
+		},
+	}
+
+	count := int64(len(groups))
+	collection := &ibmsm.SecretGroupCollection{
+		SecretGroups: groups,
+		TotalCount:   &count,
+	}
+
+	return collection, nil, nil
 }
 
 func (m *MockIBMSMClient) ListSecrets(listAllSecretsOptions *ibmsm.ListSecretsOptions) (result *ibmsm.SecretMetadataPaginatedCollection, response *core.DetailedResponse, err error) {
@@ -95,6 +141,8 @@ func (m *MockIBMSMClient) ListSecrets(listAllSecretsOptions *ibmsm.ListSecretsOp
 		},
 	}
 
+	defaultGroup := "default"
+
 	// Empty secret group
 	emptyGroup := "empty-group"
 	emptyGroupSecrets := []ibmsm.SecretMetadataIntf{}
@@ -118,6 +166,30 @@ func (m *MockIBMSMClient) ListSecrets(listAllSecretsOptions *ibmsm.ListSecretsOp
 	} else if listAllSecretsOptions.Groups[0] == emptyGroup {
 		return &ibmsm.SecretMetadataPaginatedCollection{
 			Secrets: emptyGroupSecrets,
+		}, nil, nil
+	} else if listAllSecretsOptions.Groups[0] == defaultGroup {
+		secrets := []ibmsm.SecretMetadataIntf{
+			&ibmsm.UsernamePasswordSecretMetadata{
+				Name:          &name,
+				SecretType:    &otype,
+				SecretGroupID: &defaultGroup,
+				ID:            &otype,
+			},
+		}
+		return &ibmsm.SecretMetadataPaginatedCollection{
+			Secrets: secrets,
+		}, nil, nil
+	} else if listAllSecretsOptions.Groups[0] == TEST_GROUP_ID {
+		secrets := []ibmsm.SecretMetadataIntf{
+			&ibmsm.UsernamePasswordSecretMetadata{
+				Name:          &name,
+				SecretType:    &otype,
+				SecretGroupID: &TEST_GROUP_ID,
+				ID:            &otype,
+			},
+		}
+		return &ibmsm.SecretMetadataPaginatedCollection{
+			Secrets: secrets,
 		}, nil, nil
 	} else {
 		return nil, nil, fmt.Errorf("No such group %s", listAllSecretsOptions.Groups[0])
@@ -178,15 +250,17 @@ func (m *MockIBMSMClient) GetSecretVersion(getSecretOptions *ibmsm.GetSecretVers
 	m.GetSecretVersionCalledWith = getSecretOptions
 	m.GetSecretVersionCallCount += 1
 	m.GetSecretLock.Unlock()
-	data := "dummy"
+	cert1 := "dummy certificate"
+	key := "dummy private key"
+	cert2 := "dummy intermediate certificate"
 	id := "public_cert"
 	yes := true
 	return &ibmsm.PublicCertificateVersion{
 		ID:               &id,
 		PayloadAvailable: &yes,
-		Certificate:      &data,
-		PrivateKey:       &data,
-		Intermediate:     &data,
+		Certificate:      &cert1,
+		PrivateKey:       &key,
+		Intermediate:     &cert2,
 	}, nil, nil
 }
 
@@ -462,9 +536,9 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 		// Correct data
 		expected := map[string]interface{}{
 			"my-secret": map[string]interface{}{
-				"certificate":  "dummy",
-				"private_key":  "dummy",
-				"intermediate": "dummy",
+				"certificate":  "dummy certificate",
+				"private_key":  "dummy private key",
+				"intermediate": "dummy intermediate certificate",
 			},
 		}
 		if !reflect.DeepEqual(res, expected) {
@@ -591,6 +665,171 @@ func TestIBMSecretsManagerGetSecrets(t *testing.T) {
 		}
 		if mock.GetSecretVersionCallCount != 3 {
 			t.Errorf("GetIndividualSecret should be called %d times got %d", 3, mock.GetSecretCallCount)
+		}
+	})
+}
+
+func GetSecretsTest(t *testing.T, path string, version string, expected map[string]interface{}) {
+	mock := MockIBMSMClient{}
+	sm := backends.NewIBMSecretsManagerBackend(&mock)
+
+	res, err := sm.GetSecrets(path, version, nil)
+	if err != nil {
+		t.Fatalf("%s", err)
+	}
+
+	if !reflect.DeepEqual(res, expected) {
+		t.Errorf("expected: %s, got: %s.", expected, res)
+	}
+}
+
+func GetIndividualSecretTest(t *testing.T, path string, secretRef string, version string, expected interface{}) {
+	mock := MockIBMSMClient{}
+	sm := backends.NewIBMSecretsManagerBackend(&mock)
+
+	res, err := sm.GetIndividualSecret(path, secretRef, version, nil)
+	if err != nil {
+		t.Fatalf("%s", err)
+	}
+
+	if !reflect.DeepEqual(res, expected) {
+		t.Errorf("expected: %s, got: %s.", expected, res)
+	}
+}
+
+func TestIBMSecretsManagerSecretLookup(t *testing.T) {
+
+	t.Run("Retrieves payload of username_password secret", func(t *testing.T) {
+		expected := map[string]interface{}{
+			"username": "user",
+			"password": "pass",
+		}
+		GetSecretsTest(t, "ibmcloud/username_password/secrets/groups/small-group/my-secret", "", expected)
+		GetIndividualSecretTest(t, "ibmcloud/username_password/secrets/groups/small-group/my-secret", "username", "", expected["username"])
+		GetIndividualSecretTest(t, "ibmcloud/username_password/secrets/groups/small-group/my-secret", "password", "", expected["password"])
+		GetIndividualSecretTest(t, "ibmcloud/username_password/secrets/groups/small-group/my-secret", "doesnotexist", "", nil)
+	})
+
+	t.Run("Retrieves payload of public_cert secret (versioned)", func(t *testing.T) {
+		expected := map[string]interface{}{
+			"certificate":  "dummy certificate",
+			"private_key":  "dummy private key",
+			"intermediate": "dummy intermediate certificate",
+		}
+		GetSecretsTest(t, "ibmcloud/public_cert/secrets/groups/small-group/my-secret", "321", expected)
+		GetIndividualSecretTest(t, "ibmcloud/public_cert/secrets/groups/small-group/my-secret", "certificate", "321", expected["certificate"])
+		GetIndividualSecretTest(t, "ibmcloud/public_cert/secrets/groups/small-group/my-secret", "private_key", "321", expected["private_key"])
+		GetIndividualSecretTest(t, "ibmcloud/public_cert/secrets/groups/small-group/my-secret", "intermediate", "321", expected["intermediate"])
+		GetIndividualSecretTest(t, "ibmcloud/public_cert/secrets/groups/small-group/my-secret", "doesnotexist", "321", nil)
+	})
+
+	t.Run("Retrieves payload of KV secrets", func(t *testing.T) {
+		expected := map[string]interface{}{
+			"hello": "there",
+		}
+		GetSecretsTest(t, "ibmcloud/kv/secrets/groups/small-group/my-secret", "", expected)
+		GetIndividualSecretTest(t, "ibmcloud/kv/secrets/groups/small-group/my-secret", "hello", "", expected["hello"])
+		GetIndividualSecretTest(t, "ibmcloud/kv/secrets/groups/small-group/my-secret", "doesnotexist", "", nil)
+	})
+
+	t.Run("Retrieves payload of IAM credential secret", func(t *testing.T) {
+		expected := map[string]interface{}{
+			"api_key": "password",
+		}
+		GetSecretsTest(t, "ibmcloud/iam_credentials/secrets/groups/small-group/my-secret", "", expected)
+		GetIndividualSecretTest(t, "ibmcloud/iam_credentials/secrets/groups/small-group/my-secret", "api_key", "", expected["api_key"])
+		GetIndividualSecretTest(t, "ibmcloud/iam_credentials/secrets/groups/small-group/my-secret", "doesnotexist", "", nil)
+	})
+
+	t.Run("Retrieves payload of arbitrary secret", func(t *testing.T) {
+		mock := MockIBMSMClient{}
+		sm := backends.NewIBMSecretsManagerBackend(&mock)
+
+		_, err := sm.GetSecrets("ibmcloud/arbitrary/secrets/groups/small-group/my-secret", "", nil)
+		if err == nil || !strings.Contains(err.Error(), "not supported") {
+			t.Errorf("Expected error: %s", err)
+		}
+
+		_, err = sm.GetIndividualSecret("ibmcloud/arbitrary/secrets/groups/small-group/my-secret", "", "", nil)
+		if err == nil || !strings.Contains(err.Error(), "not supported") {
+			t.Errorf("Expected error: %s", err)
+		}
+	})
+
+	t.Run("Lookup non-existent secret", func(t *testing.T) {
+		mock := MockIBMSMClient{}
+		sm := backends.NewIBMSecretsManagerBackend(&mock)
+		var expected map[string]interface{} = nil
+
+		res, err := sm.GetSecrets("ibmcloud/iam_credentials/secrets/groups/small-group/doesnotexist", "", nil)
+		if err != nil {
+			t.Fatalf("%s", err)
+		}
+		if !reflect.DeepEqual(res, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, res)
+		}
+	})
+
+	t.Run("Lookup non-existent individual secret", func(t *testing.T) {
+		mock := MockIBMSMClient{}
+		sm := backends.NewIBMSecretsManagerBackend(&mock)
+		var expected interface{} = nil
+
+		res, err := sm.GetIndividualSecret("ibmcloud/iam_credentials/secrets/groups/small-group/doesnotexist", "FOO", "", nil)
+		if err != nil {
+			t.Fatalf("%s", err)
+		}
+		if !reflect.DeepEqual(res, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, res)
+		}
+	})
+}
+
+func TestIBMSecretsManagerGroupResolution(t *testing.T) {
+
+	t.Run("Resolve security group name", func(t *testing.T) {
+		mock := MockIBMSMClient{}
+		sm := backends.NewIBMSecretsManagerBackend(&mock)
+
+		expected := map[string]interface{}{
+			"username": "user",
+			"password": "pass",
+		}
+
+		// default group lookup - no need to list secret groups
+		res, err := sm.GetSecrets("ibmcloud/username_password/secrets/groups/default/my-secret", "", nil)
+		if err != nil {
+			t.Fatalf("%s", err)
+		}
+		if mock.ListSecretGroupsCallCount != 0 {
+			t.Errorf("ListSecretGroups should be called %d times got %d", 0, mock.ListSecretGroupsCallCount)
+		}
+		if !reflect.DeepEqual(res, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, res)
+		}
+
+		// group id passed - no need to list secret groups
+		res, err = sm.GetSecrets("ibmcloud/username_password/secrets/groups/"+TEST_GROUP_ID+"/my-secret", "", nil)
+		if err != nil {
+			t.Fatalf("%s", err)
+		}
+		if mock.ListSecretGroupsCallCount != 0 {
+			t.Errorf("ListSecretGroups should be called %d times got %d", 0, mock.ListSecretGroupsCallCount)
+		}
+		if !reflect.DeepEqual(res, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, res)
+		}
+
+		// group name passed - need to list secret groups
+		res, err = sm.GetSecrets("ibmcloud/username_password/secrets/groups/"+TEST_GROUP_NAME+"/my-secret", "", nil)
+		if err != nil {
+			t.Fatalf("%s", err)
+		}
+		if mock.ListSecretGroupsCallCount != 1 {
+			t.Errorf("ListSecretGroups should be called %d times got %d", 1, mock.ListSecretGroupsCallCount)
+		}
+		if !reflect.DeepEqual(res, expected) {
+			t.Errorf("expected: %s, got: %s.", expected, res)
 		}
 	})
 }
