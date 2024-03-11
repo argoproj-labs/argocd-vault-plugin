@@ -541,7 +541,7 @@ func storeSecret(secrets *map[string]interface{}, result map[string]interface{})
 	return nil
 }
 
-func (i *IBMSecretsManager) ResolveGroup(group string) (string, error) {
+func (i *IBMSecretsManager) resolveGroup(group string) (string, error) {
 	// no need to resolve default or groupIds
 	if group == "default" || GroupId.MatchString(group) {
 		return group, nil
@@ -552,7 +552,7 @@ func (i *IBMSecretsManager) ResolveGroup(group string) (string, error) {
 		opts := &ibmsm.ListSecretGroupsOptions{}
 		secretGroupCollection, _, err := i.Client.ListSecretGroups(opts)
 		if err != nil {
-			return "", fmt.Errorf("Could not list security groups: %s", err)
+			return "", fmt.Errorf("Could not list secret groups: %s", err)
 		}
 		for _, group := range secretGroupCollection.SecretGroups {
 			i.secretGroups[*group.Name] = *group.ID
@@ -562,7 +562,7 @@ func (i *IBMSecretsManager) ResolveGroup(group string) (string, error) {
 	// look up group id for group name
 	groupId := i.secretGroups[group]
 	if groupId == "" {
-		return "", fmt.Errorf("No such security group %s", group)
+		return "", fmt.Errorf("No such secret group %s", group)
 	} else {
 		return groupId, nil
 	}
@@ -578,7 +578,7 @@ func (i *IBMSecretsManager) GetSecrets(path string, version string, annotations 
 		return nil, fmt.Errorf("The 'ibmcloud/$TYPE/secrets/groups/$GROUP/$SECRET' path format is not supported for arbitrary secrets: %s", path)
 	}
 
-	groupId, err := i.ResolveGroup(group)
+	groupId, err := i.resolveGroup(group)
 	if err != nil {
 		return nil, err
 	}
@@ -672,7 +672,7 @@ func (i *IBMSecretsManager) GetIndividualSecret(kvpath, secretRef, version strin
 		return nil, fmt.Errorf("The 'ibmcloud/$TYPE/secrets/groups/$GROUP/$SECRET' path format is not supported for arbitrary secrets: %s", kvpath)
 	}
 
-	groupId, err := i.ResolveGroup(group)
+	groupId, err := i.resolveGroup(group)
 	if err != nil {
 		return nil, err
 	}
