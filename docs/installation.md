@@ -99,7 +99,7 @@ spec:
 The following example builds an entirely customized repo-server from a Dockerfile, installing extra dependencies that may be needed for generating manifests.
 
 ```Dockerfile
-FROM argoproj/argocd:latest
+FROM quay.io/argoproj/argocd:latest
 
 # Switch to root for the ability to perform install
 USER root
