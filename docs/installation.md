@@ -80,7 +80,7 @@ spec:
         # Note the lack of the `v` prefix unlike the git tag
         env:
           - name: AVP_VERSION
-            value: "1.16.2"
+            value: "1.18.0"
         args:
           - >-
             wget -O argocd-vault-plugin
@@ -115,7 +115,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install the AVP plugin (as root so we can copy to /usr/local/bin)
-ENV AVP_VERSION=1.16.2
+ENV AVP_VERSION=1.18.0
 ENV BIN=argocd-vault-plugin
 RUN curl -L -o ${BIN} https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v${AVP_VERSION}/argocd-vault-plugin_${AVP_VERSION}_linux_amd64
 RUN chmod +x ${BIN}
@@ -190,7 +190,7 @@ spec:
         image: registry.access.redhat.com/ubi8
         env:
           - name: AVP_VERSION
-            value: 1.16.2
+            value: 1.18.0
         command: [sh, -c]
         args:
           - >-
@@ -274,7 +274,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install the AVP plugin (as root so we can copy to /usr/local/bin)
-ENV AVP_VERSION=1.16.2
+ENV AVP_VERSION=1.18.0
 ENV BIN=argocd-vault-plugin
 RUN curl -L -o ${BIN} https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v${AVP_VERSION}/argocd-vault-plugin_${AVP_VERSION}_linux_amd64
 RUN chmod +x ${BIN}
