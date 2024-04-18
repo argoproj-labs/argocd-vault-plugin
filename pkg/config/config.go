@@ -15,7 +15,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	delineasecretserver "github.com/DelineaXPM/tss-sdk-go/v2/server"
 	"github.com/IBM/go-sdk-core/v5/core"
-	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
+	ibmsm "github.com/IBM/secrets-manager-go-sdk/v2/secretsmanagerv2"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/auth/vault"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/kube"

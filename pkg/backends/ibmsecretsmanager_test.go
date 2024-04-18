@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/IBM/go-sdk-core/v5/core"
-	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
+	ibmsm "github.com/IBM/secrets-manager-go-sdk/v2/secretsmanagerv2"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 )

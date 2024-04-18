@@ -1,12 +1,13 @@
 package backends
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"sync"
 
 	"github.com/IBM/go-sdk-core/v5/core"
-	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
+	ibmsm "github.com/IBM/secrets-manager-go-sdk/v2/secretsmanagerv2"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 )
@@ -78,6 +79,15 @@ func (m IBMSecretMetadata) GetMetadata() (map[string]string, error) {
 			}, nil
 		}
 	case *ibmsm.KVSecretMetadata:
+		{
+			return map[string]string{
+				"name":    *v.Name,
+				"id":      *v.ID,
+				"groupId": *v.SecretGroupID,
+				"type":    *v.SecretType,
+			}, nil
+		}
+	case *ibmsm.ServiceCredentialsSecretMetadata:
 		{
 			return map[string]string{
 				"name":    *v.Name,
@@ -163,6 +173,13 @@ func (d IBMSecretData) GetSecret() (map[string]interface{}, error) {
 		{
 			for k, v := range v.Data {
 				result[k] = v
+			}
+		}
+	case *ibmsm.ServiceCredentialsSecret:
+		{
+			if v.Credentials != nil {
+				data, _ := json.Marshal(*&v.Credentials)
+				result["credentials"] = string(data)
 			}
 		}
 	default:
@@ -252,7 +269,6 @@ func (d IBMVersionedSecretData) GetSecret() (map[string]interface{}, error) {
 			if *v.PayloadAvailable {
 				result["api_key"] = *v.ApiKey
 			}
-			return nil, fmt.Errorf("Payload unavailable for secret %s", *v.ID)
 		}
 	case *ibmsm.KVSecretVersion:
 		{
@@ -260,6 +276,13 @@ func (d IBMVersionedSecretData) GetSecret() (map[string]interface{}, error) {
 				for k, v := range v.Data {
 					result[k] = v
 				}
+			}
+		}
+	case *ibmsm.ServiceCredentialsSecretVersion:
+		{
+			if *v.PayloadAvailable {
+				data, _ := json.Marshal(*&v.Credentials)
+				result["credentials"] = string(data)
 			}
 		}
 	default:

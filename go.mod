@@ -10,7 +10,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets v1.0.1
 	github.com/DelineaXPM/tss-sdk-go/v2 v2.0.0
 	github.com/IBM/go-sdk-core/v5 v5.14.1
-	github.com/IBM/secrets-manager-go-sdk v1.2.0
+	github.com/IBM/secrets-manager-go-sdk/v2 v2.0.4
 	github.com/aws/aws-sdk-go-v2 v1.23.4
 	github.com/aws/aws-sdk-go-v2/config v1.18.45
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.21.5
