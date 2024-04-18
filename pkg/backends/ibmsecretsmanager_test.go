@@ -1,6 +1,7 @@
 package backends_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -108,6 +109,7 @@ func (m *MockIBMSMClient) ListSecrets(listAllSecretsOptions *ibmsm.ListSecretsOp
 	ctype := "public_cert"
 	itype := "iam_credentials"
 	ktype := "kv"
+	sctype := "service_credentials"
 	smallGroupSecrets := []ibmsm.SecretMetadataIntf{
 		&ibmsm.ArbitrarySecretMetadata{
 			Name:          &name,
@@ -138,6 +140,12 @@ func (m *MockIBMSMClient) ListSecrets(listAllSecretsOptions *ibmsm.ListSecretsOp
 			SecretType:    &ktype,
 			SecretGroupID: &smallGroup,
 			ID:            &ktype,
+		},
+		&ibmsm.ServiceCredentialsSecretMetadata{
+			Name:          &name,
+			SecretType:    &sctype,
+			SecretGroupID: &smallGroup,
+			ID:            &sctype,
 		},
 	}
 
@@ -231,6 +239,22 @@ func (m *MockIBMSMClient) GetSecret(getSecretOptions *ibmsm.GetSecretOptions) (r
 			ID:   &id,
 			Data: payload,
 		}, nil, nil
+	} else if *getSecretOptions.ID == "service_credentials" {
+		name := "my-secret"
+		id := "service_credentials"
+		api_key := "123456"
+		credentials := &ibmsm.ServiceCredentialsSecretCredentials{
+			Apikey: &api_key,
+		}
+		credentials.SetProperty("authentication", map[string]interface{}{
+			"username": "user",
+			"password": "pass",
+		})
+		return &ibmsm.ServiceCredentialsSecret{
+			Name:        &name,
+			ID:          &id,
+			Credentials: credentials,
+		}, nil, nil
 	} else {
 		name := "my-secret"
 		id := "username_password"
@@ -250,18 +274,37 @@ func (m *MockIBMSMClient) GetSecretVersion(getSecretOptions *ibmsm.GetSecretVers
 	m.GetSecretVersionCalledWith = getSecretOptions
 	m.GetSecretVersionCallCount += 1
 	m.GetSecretLock.Unlock()
-	cert1 := "dummy certificate"
-	key := "dummy private key"
-	cert2 := "dummy intermediate certificate"
-	id := "public_cert"
-	yes := true
-	return &ibmsm.PublicCertificateVersion{
-		ID:               &id,
-		PayloadAvailable: &yes,
-		Certificate:      &cert1,
-		PrivateKey:       &key,
-		Intermediate:     &cert2,
-	}, nil, nil
+	if *getSecretOptions.SecretID == "service_credentials" {
+		id := "service_credentials"
+		payload := true
+		api_key := "old-123456"
+		credentials := &ibmsm.ServiceCredentialsSecretCredentials{
+			Apikey: &api_key,
+		}
+		credentials.SetProperty("authentication", map[string]interface{}{
+			"username": "old-user",
+			"password": "old-pass",
+		})
+		return &ibmsm.ServiceCredentialsSecretVersion{
+			ID:               &id,
+			Credentials:      credentials,
+			PayloadAvailable: &payload,
+		}, nil, nil
+	} else {
+		cert1 := "dummy certificate"
+		key := "dummy private key"
+		cert2 := "dummy intermediate certificate"
+		id := "public_cert"
+		yes := true
+		return &ibmsm.PublicCertificateVersion{
+			ID:               &id,
+			PayloadAvailable: &yes,
+			Certificate:      &cert1,
+			PrivateKey:       &key,
+			Intermediate:     &cert2,
+		}, nil, nil
+	}
+
 }
 
 func TestIBMSecretsManagerGetSecrets(t *testing.T) {
@@ -739,6 +782,40 @@ func TestIBMSecretsManagerSecretLookup(t *testing.T) {
 		GetSecretsTest(t, "ibmcloud/iam_credentials/secrets/groups/small-group/my-secret", "", expected)
 		GetIndividualSecretTest(t, "ibmcloud/iam_credentials/secrets/groups/small-group/my-secret", "api_key", "", expected["api_key"])
 		GetIndividualSecretTest(t, "ibmcloud/iam_credentials/secrets/groups/small-group/my-secret", "doesnotexist", "", nil)
+	})
+
+	t.Run("Retrieves payload of service credentials secret", func(t *testing.T) {
+		contents := map[string]interface{}{
+			"apikey": "123456",
+			"authentication": map[string]interface{}{
+				"username": "user",
+				"password": "pass",
+			},
+		}
+		jsonContents, _ := json.Marshal(contents)
+		expected := map[string]interface{}{
+			"credentials": string(jsonContents),
+		}
+		GetSecretsTest(t, "ibmcloud/service_credentials/secrets/groups/small-group/my-secret", "", expected)
+		GetIndividualSecretTest(t, "ibmcloud/service_credentials/secrets/groups/small-group/my-secret", "credentials", "", expected["credentials"])
+		GetIndividualSecretTest(t, "ibmcloud/service_credentials/secrets/groups/small-group/my-secret", "doesnotexist", "", nil)
+	})
+
+	t.Run("Retrieves payload of service credentials secret (versioned)", func(t *testing.T) {
+		contents := map[string]interface{}{
+			"apikey": "old-123456",
+			"authentication": map[string]interface{}{
+				"username": "old-user",
+				"password": "old-pass",
+			},
+		}
+		jsonContents, _ := json.Marshal(contents)
+		expected := map[string]interface{}{
+			"credentials": string(jsonContents),
+		}
+		GetSecretsTest(t, "ibmcloud/service_credentials/secrets/groups/small-group/my-secret", "123", expected)
+		GetIndividualSecretTest(t, "ibmcloud/service_credentials/secrets/groups/small-group/my-secret", "credentials", "123", expected["credentials"])
+		GetIndividualSecretTest(t, "ibmcloud/service_credentials/secrets/groups/small-group/my-secret", "doesnotexist", "123", nil)
 	})
 
 	t.Run("Retrieves payload of arbitrary secret", func(t *testing.T) {
