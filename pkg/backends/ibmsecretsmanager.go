@@ -1,7 +1,6 @@
 package backends
 
 import (
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"sync"
@@ -178,8 +177,12 @@ func (d IBMSecretData) GetSecret() (map[string]interface{}, error) {
 	case *ibmsm.ServiceCredentialsSecret:
 		{
 			if v.Credentials != nil {
-				data, _ := json.Marshal(*&v.Credentials)
-				result["credentials"] = string(data)
+				if v.Credentials.Apikey != nil {
+					result["apikey"] = *v.Credentials.Apikey
+				}
+				for k, v := range v.Credentials.GetProperties() {
+					result[k] = v
+				}
 			}
 		}
 	default:
@@ -281,8 +284,12 @@ func (d IBMVersionedSecretData) GetSecret() (map[string]interface{}, error) {
 	case *ibmsm.ServiceCredentialsSecretVersion:
 		{
 			if *v.PayloadAvailable {
-				data, _ := json.Marshal(*&v.Credentials)
-				result["credentials"] = string(data)
+				if v.Credentials.Apikey != nil {
+					result["apikey"] = *v.Credentials.Apikey
+				}
+				for k, v := range v.Credentials.GetProperties() {
+					result[k] = v
+				}
 			}
 		}
 	default:

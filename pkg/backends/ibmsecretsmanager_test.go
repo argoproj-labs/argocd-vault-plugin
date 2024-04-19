@@ -1,7 +1,6 @@
 package backends_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
@@ -785,16 +784,12 @@ func TestIBMSecretsManagerSecretLookup(t *testing.T) {
 	})
 
 	t.Run("Retrieves payload of service credentials secret", func(t *testing.T) {
-		contents := map[string]interface{}{
+		expected := map[string]interface{}{
 			"apikey": "123456",
 			"authentication": map[string]interface{}{
 				"username": "user",
 				"password": "pass",
 			},
-		}
-		jsonContents, _ := json.Marshal(contents)
-		expected := map[string]interface{}{
-			"credentials": string(jsonContents),
 		}
 		GetSecretsTest(t, "ibmcloud/service_credentials/secrets/groups/small-group/my-secret", "", expected)
 		GetIndividualSecretTest(t, "ibmcloud/service_credentials/secrets/groups/small-group/my-secret", "credentials", "", expected["credentials"])
@@ -802,16 +797,12 @@ func TestIBMSecretsManagerSecretLookup(t *testing.T) {
 	})
 
 	t.Run("Retrieves payload of service credentials secret (versioned)", func(t *testing.T) {
-		contents := map[string]interface{}{
+		expected := map[string]interface{}{
 			"apikey": "old-123456",
 			"authentication": map[string]interface{}{
 				"username": "old-user",
 				"password": "old-pass",
 			},
-		}
-		jsonContents, _ := json.Marshal(contents)
-		expected := map[string]interface{}{
-			"credentials": string(jsonContents),
 		}
 		GetSecretsTest(t, "ibmcloud/service_credentials/secrets/groups/small-group/my-secret", "123", expected)
 		GetIndividualSecretTest(t, "ibmcloud/service_credentials/secrets/groups/small-group/my-secret", "credentials", "123", expected["credentials"])
