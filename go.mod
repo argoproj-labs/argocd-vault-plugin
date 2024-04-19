@@ -27,7 +27,7 @@ require (
 	github.com/yandex-cloud/go-genproto v0.0.0-20231009081144-b948e2f03d1e
 	github.com/yandex-cloud/go-sdk v0.0.0-20231009081448-02cddfe74c51
 	go.mozilla.org/sops/v3 v3.7.3
-	golang.org/x/net v0.22.0
+	golang.org/x/net v0.23.0
 	google.golang.org/genproto v0.0.0-20240125205218-1f4bbc51befe
 	google.golang.org/grpc v1.61.0
 	k8s.io/apimachinery v0.29.1
