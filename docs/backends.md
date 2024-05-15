@@ -170,14 +170,28 @@ data:
 **Note**: Only Vault KV-V2 backends support versioning. Versions specified with a KV-V1 Vault will be ignored and the latest version will be retrieved.
 
 ### IBM Cloud Secrets Manager
-For IBM Cloud Secret Manager we only support using IAM authentication at this time.
 
-We support all types of secrets that can be retrieved from IBM Cloud Secret Manager. Please note:
+The path for IBM Cloud Secret Manager secrets can be specified in two ways:
+1. `ibmcloud/<SECRET_TYPE>/secrets/groups/<GROUP>#<SECRET_NAME>`, or
+2. `ibmcloud/<SECRET_TYPE>/secrets/groups/<GROUP>/<SECRET_NAME>#<SECRET_KEY>`
 
-- Secrets that are JSON data (i.e, non `arbitrary` secrets or an `arbitrary` secret with JSON `payload`) can have the select keys (i.e, the `username` in a `username_password` type secret) interpolated with the [jsonPath](./howitworks.md#jsonPath) modifier. Not all keys are available for extraction with `jsonPath`. Refer to the [IBM Cloud Secret Manager API docs](https://cloud.ibm.com/apidocs/secrets-manager#get-secret) for more details
+Where:
+* `<SECRET_TYPE>` can be one of the following: `arbitrary`, `iam_credentials`, `imported_cert`, `kv`, `private_cert`, `public_cert`, or `username_password`.
+* `<GROUP>` can be a secret group ID or name.
+* `<SECRET_NAME>` is the name of the secret.
+* `<SECRET_KEY>` is the key name within the secret. Specifically, the following keys are available for extraction:
+  * `api_key` for the `iam_credentials` secret type
+  * `username` and `password` for the `username_password` secret type
+  * `certificate`, `private_key`, `intermediate` for the `imported_cert` or `public_cert` secret types
+  * `certificate`, `private_key`, `issuing_ca`, `ca_chain` for the `private_cert` secret type
+  * any key of the `kv` secret type
+  `<SECRET_KEY>` is not supported for the `arbitrary` secret type.
 
-##### IAM Authentication
-For IAM Authentication, these are the required parameters:
+When using the first path syntax, secrets that are JSON data (i.e, non `arbitrary` secrets or an `arbitrary` secret with JSON `payload`) can have select keys (listed under `<SECRET_KEY>` above) interpolated with the [jsonPath](./howitworks.md#jsonPath) modifier. With the second path syntax, the interpolation with the `jsonPath` modifier is not necessary. 
+
+##### Authentication
+
+IAM authentication is only supported at this time. The following parameters are required for IAM authentication:
 ```
 AVP_IBM_INSTANCE_URL or VAULT_ADDR: Your IBM Cloud Secret Manager Endpoint
 AVP_TYPE: ibmsecretsmanager
@@ -231,6 +245,25 @@ stringData:
     <path:ibmcloud/imported_cert/secrets/groups/123#my-cert-secret#previous | jsonPath {.certificate}>
   PRIVATE_KEY: |
     <my-cert-secret | jsonPath {.private_key}>
+```
+
+###### Non-arbitrary secrets (alternative path syntax)
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: ibm-example
+  annotations:
+    avp.kubernetes.io/path: "ibmcloud/imported_cert/secrets/groups/myGroup/my-cert-secret"
+type: Opaque
+stringData:
+  PUBLIC_CRT: |
+    <certificate>
+  PRIVATE_KEY: |
+    <private_key>
+  USERNAME: <path:ibmcloud/username_password/secrets/groups/myGroup/basic-auth#username>
+  PASSWORD: <path:ibmcloud/username_password/secrets/groups/myGroup/basic-auth#password>
 ```
 
 ### AWS Secrets Manager
