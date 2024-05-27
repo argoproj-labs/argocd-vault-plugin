@@ -9,3 +9,4 @@ Currently, the following organizations are using argocd-vault-plugin:
 * [IBM](https://www.ibm.com/)
 * [Orange](https://www.orange.com)
 * [SAP](https://www.sap.com)
+* [Movella] (https://www.movella.com/)
