@@ -10,18 +10,35 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"crypto/sha1"
+    "encoding/base64"
 
 	"github.com/hashicorp/vault/api"
 	"github.com/spf13/viper"
 )
 
-func ReadExistingToken() ([]byte, error) {
+func GetConfigFileName(vaultClient *api.Client) (string) {
+	var config_prefix = "config"
+	var config_ext = ".json"
+	var config_name = "_" + vaultClient.Namespace()
+
+	hasher := sha1.New()
+    hasher.Write([]byte(vaultClient.Address()))
+	var config_addr_name = "_" + base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+
+	config := config_prefix + config_addr_name + config_name + config_ext
+	
+	return config
+}
+
+func ReadExistingToken(vaultClient *api.Client) ([]byte, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
 	}
+	
 
-	avpConfigPath := filepath.Join(home, ".avp", "config.json")
+	avpConfigPath := filepath.Join(home, ".avp", GetConfigFileName(vaultClient))
 	if _, err := os.Stat(avpConfigPath); err != nil {
 		return nil, err
 	}
@@ -45,7 +62,7 @@ func ReadExistingToken() ([]byte, error) {
 // LoginWithCachedToken takes a VaultType interface and tries to log in with the previously cached token,
 // And sets the token in the client
 func LoginWithCachedToken(vaultClient *api.Client) error {
-	byteValue, err := ReadExistingToken()
+	byteValue, err := ReadExistingToken(vaultClient)
 	if err != nil {
 		return err
 	}
@@ -86,13 +103,15 @@ func SetToken(vaultClient *api.Client, token string) error {
 	}
 
 	data := map[string]interface{}{
+		"vault_addr": os.Getenv("VAULT_ADDR"),
+		"vault_namespace": os.Getenv("VAULT_NAMESPACE"),
 		"vault_token": token,
 	}
 	file, err := json.MarshalIndent(data, "", " ")
 	if err != nil {
 		return fmt.Errorf("Could not marshal token data: %s", err.Error())
 	}
-	err = os.WriteFile(filepath.Join(path, "config.json"), file, 0644)
+	err = os.WriteFile(filepath.Join(path, GetConfigFileName(vaultClient)), file, 0644)
 	if err != nil {
 		return fmt.Errorf("Could not write token to file, will need to login to Vault on subsequent runs: %s", err.Error())
 	}
