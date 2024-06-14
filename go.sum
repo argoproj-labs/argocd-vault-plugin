@@ -150,8 +150,8 @@ github.com/HdrHistogram/hdrhistogram-go v1.1.2 h1:5IcZpTvzydCQeHzK4Ef/D5rrSqwxob
 github.com/HdrHistogram/hdrhistogram-go v1.1.2/go.mod h1:yDgFjdqOqDEKOvasDdhWNXYg9BVp4O+o5f6V/ehm6Oo=
 github.com/IBM/go-sdk-core/v5 v5.14.1 h1:WR1r0zz+gDW++xzZjF41r9ueY4JyjS2vgZjiYs8lO3c=
 github.com/IBM/go-sdk-core/v5 v5.14.1/go.mod h1:MUvIr/1mgGh198ZXL+ByKz9Qs1JoEh80v/96x8jPXNY=
-github.com/IBM/secrets-manager-go-sdk v1.2.0 h1:bgFfBF+LjHLtUfV3hTLkfgE8EjFsJaeU2icA2Hg+M50=
-github.com/IBM/secrets-manager-go-sdk v1.2.0/go.mod h1:qv+tQg8Z3Vb11DQYxDjEGeROHDtTLQxUWuOIrIdWg6E=
+github.com/IBM/secrets-manager-go-sdk/v2 v2.0.4 h1:xa9e+POVqaXxXHXkSMCOVAbKdUNEu86jQmo5hcpd+L4=
+github.com/IBM/secrets-manager-go-sdk/v2 v2.0.4/go.mod h1:5gq8D8uWOIbqOm1uztay6lpOysgJaxxEsaVZLWGWb40=
 github.com/Jeffail/gabs v1.1.1 h1:V0uzR08Hj22EX8+8QMhyI9sX2hwRu+/RJhJUmnwda/E=
 github.com/Jeffail/gabs v1.1.1/go.mod h1:6xMvQMK4k33lb7GUUpaAPh6nKMmemQeg5d4gn7/bOXc=
 github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c h1:RGWPOewvKIROun94nF7v2cua9qP+thov/7M50KEoeSU=
