@@ -14,6 +14,7 @@ import (
 // A Resource is the basis for all Templates
 type Resource struct {
 	Kind              string
+	Type              string
 	TemplateData      map[string]interface{} // The template as read from YAML
 	Backend           types.Backend
 	replacementErrors []error                // Any errors encountered in performing replacements
@@ -50,6 +51,7 @@ func NewTemplate(template unstructured.Unstructured, backend types.Backend, path
 	return &Template{
 		Resource{
 			Kind:           template.GetKind(),
+			Type:           getType(template),
 			TemplateData:   template.Object,
 			Backend:        backend,
 			Data:           data,
@@ -71,7 +73,11 @@ func (t *Template) Replace() error {
 	case "ConfigMap":
 		replacerFunc = configReplacement
 	case "Secret":
-		replacerFunc = secretReplacement
+		if t.Type == "kubernetes.io/dockerconfigjson" {
+			replacerFunc = dockerSecretReplacement
+		} else {
+			replacerFunc = secretReplacement
+		}
 	default:
 		replacerFunc = genericReplacement
 	}
