@@ -11,9 +11,9 @@ require (
 	github.com/DelineaXPM/tss-sdk-go/v2 v2.0.0
 	github.com/IBM/go-sdk-core/v5 v5.14.1
 	github.com/IBM/secrets-manager-go-sdk/v2 v2.0.4
-	github.com/aws/aws-sdk-go-v2 v1.23.4
-	github.com/aws/aws-sdk-go-v2/config v1.18.45
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.21.5
+	github.com/aws/aws-sdk-go-v2 v1.27.1
+	github.com/aws/aws-sdk-go-v2/config v1.27.17
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.29.2
 	github.com/googleapis/gax-go/v2 v2.12.0
 	github.com/hashicorp/go-hclog v1.6.2
 	github.com/hashicorp/vault v1.16.1
@@ -27,7 +27,7 @@ require (
 	github.com/yandex-cloud/go-genproto v0.0.0-20231009081144-b948e2f03d1e
 	github.com/yandex-cloud/go-sdk v0.0.0-20231009081448-02cddfe74c51
 	go.mozilla.org/sops/v3 v3.7.3
-	golang.org/x/net v0.22.0
+	golang.org/x/net v0.23.0
 	google.golang.org/genproto v0.0.0-20240125205218-1f4bbc51befe
 	google.golang.org/grpc v1.61.0
 	k8s.io/apimachinery v0.29.1
@@ -72,16 +72,19 @@ require (
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/aws/aws-sdk-go v1.50.13 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.13.43 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.13.13 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.2.7 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.5.7 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.45 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.37 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.15.2 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.17.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.23.2 // indirect
-	github.com/aws/smithy-go v1.18.1 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.17 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.4 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.16.23 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.8 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.8 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.11.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.10 // indirect
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.55.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.20.10 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.24.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.28.11 // indirect
+	github.com/aws/smithy-go v1.20.2 // indirect
 	github.com/axiomhq/hyperloglog v0.0.0-20220105174342-98591331716a // indirect
 	github.com/benbjohnson/immutable v0.4.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
