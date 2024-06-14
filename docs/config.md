@@ -109,6 +109,10 @@ A common use-case is to be able to use _multiple_ secret backends for generating
 
 For this to work, AVP must be configured to use specific credentials for generating the manifests of an app. This can be done in one of 2 ways:
 
+- Using Kubernetes secrets for supplying AVP configuration
+- Using Kubernetes secrets in each team namespace
+- Passing AVP configuration as environment variables in the app manifest
+
 #### Using Kubernetes secrets for supplying AVP configuration
 
 This method requires having one Kubernetes secret with AVP configuration for each backend. For example, if there are 2 teams `foo` and `bar` using different instances of AWS Secret Manager, there should be at least 2 Kubernetes secrets containing AVP configuration: `foo-team-aws-sm-credentials` and `bar-team-aws-sm-credentials`.
@@ -192,6 +196,112 @@ spec:
     path: apps/git/nginx/manifests
     plugin:
       name: foo-aws-avp
+```
+
+#### Using Kubernetes secrets in each team namespace
+
+This method is similar than the previous one, and is more appropriate when each team manages its own set of applications in specific namespaces. They must provides a unique secret containing their Vault credentials which will only be usable in these namespaces. The AVP plugin is configured to read these credentials and use them to decode the vault secrets. This method has several advantages :
+- Each team are autonomous in managing their own Vault credentials
+- The teams cannot access the credentials of other teams (security isolation)
+- This method is better suited when teams have different rights within the Vault, and in the context of a zero-trust security policy.
+
+The plugin must be configured in `argocd-cm` like this :
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+data:
+  configManagementPlugins: |-
+    - name: argocd-vault-plugin
+      generate:
+        command: ["sh", "-c"]
+        args: ['argocd-vault-plugin generate ./ -s "$ARGOCD_APP_NAMESPACE:argocd-vault-plugin-credentials"']
+```
+
+Also, addition RBAC definitions must be added, so that the argocd-repo-server have access to the vault credentials (stored in secrets with the name "argocd-vault-plugin-credentials" in any Kubernetes namespace)
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: argocd-repo-server-secret-read
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/component: server
+  name: argocd-repo-server-secret-read
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  resourceNames:
+  - argocd-vault-plugin-credentials
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/name: argocd-repo-server-secret-read
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/component: server
+  name: argocd-repo-server-secret-read
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: argocd-repo-server-secret-read
+subjects:
+- kind: ServiceAccount
+  name: argocd-repo-server
+  namespace: argocd
+```
+
+Then, any team that wishes to use the plugin has just to create a secret in their namespace(s) containing the vault credentials :
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argocd-vault-plugin-credentials
+  namespace: some_namespace
+type: Opaque
+stringData:
+  AVP_TYPE: vault
+  AVP_AUTH_TYPE: approle
+  AVP_ROLE_ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+  AVP_SECRET_ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+  VAULT_ADDR: https://vault
+```
+
+And use it in their Application manifest like this :
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team-secret
+spec:
+  source:
+    plugin:
+      name: argocd-vault-plugin
+  (...)
+```
+
+which will deploy Kubernetes secrets that will automatically be filled in with credential values pulled from Vault :
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: example-secret
+  annotations:
+    avp.kubernetes.io/path: "team/data/path"
+type: Opaque
+data:
+  password: <test>
 ```
 
 #### Passing AVP configuration as environment variables in the app manifest
