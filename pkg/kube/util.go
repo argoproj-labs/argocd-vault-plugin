@@ -10,9 +10,10 @@ import (
 	"strconv"
 	"strings"
 
+	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
+
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
-	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
 type missingKeyError struct {
@@ -91,11 +92,17 @@ func replaceInner(
 
 				r.replacementErrors = append(r.replacementErrors, err...)
 			}
-
+			keyReplacement := false
+			if genericPlaceholder.FindString(key) != "" {
+				keyReplacement = true
+				replacementKey, _ := replacerFunc(key, key, *r)
+				obj[replacementKey.(string)] = replacement
+				delete(obj, key)
+			}
 			if removeKey {
 				utils.VerboseToStdErr("removing key %s due to %s being set on the containing manifest", key, types.AVPRemoveMissingAnnotation)
 				delete(obj, key)
-			} else {
+			} else if keyReplacement == false {
 				obj[key] = replacement
 			}
 		}

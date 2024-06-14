@@ -316,6 +316,112 @@ func TestGenericReplacement_multiString(t *testing.T) {
 	assertSuccessfulReplacement(&dummyResource, &expected, t)
 }
 
+func TestGenericReplacement_keyReplacement(t *testing.T) {
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"<name>":    "default",
+			"namespace": "test",
+		},
+		Data: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"app":       "default",
+			"namespace": "test",
+		},
+		Data: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
+func TestGenericReplacement_keyAndValueReplacement(t *testing.T) {
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"<name>": "default",
+			"tag":    "<tag>",
+			"<tag>":  "<name>",
+		},
+		Data: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"app":    "default",
+			"tag":    "latest",
+			"latest": "app",
+		},
+		Data: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+func TestGenericReplacement_keyAndValueReplacementNoPathAnnotation(t *testing.T) {
+	mv := helpers.MockVault{}
+	mv.LoadData(map[string]interface{}{
+		"version": "one",
+	})
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"<path:blah/blah#version>": "default",
+			"version":                  "<path:blah/blah#version>",
+		},
+		Data: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+		Backend:     &mv,
+		Annotations: map[string]string{},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"one":     "default",
+			"version": "one",
+		},
+		Data: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
 func TestGenericReplacement_Base64(t *testing.T) {
 	dummyResource := Resource{
 		TemplateData: map[string]interface{}{

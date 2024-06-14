@@ -7,9 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/argoproj-labs/argocd-vault-plugin/pkg/helpers"
 	"github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/vault"
+
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/helpers"
 )
 
 var roleid, secretid string
