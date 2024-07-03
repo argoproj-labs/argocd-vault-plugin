@@ -125,7 +125,7 @@ data:
     - name: aws-avp
       generate:
         command: ["sh", "-c"]
-        args: ["argocd-vault-plugin generate -s ${AVP_SECRET} ./"]
+        args: ["argocd-vault-plugin generate -s ${ARGOCD_ENV_AVP_SECRET} ./"]
 ```
 
 Notice that the secret name is parametrized via an environment variable. This means each Argo app manifest can set `AVP_SECRET` to be the name of the Kubernetes secret that contains the configuration for the backend needed to generate its secrets.
