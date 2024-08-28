@@ -31,6 +31,8 @@ const (
 	EnvAvpDelineaUser      = "AVP_DELINEA_USER"
 	EnvAvpDelineaPassword  = "AVP_DELINEA_PASSWORD"
 	EnvAvpDelineaDomain    = "AVP_DELINEA_DOMAIN"
+	EnvAvpCert             = "AVP_CERT"
+	EnvAvpKey              = "AVP_KEY"
 
 	// Backend and Auth Constants
 	VaultBackend                = "vault"
@@ -49,6 +51,7 @@ const (
 	GithubAuth                  = "github"
 	TokenAuth                   = "token"
 	UserPass                    = "userpass"
+	CertificateAuth             = "certificate"
 	IAMAuth                     = "iam"
 	AwsDefaultRegion            = "us-east-2"
 	GCPCurrentSecretVersion     = "latest"
