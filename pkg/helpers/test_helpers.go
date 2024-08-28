@@ -10,6 +10,7 @@ import (
 	kv "github.com/hashicorp/vault-plugin-secrets-kv"
 	"github.com/hashicorp/vault/api"
 	credAppRole "github.com/hashicorp/vault/builtin/credential/approle"
+	credCert "github.com/hashicorp/vault/builtin/credential/cert"
 	credUserPass "github.com/hashicorp/vault/builtin/credential/userpass"
 	"github.com/hashicorp/vault/http"
 	"github.com/hashicorp/vault/sdk/logical"
@@ -166,6 +167,188 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 		"bind_secret_id": "true",
 		"period":         "300",
 		"policies":       "approle-secret, approle-kv",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/testing", map[string]interface{}{
+		"name":              "test-name",
+		"namespace":         "test-namespace",
+		"version":           "1.0",
+		"replicas":          "2",
+		"tag":               "1.0",
+		"secret-var-value":  "dGVzdC1wYXNzd29yZA==",
+		"secret-var-value2": "dGVzdC1wYXNzd29yZDI=",
+		"secret-num":        "MQ==",
+		"secret-var-clear":  "test-password",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("kv/data/testing", map[string]interface{}{
+		"data": map[string]interface{}{
+			"name":        "test-kv-name",
+			"namespace":   "test-kv-namespace",
+			"version":     "1.2",
+			"replicas":    "3",
+			"tag":         "1.1",
+			"target-port": 80,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/foo", map[string]interface{}{
+		"secret": "bar",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/json", map[string]interface{}{
+		"data": map[string]interface{}{
+			"service": map[string]interface{}{
+				"enableTLS": true,
+				"ports":     []int{80, 8080},
+			},
+			"deployment": map[string]interface{}{
+				"replicas": 2,
+				"image": map[string]interface{}{
+					"name": "json-test",
+					"tag":  "latest",
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/jsonstring", map[string]interface{}{
+		"secret": "{\"credentials\":{\"user\":\"test-user\",\"pass\":\"test-password\"}}",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("kv/data/test", map[string]interface{}{
+		"data": map[string]interface{}{
+			"hello": "world",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/bad_test", map[string]interface{}{
+		"hello": "world",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("kv/data/versioned", map[string]interface{}{
+		"data": map[string]interface{}{
+			"secret": "version1",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.Logical().Write("kv/data/versioned", map[string]interface{}{
+		"data": map[string]interface{}{
+			"secret": "version2",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/base64", map[string]interface{}{
+		"encoded_secret": "ewogICJrZXkxIjogInNlY3JldDEiLAogICJrZXkyIjogInNlY3JldDIiLAogICJrZXkzIjogInNlY3JldDMiCn0K",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/yaml", map[string]interface{}{
+		"secret": "---\nkey1: secret1\nkey2: secret2\nkey3: secret3",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	secret, err := client.Logical().Write("auth/approle/role/role1/secret-id", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	secretID := secret.Data["secret_id"].(string)
+
+	secret, err = client.Logical().Read("auth/approle/role/role1/role-id")
+	if err != nil {
+		t.Fatal(err)
+	}
+	roleID := secret.Data["role_id"].(string)
+
+	return cluster, roleID, secretID
+}
+
+// CreateTestAppRoleVault initializes a new test vault with AppRole and Kv v2
+func CreateTestCertificateVault(t *testing.T) (*vault.TestCluster, string, string) {
+	t.Helper()
+
+	coreConfig := &vault.CoreConfig{
+		LogicalBackends: map[string]logical.Factory{
+			"kv": kv.Factory,
+		},
+		CredentialBackends: map[string]logical.Factory{
+			"cert": credCert.Factory,
+		},
+	}
+
+	cluster := vault.NewTestCluster(t, coreConfig, &vault.TestClusterOptions{
+		HandlerFunc: http.Handler,
+		Logger:      hclog.NewNullLogger(),
+	})
+
+	cluster.Start()
+
+	vault.TestWaitActive(t, cluster.Cores[0].Core)
+
+	client := cluster.Cores[0].Client
+
+	client.Sys().Mount("kv", &api.MountInput{
+		Type: "kv",
+		Options: map[string]string{
+			"version": "2",
+		},
+	})
+
+	if err := client.Sys().EnableAuthWithOptions("cert", &api.EnableAuthOptions{
+		Type: "cert",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create Policy for secret/foo
+	err := client.Sys().PutPolicy("cert-secret", "path \"secret/*\" { capabilities = [\"read\",\"list\"] }")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create Policy for kv
+	err = client.Sys().PutPolicy("cert-kv", "path \"kv/*\" { capabilities = [\"read\",\"list\"] }")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("auth/approle/role/role1", map[string]interface{}{
+		"bind_secret_id": "true",
+		"period":         "300",
+		"policies":       "cert-secret, cert-kv",
 	})
 	if err != nil {
 		t.Fatal(err)
