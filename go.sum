@@ -867,6 +867,8 @@ github.com/hashicorp/vault-testing-stepwise v0.1.4 h1:Lsv1KdpQyjhvmLgKeH65FG5MmY
 github.com/hashicorp/vault-testing-stepwise v0.1.4/go.mod h1:Ym1T/kMM2sT6qgCIIJ3an7uaSWCJ8O7ohsWB9UiB5tI=
 github.com/hashicorp/vault/api v1.12.0 h1:meCpJSesvzQyao8FCOgk2fGdoADAnbDu2WPJN1lDLJ4=
 github.com/hashicorp/vault/api v1.12.0/go.mod h1:si+lJCYO7oGkIoNPAN8j3azBLTn9SjMGS+jFaHd1Cck=
+github.com/hashicorp/vault/api/auth/userpass v0.1.0 h1:C6OdAYczMbzd1Pe1LLf2SHDulxOq/iybWV3kbgV/PS4=
+github.com/hashicorp/vault/api/auth/userpass v0.1.0/go.mod h1:0orUbtkEwbEPmaQ+wvfrOddGBimLJnuN8A/J0PNfBks=
 github.com/hashicorp/vault/sdk v0.12.0 h1:c2WeMWtF08zKQmrJya7paM4IVnsXIXF5UlhQTBdwZwQ=
 github.com/hashicorp/vault/sdk v0.12.0/go.mod h1:2kN1F5owc/Yh1OwL32GGnYrX9E3vFOIKA/cGJxCNQ30=
 github.com/hashicorp/vic v1.5.1-0.20190403131502-bbfe86ec9443 h1:O/pT5C1Q3mVXMyuqg7yuAWUg/jMZR1/0QTzTRdNR6Uw=

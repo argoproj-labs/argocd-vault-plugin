@@ -10,10 +10,10 @@ import (
 )
 
 func TestCertificateLogin(t *testing.T) {
-	cluster, cert, key := helpers.CreateTestCertificateVault(t)
+	cluster, _, _ := helpers.CreateTestCertificateVault(t)
 	defer cluster.Cleanup()
 
-	certificateAuth := vault.NewCertificateAuth(cert, key, "")
+	certificateAuth := vault.NewCertificateAuth("", "", "")
 
 	err := certificateAuth.Authenticate(cluster.Cores[0].Client)
 	if err != nil {

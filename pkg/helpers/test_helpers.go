@@ -1,20 +1,27 @@
 package helpers
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"fmt"
-	"net"
-	"strconv"
-	"testing"
-
 	"github.com/hashicorp/go-hclog"
 	kv "github.com/hashicorp/vault-plugin-secrets-kv"
 	"github.com/hashicorp/vault/api"
 	credAppRole "github.com/hashicorp/vault/builtin/credential/approle"
 	credCert "github.com/hashicorp/vault/builtin/credential/cert"
 	credUserPass "github.com/hashicorp/vault/builtin/credential/userpass"
+	"github.com/hashicorp/vault/builtin/logical/pki"
 	"github.com/hashicorp/vault/http"
 	"github.com/hashicorp/vault/sdk/logical"
 	"github.com/hashicorp/vault/vault"
+	"math/big"
+	"net"
+	"strconv"
+	"testing"
+	"time"
 )
 
 // Test Constants
@@ -302,7 +309,8 @@ func CreateTestCertificateVault(t *testing.T) (*vault.TestCluster, string, strin
 
 	coreConfig := &vault.CoreConfig{
 		LogicalBackends: map[string]logical.Factory{
-			"kv": kv.Factory,
+			"kv":  kv.Factory,
+			"pki": pki.Factory,
 		},
 		CredentialBackends: map[string]logical.Factory{
 			"cert": credCert.Factory,
@@ -333,23 +341,23 @@ func CreateTestCertificateVault(t *testing.T) (*vault.TestCluster, string, strin
 		t.Fatal(err)
 	}
 
+	write, err := client.Logical().Write("auth/cert/certs/vault-cert", map[string]interface{}{
+		"display_name": "vault-cert",
+		"policies":     "cert-kv,cert-secret",
+		"certificate":  string(cluster.CACertPEM),
+	})
+	if err != nil && write == nil {
+		return nil, "", ""
+	}
+
 	// Create Policy for secret/foo
-	err := client.Sys().PutPolicy("cert-secret", "path \"secret/*\" { capabilities = [\"read\",\"list\"] }")
+	err = client.Sys().PutPolicy("cert-secret", "path \"secret/*\" { capabilities = [\"read\",\"list\"] }")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// Create Policy for kv
 	err = client.Sys().PutPolicy("cert-kv", "path \"kv/*\" { capabilities = [\"read\",\"list\"] }")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	_, err = client.Logical().Write("auth/approle/role/role1", map[string]interface{}{
-		"bind_secret_id": "true",
-		"period":         "300",
-		"policies":       "cert-secret, cert-kv",
-	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -463,19 +471,49 @@ func CreateTestCertificateVault(t *testing.T) (*vault.TestCluster, string, strin
 		t.Fatal(err)
 	}
 
-	secret, err := client.Logical().Write("auth/approle/role/role1/secret-id", nil)
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		t.Fatal(err)
 	}
-	secretID := secret.Data["secret_id"].(string)
+	privateKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
+	})
 
-	secret, err = client.Logical().Read("auth/approle/role/role1/role-id")
+	csrTemplate := x509.CertificateRequest{
+		Subject: pkix.Name{
+			CommonName:   "vault-cert",
+			Organization: []string{"Client Org"},
+		},
+	}
+	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, &csrTemplate, key)
 	if err != nil {
 		t.Fatal(err)
 	}
-	roleID := secret.Data["role_id"].(string)
 
-	return cluster, roleID, secretID
+	csr, err := x509.ParseCertificateRequest(csrBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	clientCertTemplate := x509.Certificate{
+		SerialNumber: big.NewInt(1234567890), // Eine eindeutige Seriennummer
+		Subject:      csr.Subject,
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().Add(365 * 24 * time.Hour), // 1 Jahr Gültigkeit
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+	clientCertBytes, err := x509.CreateCertificate(rand.Reader, &clientCertTemplate, cluster.CACert, csr.PublicKey, cluster.CAKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	clientCertPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: clientCertBytes,
+	})
+	return cluster, string(clientCertPEM), string(privateKeyPEM)
 }
 
 // CreateTestGithubVault initializes a new test vault with AppRole and Kv v2

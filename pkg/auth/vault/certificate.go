@@ -64,7 +64,7 @@ func (a *CertificateAuth) Authenticate(vaultClient *api.Client) error {
 
 	apiClientConfig := vaultClient.CloneConfig()
 
-	tlsConfig := &api.TLSConfig{
+	/*tlsConfig := &api.TLSConfig{
 		ClientKey:  tempKey.Name(),
 		ClientCert: tempCrt.Name(),
 	}
@@ -72,7 +72,7 @@ func (a *CertificateAuth) Authenticate(vaultClient *api.Client) error {
 	err = apiClientConfig.ConfigureTLS(tlsConfig)
 	if err != nil {
 		return err
-	}
+	}*/
 
 	certVaultClient, err := api.NewClient(apiClientConfig)
 
@@ -81,6 +81,8 @@ func (a *CertificateAuth) Authenticate(vaultClient *api.Client) error {
 	}
 
 	utils.VerboseToStdErr("Hashicorp Vault authenticating with certificate")
+
+	certVaultClient.ClearToken()
 	data, err := certVaultClient.Logical().Write(fmt.Sprintf("%s/login", a.MountPath), payload)
 	if err != nil {
 		return err
