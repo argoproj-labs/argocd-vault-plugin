@@ -72,10 +72,10 @@ We support all the backend specific environment variables each backend's SDK wil
 We also support these AVP specific variables:
 
 | Name                       | Description                                         | Notes                                                                                                                                                                        |
-| -------------------------- |-----------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|----------------------------|-----------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | AVP_TYPE                   | The type of Vault backend                           | Supported values: `vault`, `ibmsecretsmanager`, `awssecretsmanager`, `gcpsecretmanager`, `yandexcloudlockbox` and `1passwordconnect`                                         |
 | AVP_KV_VERSION             | The vault secret engine                             | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `avp.kubernetes.io/kv-version` annotation is present in a YAML resource.                    |
-| AVP_AUTH_TYPE              | The type of authentication                          | Supported values: vault: `approle, github, k8s, token`. Only honored for `AVP_TYPE` of `vault`                                                                               |
+| AVP_AUTH_TYPE              | The type of authentication                          | Supported values: vault: `approle, github, k8s, token, certificate`. Only honored for `AVP_TYPE` of `vault`                                                                  |
 | AVP_GITHUB_TOKEN           | Github token                                        | Required with `AUTH_TYPE` of `github`                                                                                                                                        |
 | AVP_ROLE_ID                | Vault AppRole Role_ID                               | Required with `AUTH_TYPE` of `approle`                                                                                                                                       |
 | AVP_SECRET_ID              | Vault AppRole Secret_ID                             | Required with `AUTH_TYPE` of `approle`                                                                                                                                       |
@@ -90,7 +90,8 @@ We also support these AVP specific variables:
 | AVP_YCL_KEY_ID             | Yandex Cloud Lockbox service account Key ID         | Required with `TYPE` of `yandexcloudlockbox`                                                                                                                                 |
 | AVP_YCL_PRIVATE_KEY        | Yandex Cloud Lockbox service account private key    | Required with `TYPE` of `yandexcloudlockbox`                                                                                                                                 |
 | AVP_PATH_VALIDATION        | Regular Expression to validate the Vault path       | Optional. Can be used for e.g. to prevent path traversals.                                                                                                                   |
-
+| AVP_CERT                   | Your Vault client certificate                       | Required with `AUTH_TYPE`of `certificate`                                                                                                                                    |
+| AVP_KEY                    | Your Vault client key                               | Required with `AUTH_TYPE`of `certificate`                                                                                                                                    |
 ### Full List of Supported Annotation
 
 We support several different annotations that can be used inside a kubernetes resource. These annotations will override any corresponding configuration set via Environment Variable or Configuration File.

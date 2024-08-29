@@ -62,9 +62,10 @@ func (a *CertificateAuth) Authenticate(vaultClient *api.Client) error {
 	}
 	defer os.Remove(tempKey.Name())
 
+	// Clone Client with new TLS Settings
 	apiClientConfig := vaultClient.CloneConfig()
 
-	/*tlsConfig := &api.TLSConfig{
+	tlsConfig := &api.TLSConfig{
 		ClientKey:  tempKey.Name(),
 		ClientCert: tempCrt.Name(),
 	}
@@ -72,7 +73,7 @@ func (a *CertificateAuth) Authenticate(vaultClient *api.Client) error {
 	err = apiClientConfig.ConfigureTLS(tlsConfig)
 	if err != nil {
 		return err
-	}*/
+	}
 
 	certVaultClient, err := api.NewClient(apiClientConfig)
 
