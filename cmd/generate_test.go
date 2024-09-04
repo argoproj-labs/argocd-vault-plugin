@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/helpers"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/vault"
 )
@@ -247,6 +249,54 @@ func TestMain(t *testing.T) {
 		expected := "^\\/(?!\\/)(.*?) is not a valid regular expression: error parsing regexp: invalid or unsupported Perl syntax: `(?!`"
 		if !strings.Contains(string(out), expected) {
 			t.Fatalf("expected to contain: %s but got %s", expected, out)
+		}
+	})
+
+	t.Run("will not create cache if disabled", func(t *testing.T) {
+
+		// Purging token cache before launching this test
+		err := utils.PurgeTokenCache()
+		if err != nil {
+			t.Fatalf("fail to purge tocken cache: %s", err.Error())
+		}
+
+		// Starting the generate command with the --disable-token-cache flag
+		args := []string{
+			"../fixtures/input/nonempty",
+			"--disable-token-cache",
+		}
+		cmd := NewGenerateCommand()
+
+		b := bytes.NewBufferString("")
+		e := bytes.NewBufferString("")
+		cmd.SetArgs(args)
+		cmd.SetOut(b)
+		cmd.SetErr(e)
+		cmd.Execute()
+		out, err := io.ReadAll(b) // Read buffer to bytes
+		if err != nil {
+			t.Fatal(err)
+		}
+		stderr, err := io.ReadAll(e) // Read buffer to bytes
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		buf, err := os.ReadFile("../fixtures/output/all.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// We first check that the command was successful to make sure it reached the token caching part
+		expected := string(buf)
+		if string(out) != expected {
+			t.Fatalf("expected %s\n\nbut got\n\n%s\nerr: %s", expected, string(out), string(stderr))
+		}
+
+		// No cache is expected
+		_, err = utils.ReadExistingToken(fmt.Sprintf("approle_%s", roleid))
+		if err == nil {
+			t.Fatalf("expected no cache but found one")
 		}
 	})
 

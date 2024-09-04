@@ -15,13 +15,28 @@ import (
 	"github.com/spf13/viper"
 )
 
-func ReadExistingToken() ([]byte, error) {
+func PurgeTokenCache() error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	avpConfigFolderPath := filepath.Join(home, ".avp")
+
+	err = os.RemoveAll(avpConfigFolderPath)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func ReadExistingToken(identifier string) ([]byte, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
 	}
 
-	avpConfigPath := filepath.Join(home, ".avp", "config.json")
+	avpConfigPath := filepath.Join(home, ".avp", fmt.Sprintf("%s_config.json", identifier))
 	if _, err := os.Stat(avpConfigPath); err != nil {
 		return nil, err
 	}
@@ -42,62 +57,71 @@ func ReadExistingToken() ([]byte, error) {
 	return byteValue, nil
 }
 
-// LoginWithCachedToken takes a VaultType interface and tries to log in with the previously cached token,
+// LoginWithCachedToken takes a VaultType interface, the auth types and an identifier of the token
+// It then tries to log in with the matching previously cached token,
 // And sets the token in the client
-func LoginWithCachedToken(vaultClient *api.Client) error {
-	byteValue, err := ReadExistingToken()
-	if err != nil {
-		return err
-	}
+func LoginWithCachedToken(vaultClient *api.Client, identifier string) error {
+	if viper.GetBool("disableCache") {
+		return fmt.Errorf("Token cache feature is disabled")
+	}	else {
+		byteValue, err := ReadExistingToken(identifier)
+		if err != nil {
+			return err
+		}
 
-	var result map[string]interface{}
-	err = json.Unmarshal([]byte(byteValue), &result)
-	if err != nil {
-		return err
-	}
+		var result map[string]interface{}
+		err = json.Unmarshal([]byte(byteValue), &result)
+		if err != nil {
+			return err
+		}
 
-	vaultClient.SetToken(result["vault_token"].(string))
-	_, err = vaultClient.Auth().Token().LookupSelf()
-	if err != nil {
-		return err
-	}
+		vaultClient.SetToken(result["vault_token"].(string))
+		_, err = vaultClient.Auth().Token().LookupSelf()
+		if err != nil {
+			return err
+		}
 
-	return nil
+		return nil
+	}
 }
 
 // SetToken attmepts to set the vault token on the vault api client
 // and then attempts to write that token to a file to be used later
 // If this method fails we do not want to stop the process
-func SetToken(vaultClient *api.Client, token string) error {
+func SetToken(vaultClient *api.Client, identifier string, token string) error {
 	// We want to set the token first
 	vaultClient.SetToken(token)
 
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("Could not access home directory: %s", err.Error())
-	}
-
-	path := filepath.Join(home, ".avp")
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		err := os.Mkdir(path, 0755)
+	if viper.GetBool("disableCache") {
+		return fmt.Errorf("Token cache feature is disabled")
+	}	else {
+		home, err := os.UserHomeDir()
 		if err != nil {
-			return fmt.Errorf("Could not create avp directory: %s", err.Error())
+			return fmt.Errorf("Could not access home directory: %s", err.Error())
 		}
-	}
 
-	data := map[string]interface{}{
-		"vault_token": token,
-	}
-	file, err := json.MarshalIndent(data, "", " ")
-	if err != nil {
-		return fmt.Errorf("Could not marshal token data: %s", err.Error())
-	}
-	err = os.WriteFile(filepath.Join(path, "config.json"), file, 0644)
-	if err != nil {
-		return fmt.Errorf("Could not write token to file, will need to login to Vault on subsequent runs: %s", err.Error())
-	}
+		path := filepath.Join(home, ".avp")
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			err := os.Mkdir(path, 0755)
+			if err != nil {
+				return fmt.Errorf("Could not create avp directory: %s", err.Error())
+			}
+		}
 
-	return nil
+		data := map[string]interface{}{
+			"vault_token": token,
+		}
+		file, err := json.MarshalIndent(data, "", " ")
+		if err != nil {
+			return fmt.Errorf("Could not marshal token data: %s", err.Error())
+		}
+		err = os.WriteFile(filepath.Join(path, fmt.Sprintf("%s_config.json", identifier)), file, 0644)
+		if err != nil {
+			return fmt.Errorf("Could not write token to file, will need to login to Vault on subsequent runs: %s", err.Error())
+		}
+
+		return nil
+	}
 }
 
 func DefaultHttpClient() *http.Client {

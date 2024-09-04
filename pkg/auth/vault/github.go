@@ -32,7 +32,7 @@ func NewGithubAuth(token, mountPath string) *GithubAuth {
 
 // Authenticate authenticates with Vault and returns a token
 func (g *GithubAuth) Authenticate(vaultClient *api.Client) error {
-	err := utils.LoginWithCachedToken(vaultClient)
+	err := utils.LoginWithCachedToken(vaultClient, "github")
 	if err != nil {
 		utils.VerboseToStdErr("Hashicorp Vault cannot retrieve cached token: %v. Generating a new one", err)
 	} else {
@@ -52,7 +52,7 @@ func (g *GithubAuth) Authenticate(vaultClient *api.Client) error {
 	utils.VerboseToStdErr("Hashicorp Vault authentication response: %v", data)
 
 	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
-	err = utils.SetToken(vaultClient, data.Auth.ClientToken)
+	err = utils.SetToken(vaultClient, "github", data.Auth.ClientToken)
 	if err != nil {
 		utils.VerboseToStdErr("Hashicorp Vault cannot cache token for future runs: %v", err)
 	}
