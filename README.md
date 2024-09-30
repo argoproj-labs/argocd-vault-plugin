@@ -25,3 +25,7 @@ Interested in contributing? Please read our contributing documentation [here](./
 
 ## Presentations
 - [Shh, It’s a Secret: Managing Your Secrets in a GitOps Way - Jake Wernette & Josh Kayani, IBM](https://youtu.be/7L6nSuKbC2c)
+
+## Update Official Documentation
+argocd-vault-plugin documentation shows about using argocd-cm configmap, but it is depreciated on v2.8
+- [Associated links: https://argo-cd.readthedocs.io/en/stable/operator-manual/config-management-plugins/#migrating-from-argocd-cm-plugins & https://argocd-vault-plugin.readthedocs.io/en/stable/installation/]
