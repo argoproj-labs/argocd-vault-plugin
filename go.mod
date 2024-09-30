@@ -14,6 +14,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.27.1
 	github.com/aws/aws-sdk-go-v2/config v1.27.17
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.29.2
+	github.com/bitwarden/sdk-go v0.1.1
 	github.com/googleapis/gax-go/v2 v2.12.0
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/vault v1.16.1

@@ -9,7 +9,8 @@ builds:
       -X "github.com/argoproj-labs/argocd-vault-plugin/version.BuildDate={{.Date}}"
       -X "github.com/argoproj-labs/argocd-vault-plugin/version.CommitSHA={{.Commit}}"
     env:
-      - "CGO_ENABLED=0"
+      - "CGO_ENABLED=1"
+      - "C=musl-gcc"
     goos:
       - darwin
       - linux

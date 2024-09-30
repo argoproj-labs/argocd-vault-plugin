@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 
 	gcpsm "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/1Password/connect-sdk-go/connect"
@@ -23,6 +24,7 @@ import (
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	"github.com/aws/aws-sdk-go-v2/config"
 	awssm "github.com/aws/aws-sdk-go-v2/service/secretsmanager"
+	bitwarden "github.com/bitwarden/sdk-go"
 	"github.com/hashicorp/vault/api"
 	ksm "github.com/keeper-security/secrets-manager-go/core"
 	"github.com/spf13/viper"
@@ -50,6 +52,7 @@ var backendPrefixes []string = []string{
 	"sops",
 	"op_connect",
 	"k8s_secret",
+	"bitwarden",
 }
 
 // New returns a new Config struct
@@ -282,6 +285,41 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 	case types.KubernetesSecretBackend:
 		{
 			backend = backends.NewKubernetesSecret()
+		}
+	case types.BitwardenSecretsManagerBackend:
+		{
+			if !v.IsSet(types.EnvAvpBitwardenAPIURL) {
+				utils.VerboseToStdErr("warning: %s env var not set, using Bitwarden API URL %s", types.EnvAvpBitwardenAPIURL, types.BitwardenDefaultAPIURL)
+				v.Set(types.EnvAvpBitwardenAPIURL, types.BitwardenDefaultAPIURL)
+			}
+
+			if !v.IsSet(types.EnvAvpBitwardenIdentityURL) {
+				utils.VerboseToStdErr("warning: %s env var not set, using Bitwarden Identity URL %s", types.EnvAvpBitwardenIdentityURL, types.BitwardenDefaultIdentityURL)
+				v.Set(types.EnvAvpBitwardenIdentityURL, types.BitwardenDefaultIdentityURL)
+			}
+
+			if !v.IsSet(types.EnvAvpBitwardenToken) {
+				return nil, fmt.Errorf("%s is required for Bitwarden Secrets Manager", types.EnvAvpBitwardenToken)
+			}
+
+			apiURL := v.GetString(types.EnvAvpBitwardenAPIURL)
+			identityURL := v.GetString(types.EnvAvpBitwardenIdentityURL)
+
+			s, err := bitwarden.NewBitwardenClient(
+				&apiURL,
+				&identityURL,
+			)
+			if err != nil {
+				return nil, err
+			}
+
+			err = s.AccessTokenLogin(v.GetString(types.EnvAvpBitwardenToken), nil)
+			if err != nil {
+				return nil, err
+			}
+
+			backend = backends.NewBitwardenSecretsClient(s.Secrets())
+
 		}
 	default:
 		return nil, fmt.Errorf("Must provide a supported Vault Type, received %s", v.GetString(types.EnvAvpType))

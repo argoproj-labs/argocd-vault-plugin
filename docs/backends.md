@@ -808,3 +808,48 @@ type: Opaque
 data:
   password: <path:prod:my-secret#key>
 ```
+
+### Bitwarden Secrets Manager
+
+**Note**: The Bitwarden Secrets Manager backend does not support versioning.
+
+##### Authentication
+
+These are the parameters for Delinea:
+```
+AVP_TYPE: bitwardensecretsmanager
+AVP_BITWARDEN_TOKEN: Bitwarden machine Account Token
+
+Optional:
+AVP_BITWARDEN_API_URL: API Endpoint URL (default: https://api.bitwarden.com)
+AVP_BITWARDEN_IDENTITY_URL: Identity Endpoint URL (default: https://identity.bitwarden.com)
+```
+##### Examples
+Examples assume that the secrets are not saved base64 encoded in the Secret Server.
+
+###### Path Annotation
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+  annotations:
+    avp.kubernetes.io/path: "organization-id"
+type: Opaque
+stringData:
+  password: <secret-id>
+```
+
+###### Inline Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: test-secret
+type: Opaque
+data:
+  password: <path:organization-id#secret-id | base64encode>
+```
+
