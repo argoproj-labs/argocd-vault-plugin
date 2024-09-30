@@ -33,7 +33,7 @@ func NewUserPassAuth(username, password, mountPath string) *UserPassAuth {
 
 // Authenticate authenticates with Vault using userpass and returns a token
 func (a *UserPassAuth) Authenticate(vaultClient *api.Client) error {
-	err := utils.LoginWithCachedToken(vaultClient)
+	err := utils.LoginWithCachedToken(vaultClient, fmt.Sprintf("userpass_%s", a.Username))
 	if err != nil {
 		utils.VerboseToStdErr("Hashicorp Vault cannot retrieve cached token: %v. Generating a new one", err)
 	} else {
@@ -53,7 +53,7 @@ func (a *UserPassAuth) Authenticate(vaultClient *api.Client) error {
 	utils.VerboseToStdErr("Hashicorp Vault authentication response: %v", data)
 
 	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
-	if err = utils.SetToken(vaultClient, data.Auth.ClientToken); err != nil {
+	if err = utils.SetToken(vaultClient, fmt.Sprintf("userpass_%s", a.Username), data.Auth.ClientToken); err != nil {
 		utils.VerboseToStdErr("Hashicorp Vault cannot cache token for future runs: %v", err)
 	}
 
