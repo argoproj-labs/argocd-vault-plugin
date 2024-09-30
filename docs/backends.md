@@ -117,6 +117,16 @@ AVP_USERNAME: Your Username
 AVP_PASSWORD: Your Password
 ```
 
+##### Certificate Authentication
+For Certificate Authentication, these are the required parameters:
+```
+VAULT_ADDR: Your HashiCorp Vault Address
+AVP_TYPE: vault
+AVP_AUTH_TYPE: certificate
+AVP_CERT: Your client certificate
+AVP_KEY: Your client key
+```
+
 ##### Examples
 
 ###### Path Annotation

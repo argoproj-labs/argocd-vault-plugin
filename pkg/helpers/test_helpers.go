@@ -1,19 +1,27 @@
 package helpers
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"fmt"
-	"net"
-	"strconv"
-	"testing"
-
 	"github.com/hashicorp/go-hclog"
 	kv "github.com/hashicorp/vault-plugin-secrets-kv"
 	"github.com/hashicorp/vault/api"
 	credAppRole "github.com/hashicorp/vault/builtin/credential/approle"
+	credCert "github.com/hashicorp/vault/builtin/credential/cert"
 	credUserPass "github.com/hashicorp/vault/builtin/credential/userpass"
+	"github.com/hashicorp/vault/builtin/logical/pki"
 	"github.com/hashicorp/vault/http"
 	"github.com/hashicorp/vault/sdk/logical"
 	"github.com/hashicorp/vault/vault"
+	"math/big"
+	"net"
+	"strconv"
+	"testing"
+	"time"
 )
 
 // Test Constants
@@ -293,6 +301,219 @@ func CreateTestAppRoleVault(t *testing.T) (*vault.TestCluster, string, string) {
 	roleID := secret.Data["role_id"].(string)
 
 	return cluster, roleID, secretID
+}
+
+// CreateTestAppRoleVault initializes a new test vault with AppRole and Kv v2
+func CreateTestCertificateVault(t *testing.T) (*vault.TestCluster, string, string) {
+	t.Helper()
+
+	coreConfig := &vault.CoreConfig{
+		LogicalBackends: map[string]logical.Factory{
+			"kv":  kv.Factory,
+			"pki": pki.Factory,
+		},
+		CredentialBackends: map[string]logical.Factory{
+			"cert": credCert.Factory,
+		},
+	}
+
+	cluster := vault.NewTestCluster(t, coreConfig, &vault.TestClusterOptions{
+		HandlerFunc: http.Handler,
+		Logger:      hclog.NewNullLogger(),
+	})
+
+	cluster.Start()
+
+	vault.TestWaitActive(t, cluster.Cores[0].Core)
+
+	client := cluster.Cores[0].Client
+
+	client.Sys().Mount("kv", &api.MountInput{
+		Type: "kv",
+		Options: map[string]string{
+			"version": "2",
+		},
+	})
+
+	if err := client.Sys().EnableAuthWithOptions("cert", &api.EnableAuthOptions{
+		Type: "cert",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	write, err := client.Logical().Write("auth/cert/certs/vault-cert", map[string]interface{}{
+		"display_name": "vault-cert",
+		"policies":     "cert-kv,cert-secret",
+		"certificate":  string(cluster.CACertPEM),
+	})
+	if err != nil && write == nil {
+		return nil, "", ""
+	}
+
+	// Create Policy for secret/foo
+	err = client.Sys().PutPolicy("cert-secret", "path \"secret/*\" { capabilities = [\"read\",\"list\"] }")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create Policy for kv
+	err = client.Sys().PutPolicy("cert-kv", "path \"kv/*\" { capabilities = [\"read\",\"list\"] }")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/testing", map[string]interface{}{
+		"name":              "test-name",
+		"namespace":         "test-namespace",
+		"version":           "1.0",
+		"replicas":          "2",
+		"tag":               "1.0",
+		"secret-var-value":  "dGVzdC1wYXNzd29yZA==",
+		"secret-var-value2": "dGVzdC1wYXNzd29yZDI=",
+		"secret-num":        "MQ==",
+		"secret-var-clear":  "test-password",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("kv/data/testing", map[string]interface{}{
+		"data": map[string]interface{}{
+			"name":        "test-kv-name",
+			"namespace":   "test-kv-namespace",
+			"version":     "1.2",
+			"replicas":    "3",
+			"tag":         "1.1",
+			"target-port": 80,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/foo", map[string]interface{}{
+		"secret": "bar",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/json", map[string]interface{}{
+		"data": map[string]interface{}{
+			"service": map[string]interface{}{
+				"enableTLS": true,
+				"ports":     []int{80, 8080},
+			},
+			"deployment": map[string]interface{}{
+				"replicas": 2,
+				"image": map[string]interface{}{
+					"name": "json-test",
+					"tag":  "latest",
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/jsonstring", map[string]interface{}{
+		"secret": "{\"credentials\":{\"user\":\"test-user\",\"pass\":\"test-password\"}}",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("kv/data/test", map[string]interface{}{
+		"data": map[string]interface{}{
+			"hello": "world",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/bad_test", map[string]interface{}{
+		"hello": "world",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("kv/data/versioned", map[string]interface{}{
+		"data": map[string]interface{}{
+			"secret": "version1",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.Logical().Write("kv/data/versioned", map[string]interface{}{
+		"data": map[string]interface{}{
+			"secret": "version2",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/base64", map[string]interface{}{
+		"encoded_secret": "ewogICJrZXkxIjogInNlY3JldDEiLAogICJrZXkyIjogInNlY3JldDIiLAogICJrZXkzIjogInNlY3JldDMiCn0K",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Logical().Write("secret/yaml", map[string]interface{}{
+		"secret": "---\nkey1: secret1\nkey2: secret2\nkey3: secret3",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	privateKeyPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
+	})
+
+	csrTemplate := x509.CertificateRequest{
+		Subject: pkix.Name{
+			CommonName:   "vault-cert",
+			Organization: []string{"Client Org"},
+		},
+	}
+	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, &csrTemplate, key)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	csr, err := x509.ParseCertificateRequest(csrBytes)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	clientCertTemplate := x509.Certificate{
+		SerialNumber: big.NewInt(1234567890), // Eine eindeutige Seriennummer
+		Subject:      csr.Subject,
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().Add(365 * 24 * time.Hour), // 1 Jahr Gültigkeit
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+	clientCertBytes, err := x509.CreateCertificate(rand.Reader, &clientCertTemplate, cluster.CACert, csr.PublicKey, cluster.CAKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	clientCertPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: clientCertBytes,
+	})
+	return cluster, string(clientCertPEM), string(privateKeyPEM)
 }
 
 // CreateTestGithubVault initializes a new test vault with AppRole and Kv v2

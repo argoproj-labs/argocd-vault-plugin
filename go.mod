@@ -114,6 +114,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.11.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
+	github.com/fatih/structs v1.1.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gammazero/deque v0.2.1 // indirect
@@ -183,6 +184,7 @@ require (
 	github.com/hashicorp/go-secure-stdlib/awsutil v0.3.0 // indirect
 	github.com/hashicorp/go-secure-stdlib/base62 v0.1.2 // indirect
 	github.com/hashicorp/go-secure-stdlib/mlock v0.1.3 // indirect
+	github.com/hashicorp/go-secure-stdlib/nonceutil v0.1.0 // indirect
 	github.com/hashicorp/go-secure-stdlib/parseutil v0.1.8 // indirect
 	github.com/hashicorp/go-secure-stdlib/password v0.1.1 // indirect
 	github.com/hashicorp/go-secure-stdlib/plugincontainer v0.3.0 // indirect
@@ -194,6 +196,7 @@ require (
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
+	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/hcl v1.0.1-vault-5 // indirect
 	github.com/hashicorp/hcp-sdk-go v0.75.0 // indirect
 	github.com/hashicorp/mdns v1.0.4 // indirect
