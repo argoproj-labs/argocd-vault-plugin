@@ -98,6 +98,8 @@ func buildSecretsMap(secretsMap map[string]interface{}, fieldMap map[string]inte
 // GetSecrets gets secrets from Keeper Secrets Manager. It does not currently
 // implement anything related to versions or annotations.
 func (a *KeeperSecretsManager) GetSecrets(path string, version string, annotations map[string]string) (map[string]interface{}, error) {
+	// keeper returns a record multiple times if the record is used in multiple folders.
+	// This means that even when filtering by uid you can recieve many different records.
 	records, err := a.client.GetSecrets([]string{
 		path,
 	})
@@ -108,10 +110,6 @@ func (a *KeeperSecretsManager) GetSecrets(path string, version string, annotatio
 
 	if len(records) == 0 {
 		return nil, fmt.Errorf("no secrets could be found with the given path: %s", path)
-	}
-
-	if len(records) > 1 {
-		return nil, fmt.Errorf("unexpectedly multiple secrets were found with the given path: %s", path)
 	}
 
 	utils.VerboseToStdErr("Keeper Secrets Manager decoding record %s", records[0].Title())
