@@ -322,7 +322,7 @@ spec:
 ## Installing locally
 ### On Linux or macOS via Curl
 ```
-curl -Lo argocd-vault-plugin https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/{version}/argocd-vault-plugin_{version}_{linux|darwin}_{amd64|arm64|s390x}
+curl -Lo argocd-vault-plugin https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v{version}/argocd-vault-plugin_{version}_{linux|darwin}_{amd64|arm64|s390x}
 
 chmod +x argocd-vault-plugin
 
