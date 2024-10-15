@@ -19,7 +19,7 @@ In order to use the plugin in Argo CD you have 4 distinct options:
 
 ### Explaining your options
 
-First, the Argo CD docs provide valuable information on how to extend the `argocd-repo-server` with additonal tools or a custom built image: <https://argoproj.github.io/argo-cd/operator-manual/custom_tools/>.
+First, the Argo CD docs provide valuable information on how to extend the `argocd-repo-server` with additional tools or a custom built image: <https://argoproj.github.io/argo-cd/operator-manual/custom_tools/>.
 
 Before version 2.4.0 of Argo CD, the only way to install AVP was as an additional binary that ran inside the `argocd-repo-server` container when specifically told by including the following YAML in an Application mainfest:
 ```yaml
