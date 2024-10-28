@@ -213,7 +213,7 @@ spec:
           - mountPath: /home/argocd/cmp-server/plugins
             name: plugins
           - mountPath: /tmp
-            name: tmp
+            name: tmp-dir
           
           # Register plugins into sidecar
           - mountPath: /home/argocd/cmp-server/config/plugin.yaml
