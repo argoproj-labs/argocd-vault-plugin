@@ -190,6 +190,18 @@ type: Opaque
 ---
 apiVersion: v1
 data:
+  .dockerconfigjson: eyJhdXRocyI6eyJodHRwczovL215LXNlcnZlci5sb2NhbCI6eyJhdXRoIjoiZFhObGNqcGtSMVo2WkVNeGQxbFlUbnBrTWpsNVdrRTlQUT09IiwicGFzc3dvcmQiOiJkR1Z6ZEMxd1lYTnpkMjl5WkE9PSIsInVzZXJuYW1lIjoidXNlciJ9fX0=
+kind: Secret
+metadata:
+  annotations:
+    avp.kubernetes.io/kv-version: "1"
+    avp.kubernetes.io/path: secret/testing
+  name: test-name-dockerconfigjson
+  namespace: test-namespace
+type: kubernetes.io/dockerconfigjson
+---
+apiVersion: v1
+data:
   secret.yaml: c29tZQ==dGVzdC1wYXNzd29yZA==dmFsdWU=
 kind: Secret
 metadata:

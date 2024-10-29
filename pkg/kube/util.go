@@ -12,11 +12,16 @@ import (
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
 type missingKeyError struct {
 	s string
+}
+
+type dockerConfig struct {
+	Auths map[string](map[string]string) `json:"auths"`
 }
 
 func (e *missingKeyError) Error() string {
@@ -226,6 +231,54 @@ func secretReplacement(key, value string, resource Resource) (interface{}, []err
 	return genericReplacement(key, value, resource)
 }
 
+func dockerSecretReplacement(key, value string, resource Resource) (interface{}, []error) {
+	reencode := true
+	bytes, err := base64.StdEncoding.DecodeString(value)
+	if err != nil {
+		reencode = false
+		bytes = []byte(value)
+	}
+
+	dc := dockerConfig{}
+	err = json.Unmarshal(bytes, &dc)
+	if err != nil {
+		return secretReplacement(key, value, resource)
+	}
+
+	errs := []error{}
+
+	// iterate through the auths map and run a secretReplacement
+	// on each value so we can replace secrets that have
+	// been base64 encoded twice or are HTML escaped
+	for repo, auth := range dc.Auths {
+		for k, v := range auth {
+			res, err := secretReplacement(key, v, resource)
+			if err != nil {
+				errs = append(errs, err...)
+			} else {
+				auth[k], _ = res.(string)
+			}
+		}
+		dc.Auths[repo] = auth
+	}
+
+	bytes, err = json.Marshal(dc)
+	if err != nil {
+		return nil, append(errs, err)
+	}
+
+	value = string(bytes)
+	if reencode {
+		// only base64 encode if the original value was encoded
+		value = base64.StdEncoding.EncodeToString(bytes)
+	}
+
+	// run a fallback genericReplacement to catch any placeholders
+	// that are not in .dockerconfigjson
+	res, fallbackErr := genericReplacement(key, value, resource)
+	return res, append(errs, fallbackErr...)
+}
+
 func stringify(input interface{}) string {
 	switch input.(type) {
 	case int:
@@ -269,4 +322,13 @@ func secretNamespaceName(input string) (string, string) {
 	}
 
 	return secretNamespace, secretName
+}
+
+func getType(template unstructured.Unstructured) string {
+	val := template.UnstructuredContent()["type"]
+	s, ok := val.(string)
+	if !ok {
+		return ""
+	}
+	return s
 }

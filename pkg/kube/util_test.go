@@ -679,6 +679,74 @@ func TestSecretReplacement_Base64Substrings(t *testing.T) {
 	assertSuccessfulReplacement(&dummyResource, &expected, t)
 }
 
+func TestDockerReplacement_Base64(t *testing.T) {
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"data": map[string]interface{}{
+				".dockerconfigjson": `eyJhdXRocyI6eyJodHRwczovL215LXNlcnZlci5sb2NhbCI6eyJ1c2VybmFtZSI6Ilx1MDAzY3VzZXJcdTAwM2UiLCJwYXNzd29yZCI6Ilx1MDAzY3Bhc3NcdTAwM2UiLCJhdXRoIjoiUEhWelpYSStPanh3WVhOelBnPT0ifX19`,
+			},
+		},
+		Data: map[string]interface{}{
+			"user": "testuser",
+			"pass": "testpass",
+		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, dockerSecretReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"data": map[string]interface{}{
+				".dockerconfigjson": `eyJhdXRocyI6eyJodHRwczovL215LXNlcnZlci5sb2NhbCI6eyJhdXRoIjoiZEdWemRIVnpaWEk2ZEdWemRIQmhjM009IiwicGFzc3dvcmQiOiJ0ZXN0cGFzcyIsInVzZXJuYW1lIjoidGVzdHVzZXIifX19`,
+			},
+		},
+		Data: map[string]interface{}{
+			"user": "testuser",
+			"pass": "testpass",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
+func TestDockerReplacement_Plain(t *testing.T) {
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"stringData": map[string]interface{}{
+				".dockerconfigjson": `{"auths":{"https://my-server.local":{"username":"\u003cuser\u003e","password":"\u003cpass\u003e","auth":"PHVzZXI+OjxwYXNzPg=="}}}`,
+			},
+		},
+		Data: map[string]interface{}{
+			"user": "testuser",
+			"pass": "testpass",
+		},
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, dockerSecretReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"stringData": map[string]interface{}{
+				".dockerconfigjson": `{"auths":{"https://my-server.local":{"auth":"dGVzdHVzZXI6dGVzdHBhc3M=","password":"testpass","username":"testuser"}}}`,
+			},
+		},
+		Data: map[string]interface{}{
+			"user": "testuser",
+			"pass": "testpass",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
 func TestStringify(t *testing.T) {
 	testCases := []struct {
 		input    interface{}
