@@ -449,6 +449,12 @@ These are the parameters for Azure:
 ```
 AVP_TYPE: azurekeyvault
 ```
+**Note**: If you are using Azure China, set the following environment variable:
+
+```
+export AVP_AZ_CLOUD_NAME=azurechina
+```
+
 
 ##### Examples
 
