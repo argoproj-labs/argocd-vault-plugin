@@ -31,9 +31,14 @@ spec:
           - name: AVP_VERSION
             value: "1.18.0"
         args:
-          - >-
+          - |
+            ARCH=$(uname -m)
+            case $ARCH in
+              aarch64) ARCH="arm64";;
+              x86_64) ARCH="amd64";;
+            esac
             wget -O argocd-vault-plugin
-            https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v${AVP_VERSION}/argocd-vault-plugin_${AVP_VERSION}_linux_amd64 &&
+            https://github.com/argoproj-labs/argocd-vault-plugin/releases/download/v${AVP_VERSION}/argocd-vault-plugin_${AVP_VERSION}_linux_$ARCH &&
             chmod +x argocd-vault-plugin &&
             mv argocd-vault-plugin /custom-tools/
         volumeMounts:
