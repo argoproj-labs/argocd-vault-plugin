@@ -27,7 +27,7 @@ jobs:
         run: docker run --network none --env GOPATH="" --rm -v $PWD:/go/work ci make quality
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
 
       - name: Build and test plugin
         run: docker run --network none --env GOPATH="" --rm -v $PWD:/go/work ci make e2e
