@@ -1,6 +1,7 @@
 package kube
 
 import (
+	"github.com/stretchr/testify/assert"
 	"os"
 	"reflect"
 	"regexp"
@@ -85,6 +86,63 @@ func TestToYAML_Missing_PlaceholdersSpecificPath(t *testing.T) {
 	if expectedErr != err.Error() {
 		t.Fatalf("expected error \n%s but got error \n%s", expectedErr, err.Error())
 	}
+}
+
+func TestToYAML_BinaryValueInjectedToStringData(t *testing.T) {
+	mv := helpers.MockVault{}
+
+	d := Template{
+		Resource{
+			Kind: "Secret",
+			Annotations: map[string]string{
+				types.AVPPathAnnotation: "path/to/secret",
+			},
+			TemplateData: map[string]interface{}{
+				"apiVersion": "v1",
+				"kind":       "Secret",
+				"metadata": map[string]interface{}{
+					"namespace": "default",
+					"name":      "some-resource",
+					"annotations": map[string]string{
+						types.AVPPathAnnotation: "path/to/secret",
+					},
+				},
+				"data": map[string]interface{}{
+					"d-yscs":      "<yaml-safe-control-chars>",
+					"d-ubd":       "<unsafe-binary-data>",
+					"d-realistic": "<realistic>",
+				},
+				"stringData": map[string]interface{}{
+					"sd-yscc":      "<yaml-safe-control-chars>",
+					"sd-ubd":       "<unsafe-binary-data>",
+					"sd-realistic": "<realistic>",
+				},
+			},
+			Backend: &mv,
+			Data: map[string]interface{}{
+				// Tab and linebreak chars are safe
+				"yaml-safe-control-chars": "\x09first\x0D\x0A\x09second\n",
+				"unsafe-binary-data":      "as\u0001df\nas\x0bdf",
+				"realistic":               "�\u0001\f\u0003�c�ţ8h�\u0001\a�R�\nڒp��Y4���E�m���+��W�%\u000FH��$�(���]�\u000E&\u000E�zi�@�O�X(\f��ߞ\u0003\a�\u000EN(�a#��\u000F��5LF1�}��ݗ��\u000Fk\u0010�i5\u000FcJOϐ\u001F�.\u0000sp)�(5��\u0004a\u0015���\u0004�'�9�\u0002��\ak��M4\u0004~\u007F��:�Y�:�\u001A=]c�\u0004;����\u0013�ʼ��ױ;۹�C\u0001��+o+=��r�\u0011�*d�\u0018����Z�赁\u0004��Ża�\n�.հ\u0014H����\u0017�y�\u0006R�xv�X�i)\u0000��-^�\u0006L�ٲfQsfz�\u001D�ͩ8T6^E��5zk�غ%��B\u0001A�Ը�^\u0005��~�\u0084�\u0004ă����\nq��;�e�f�Ic��\f�\u000F4H]�+ܭU��×�D��\u0017�x�c��\u0017\u0017�{",
+			},
+		},
+	}
+
+	expectedErr := []string{
+		"Replace: could not replace all placeholders in Template:",
+		"placeholder resolved to binary content in sd-ubd: <unsafe-binary-data>",
+		"placeholder resolved to binary content in sd-realistic: <realistic>",
+		"placeholder resolved to binary content in d-ubd: <unsafe-binary-data>",
+		"placeholder resolved to binary content in d-realistic: <realistic>",
+	}
+
+	err := d.Replace()
+	if err == nil {
+		yaml, _ := d.ToYAML()
+		t.Fatalf("expected error %s but got success, producing: %s", expectedErr, yaml)
+	}
+
+	assert.ElementsMatch(t, strings.Split(err.Error(), "\n"), expectedErr)
 }
 
 func TestToYAML_RemoveMissing(t *testing.T) {

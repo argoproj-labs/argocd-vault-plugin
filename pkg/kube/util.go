@@ -5,14 +5,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
+	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
-	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
-	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
+	"unicode"
 )
 
 type missingKeyError struct {
@@ -199,7 +199,21 @@ func genericReplacement(key, value string, resource Resource) (_ interface{}, er
 		return nonStringReplacement, err
 	}
 
-	return string(res), err
+	sres := string(res)
+	if containsBinary(sres) {
+		e := fmt.Errorf("placeholder resolved to binary content in %s: %s", key, value)
+		err = append(err, e)
+	}
+	return sres, err
+}
+
+func containsBinary(rep string) bool {
+	for _, r := range rep {
+		if unicode.IsControl(r) && r != '\t' && r != '\n' && r != '\r' {
+			return true
+		}
+	}
+	return false
 }
 
 func configReplacement(key, value string, resource Resource) (interface{}, []error) {
