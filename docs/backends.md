@@ -176,7 +176,7 @@ The path for IBM Cloud Secret Manager secrets can be specified in two ways:
 2. `ibmcloud/<SECRET_TYPE>/secrets/groups/<GROUP>/<SECRET_NAME>#<SECRET_KEY>`
 
 Where:
-* `<SECRET_TYPE>` can be one of the following: `arbitrary`, `iam_credentials`, `imported_cert`, `kv`, `private_cert`, `public_cert`, or `username_password`.
+* `<SECRET_TYPE>` can be one of the following: `arbitrary`, `iam_credentials`, `imported_cert`, `kv`, `private_cert`, `public_cert`, `username_password`, or `service_credentials`.
 * `<GROUP>` can be a secret group ID or name.
 * `<SECRET_NAME>` is the name of the secret.
 * `<SECRET_KEY>` is the key name within the secret. Specifically, the following keys are available for extraction:
@@ -184,6 +184,7 @@ Where:
   * `username` and `password` for the `username_password` secret type
   * `certificate`, `private_key`, `intermediate` for the `imported_cert` or `public_cert` secret types
   * `certificate`, `private_key`, `issuing_ca`, `ca_chain` for the `private_cert` secret type
+  * `apikey` or/and any top-level key of the actual credential object for the `service_credentials` secret type
   * any key of the `kv` secret type
   `<SECRET_KEY>` is not supported for the `arbitrary` secret type.
 
