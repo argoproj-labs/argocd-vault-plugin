@@ -41,7 +41,7 @@ spec:
 If you want to use Helm along with argocd-vault-plugin, use the instructions matching your [plugin installation method](../installation).
 
 ##### Simple
-For `argocd-cm` ConfigMap configured plugins, add this to `argod-cm` ConfigMap:
+For `argocd-cm` ConfigMap configured plugins, add this to `argocd-cm` ConfigMap:
 ```yaml
 configManagementPlugins: |
   - name: argocd-vault-plugin-helm
@@ -86,7 +86,7 @@ Use this option if you want to use Helm along with argocd-vault-plugin and use a
 repo-server (or, if using a sidecar, in the plugin sidecar). Only use this when the users are completely trusted. If  
 possible, determine which Helm arguments are needed by your users and explicitly pass only those arguments.
 
-For `argocd-cm` ConfigMap configured plugins, add this to `argod-cm` ConfigMap:
+For `argocd-cm` ConfigMap configured plugins, add this to `argocd-cm` ConfigMap:
 ```yaml
 configManagementPlugins: |
   - name: argocd-vault-plugin-helm
@@ -139,7 +139,7 @@ Helm args must be defined in the application manifest:
 ##### With an inline values file
 Alternatively, if you'd like to use values inline in your application manifest (similar to the ArgoCD CLI's `--values-literal-file` option), you can create a plugin like this (note the use of `bash` instead of `sh` here):
 
-For `argocd-cm` ConfigMap configured plugins, add this to `argod-cm` ConfigMap:
+For `argocd-cm` ConfigMap configured plugins, add this to `argocd-cm` ConfigMap:
 ```yaml
 configManagementPlugins: |
   - name: argocd-vault-plugin-helm
@@ -200,7 +200,7 @@ Then you can define your Helm values inline in your application manifest:
 If you want to use Kustomize along with argocd-vault-plugin, use the instructions matching your [plugin installation method](../installation).
 
 
-For `argocd-cm` ConfigMap configured plugins, add this to `argod-cm` ConfigMap:
+For `argocd-cm` ConfigMap configured plugins, add this to `argocd-cm` ConfigMap:
 ```yaml
 configManagementPlugins: |
   - name: argocd-vault-plugin-kustomize
@@ -237,7 +237,7 @@ For sidecar configured plugins, add this to `cmp-plugin` ConfigMap, and then [ad
 If you want to use Jsonnet along with argocd-vault-plugin, use the instructions matching your [plugin installation method](../installation).
 
 
-For `argocd-cm` ConfigMap configured plugins, add this to `argod-cm` ConfigMap:
+For `argocd-cm` ConfigMap configured plugins, add this to `argocd-cm` ConfigMap:
 
 ```yaml
 configManagementPlugins: |
