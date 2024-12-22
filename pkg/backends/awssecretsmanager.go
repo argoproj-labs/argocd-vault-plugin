@@ -70,7 +70,7 @@ func (a *AWSSecretsManager) GetSecrets(path string, version string, annotations 
 		return nil, err
 	}
 
-	utils.VerboseToStdErr("AWS Secrets Manager get secret response %v", result)
+	utils.VerboseToStdErr("AWS Secrets Manager get secret response %v", utils.SanitizeUnsafe(result))
 
 	var dat map[string]interface{}
 

@@ -35,7 +35,7 @@ func NewUserPassAuth(username, password, mountPath string) *UserPassAuth {
 func (a *UserPassAuth) Authenticate(vaultClient *api.Client) error {
 	err := utils.LoginWithCachedToken(vaultClient, fmt.Sprintf("userpass_%s", a.Username))
 	if err != nil {
-		utils.VerboseToStdErr("Hashicorp Vault cannot retrieve cached token: %v. Generating a new one", err)
+		utils.VerboseToStdErr("Hashicorp Vault cannot retrieve cached token: %v. Generating a new one", utils.SanitizeUnsafe(err))
 	} else {
 		return nil
 	}
@@ -44,17 +44,20 @@ func (a *UserPassAuth) Authenticate(vaultClient *api.Client) error {
 		"password": a.Password,
 	}
 
-	utils.VerboseToStdErr("Hashicorp Vault authenticating with username %s and password %s", a.Username, a.Password)
+	utils.VerboseToStdErr(
+		"Hashicorp Vault authenticating with username %s and password %s",
+		utils.SanitizeUnsafe(a.Username), utils.SanitizeUnsafe(a.Password),
+	)
 	data, err := vaultClient.Logical().Write(fmt.Sprintf("%s/login/%s", a.MountPath, a.Username), payload)
 	if err != nil {
 		return err
 	}
 
-	utils.VerboseToStdErr("Hashicorp Vault authentication response: %v", data)
+	utils.VerboseToStdErr("Hashicorp Vault authentication response: %v", utils.SanitizeUnsafe(data))
 
 	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
 	if err = utils.SetToken(vaultClient, fmt.Sprintf("userpass_%s", a.Username), data.Auth.ClientToken); err != nil {
-		utils.VerboseToStdErr("Hashicorp Vault cannot cache token for future runs: %v", err)
+		utils.VerboseToStdErr("Hashicorp Vault cannot cache token for future runs: %v", utils.SanitizeUnsafe(err))
 	}
 
 	return nil

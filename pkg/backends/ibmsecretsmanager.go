@@ -384,7 +384,7 @@ func (i *IBMSecretsManager) getSecretVersionedOrNot(id, stype, version string) (
 			return nil, fmt.Errorf("Could not retrieve secret %s after %d retries, statuscode %d", id, types.IBMMaxRetries, httpResponse.GetStatusCode())
 		}
 
-		utils.VerboseToStdErr("IBM Cloud Secrets Manager get versioned secret %s HTTP response: %v", id, httpResponse)
+		utils.VerboseToStdErr("IBM Cloud Secrets Manager get versioned secret %s HTTP response: %v", id, utils.SanitizeUnsafe(httpResponse))
 
 		result, err = NewIBMVersionedSecretData(secretVersion).GetSecret()
 		if err != nil {
@@ -402,7 +402,7 @@ func (i *IBMSecretsManager) getSecretVersionedOrNot(id, stype, version string) (
 			return nil, fmt.Errorf("Could not retrieve secret %s after %d retries, statuscode %d", id, types.IBMMaxRetries, httpResponse.GetStatusCode())
 		}
 
-		utils.VerboseToStdErr("IBM Cloud Secrets Manager get unversioned secret %s HTTP response: %v", id, httpResponse)
+		utils.VerboseToStdErr("IBM Cloud Secrets Manager get unversioned secret %s HTTP response: %v", id, utils.SanitizeUnsafe(httpResponse))
 
 		result, err = NewIBMSecretData(secretRes).GetSecret()
 		if err != nil {
@@ -500,7 +500,7 @@ func (i *IBMSecretsManager) listSecretsInGroup(groupId, secretType string) (map[
 			return nil, fmt.Errorf("Could not list secrets for secret group %s: %d\n%s", groupId, details.GetStatusCode(), details.String())
 		}
 
-		utils.VerboseToStdErr("IBM Cloud Secrets Manager list secrets in group HTTP response: %v", details)
+		utils.VerboseToStdErr("IBM Cloud Secrets Manager list secrets in group HTTP response: %v", utils.SanitizeUnsafe(details))
 
 		for _, secret := range res.Secrets {
 			var name, ttype string
@@ -508,7 +508,7 @@ func (i *IBMSecretsManager) listSecretsInGroup(groupId, secretType string) (map[
 
 			data, err := v.GetMetadata()
 			if err != nil {
-				utils.VerboseToStdErr("Skipping a secret in group %s: %s", groupId, err)
+				utils.VerboseToStdErr("Skipping a secret in group %s: %s", groupId, utils.SanitizeUnsafe(err))
 			}
 
 			name = data["name"]

@@ -61,7 +61,7 @@ func (v *Vault) GetSecrets(path string, version string, annotations map[string]s
 		return nil, err
 	}
 
-	utils.VerboseToStdErr("Hashicorp Vault get kv pairs response: %v", secret)
+	utils.VerboseToStdErr("Hashicorp Vault get kv pairs response: %v", utils.SanitizeUnsafe(secret))
 
 	if secret == nil {
 		// Do not mention `version` in error message when it's not honored (KV-V1)

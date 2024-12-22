@@ -41,7 +41,7 @@ func (ycl *YandexCloudLockbox) GetSecrets(secretID string, version string, _ map
 		return nil, err
 	}
 
-	utils.VerboseToStdErr("Yandex Cloud Lockbox get secret response %v", resp)
+	utils.VerboseToStdErr("Yandex Cloud Lockbox get secret response %v", utils.SanitizeUnsafe(resp))
 
 	result := make(map[string]interface{}, len(resp.GetEntries()))
 	for _, v := range resp.GetEntries() {

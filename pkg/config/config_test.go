@@ -1,14 +1,13 @@
 package config_test
 
 import (
-	"bytes"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/config"
+	"github.com/argoproj-labs/argocd-vault-plugin/pkg/helpers"
 	"github.com/spf13/viper"
 )
 
@@ -267,19 +266,6 @@ func TestNewConfigNoAuthType(t *testing.T) {
 	os.Unsetenv("AVP_TYPE")
 }
 
-// Helper function that captures log output from a function call into a string
-// Adapted from https://stackoverflow.com/a/26806093/170154
-func captureOutput(f func()) string {
-	var buf bytes.Buffer
-	flags := log.Flags()
-	log.SetOutput(&buf)
-	log.SetFlags(0) // don't include any date or time in the logging messages
-	f()
-	log.SetOutput(os.Stderr)
-	log.SetFlags(flags)
-	return buf.String()
-}
-
 func TestNewConfigAwsRegionWarning(t *testing.T) {
 	testCases := []struct {
 		environment  map[string]interface{}
@@ -314,7 +300,7 @@ func TestNewConfigAwsRegionWarning(t *testing.T) {
 		viper.Set("verboseOutput", true)
 
 		v := viper.New()
-		output := captureOutput(func() {
+		output := helpers.CaptureOutput(func() {
 			config, err := config.New(v, &config.Options{})
 			if err != nil {
 				t.Error(err)

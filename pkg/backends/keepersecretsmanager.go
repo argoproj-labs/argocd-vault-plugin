@@ -140,7 +140,7 @@ func (a *KeeperSecretsManager) GetSecrets(path string, version string, annotatio
 		}
 	}
 
-	utils.VerboseToStdErr("Keeper Secrets Manager constructed map %s", secretMap)
+	utils.VerboseToStdErr("Keeper Secrets Manager constructed map %s", utils.SanitizeUnsafe(secretMap))
 
 	return secretMap, nil
 

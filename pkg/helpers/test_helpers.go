@@ -1,8 +1,11 @@
 package helpers
 
 import (
+	"bytes"
 	"fmt"
+	"log"
 	"net"
+	"os"
 	"strconv"
 	"testing"
 
@@ -542,4 +545,17 @@ func (v *MockVault) GetIndividualSecret(path, secret, version string, annotation
 	}
 	num, _ := strconv.ParseInt(version, 10, 0)
 	return v.Data[num-1][secret], nil
+}
+
+// Helper function that captures log output from a function call into a string
+// Adapted from https://stackoverflow.com/a/26806093/170154
+func CaptureOutput(f func()) string {
+	var buf bytes.Buffer
+	flags := log.Flags()
+	log.SetOutput(&buf)
+	log.SetFlags(0) // don't include any date or time in the logging messages
+	f()
+	log.SetOutput(os.Stderr)
+	log.SetFlags(flags)
+	return buf.String()
 }

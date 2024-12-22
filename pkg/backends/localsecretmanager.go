@@ -32,7 +32,7 @@ func (a *LocalSecretManager) GetSecrets(path string, version string, annotations
 	utils.VerboseToStdErr("Local secret manager getting secret %s at version %s", path, version)
 	cleartext, err := a.Decrypt(path, "yaml")
 
-	utils.VerboseToStdErr("Local secret manager get secret response: %v", cleartext)
+	utils.VerboseToStdErr("Local secret manager get secret response: %v", utils.SanitizeUnsafe(cleartext))
 
 	var dat map[string]interface{}
 

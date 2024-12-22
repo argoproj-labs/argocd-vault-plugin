@@ -73,16 +73,16 @@ func (a *AzureKeyVault) GetSecrets(kvpath string, version string, _ map[string]s
 				if err != nil {
 					return nil, err
 				}
-				utils.VerboseToStdErr("Azure Key Vault get secret response %v", secret)
+				utils.VerboseToStdErr("Azure Key Vault get secret response %v", utils.SanitizeUnsafe(secret))
 				data[name] = *secret.Value
 			} else {
 				verboseOptionalVersion("Azure Key Vault getting secret %s from vault %s", version, name, kvpath)
 				secret, err := client.GetSecret(ctx, name, version, nil)
 				if err != nil || !*secretVersion.Attributes.Enabled {
-					utils.VerboseToStdErr("Azure Key Vault get versioned secret not found %s", err)
+					utils.VerboseToStdErr("Azure Key Vault get versioned secret not found %s", utils.SanitizeUnsafe(err))
 					continue
 				}
-				utils.VerboseToStdErr("Azure Key Vault get versioned secret response %v", secret)
+				utils.VerboseToStdErr("Azure Key Vault get versioned secret response %v", utils.SanitizeUnsafe(secret))
 				data[name] = *secret.Value
 			}
 		}
@@ -110,7 +110,7 @@ func (a *AzureKeyVault) GetIndividualSecret(kvpath, secret, version string, anno
 		return nil, err
 	}
 
-	utils.VerboseToStdErr("Azure Key Vault get individual secret response %v", data)
+	utils.VerboseToStdErr("Azure Key Vault get individual secret response %v", utils.SanitizeUnsafe(data))
 
 	return *data.Value, nil
 }

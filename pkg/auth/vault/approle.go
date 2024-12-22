@@ -35,7 +35,7 @@ func NewAppRoleAuth(roleID, secretID, mountPath string) *AppRoleAuth {
 func (a *AppRoleAuth) Authenticate(vaultClient *api.Client) error {
 	err := utils.LoginWithCachedToken(vaultClient, fmt.Sprintf("approle_%s", a.RoleID))
 	if err != nil {
-		utils.VerboseToStdErr("Hashicorp Vault cannot retrieve cached token: %v. Generating a new one", err)
+		utils.VerboseToStdErr("Hashicorp Vault cannot retrieve cached token: %v. Generating a new one", utils.SanitizeUnsafe(err))
 	} else {
 		return nil
 	}
@@ -45,18 +45,21 @@ func (a *AppRoleAuth) Authenticate(vaultClient *api.Client) error {
 		"secret_id": a.SecretID,
 	}
 
-	utils.VerboseToStdErr("Hashicorp Vault authenticating with role ID %s and secret ID %s at path %s", a.RoleID, a.SecretID, a.MountPath)
+	utils.VerboseToStdErr(
+		"Hashicorp Vault authenticating with role ID %s and secret ID %s at path %s",
+		utils.SanitizeUnsafe(a.RoleID), utils.SanitizeUnsafe(a.SecretID), a.MountPath,
+	)
 	data, err := vaultClient.Logical().Write(fmt.Sprintf("%s/login", a.MountPath), payload)
 	if err != nil {
 		return err
 	}
 
-	utils.VerboseToStdErr("Hashicorp Vault authentication response: %v", data)
+	utils.VerboseToStdErr("Hashicorp Vault authentication response: %v", utils.SanitizeUnsafe(data))
 
 	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
 	err = utils.SetToken(vaultClient, fmt.Sprintf("approle_%s", a.RoleID), data.Auth.ClientToken)
 	if err != nil {
-		utils.VerboseToStdErr("Hashicorp Vault cannot cache token for future runs: %v", err)
+		utils.VerboseToStdErr("Hashicorp Vault cannot cache token for future runs: %v", utils.SanitizeUnsafe(err))
 	}
 
 	return nil

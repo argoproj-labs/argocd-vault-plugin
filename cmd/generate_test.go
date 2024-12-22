@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"os"
 	"strings"
@@ -298,6 +299,63 @@ func TestMain(t *testing.T) {
 		if err == nil {
 			t.Fatalf("expected no cache but found one")
 		}
+	})
+
+	os.Unsetenv("AVP_TYPE")
+	os.Unsetenv("VAULT_ADDR")
+	os.Unsetenv("AVP_AUTH_TYPE")
+	os.Unsetenv("AVP_SECRET_ID")
+	os.Unsetenv("AVP_ROLE_ID")
+	os.Unsetenv("VAULT_SKIP_VERIFY")
+	os.Unsetenv("AVP_PATH_VALIDATION")
+}
+
+func TestVerboseness(t *testing.T) {
+	cluster, roleid, secretid = helpers.CreateTestAppRoleVault(t)
+	os.Setenv("AVP_TYPE", "vault")
+	os.Setenv("VAULT_ADDR", cluster.Cores[0].Client.Address())
+	os.Setenv("AVP_AUTH_TYPE", "approle")
+	os.Setenv("AVP_SECRET_ID", "broken_but_secret")
+	os.Setenv("AVP_ROLE_ID", "broken_but_secret")
+	os.Setenv("VAULT_SKIP_VERIFY", "true")
+
+	t.Run("Quiet", func(t *testing.T) {
+		cmd := NewGenerateCommand()
+		cmd.SetArgs([]string{"../fixtures/input/nonempty/secret_path.yaml"})
+		cmd.SetOut(bytes.NewBufferString(""))
+		cmd.SetErr(bytes.NewBufferString(""))
+		logOut := helpers.CaptureOutput(func() {
+			cmd.Execute()
+		})
+
+		assert.Equal(t, "", logOut)
+	})
+
+	t.Run("Safe verbose", func(t *testing.T) {
+		cmd := NewGenerateCommand()
+		cmd.SetArgs([]string{"../fixtures/input/nonempty/secret_path.yaml", "--verbose"})
+		cmd.SetOut(bytes.NewBufferString(""))
+		cmd.SetErr(bytes.NewBufferString(""))
+		logOut := helpers.CaptureOutput(func() {
+			cmd.Execute()
+		})
+
+		assert.Contains(t, logOut, "Hashicorp Vault authenticating with role ID ***REDACTED(17 characters)*** and secret ID ***REDACTED(17 characters)*** at path auth/approle")
+		assert.NotContains(t, logOut, "broken_but_secret")
+	})
+
+	t.Run("Sensitive verbose", func(t *testing.T) {
+		cmd := NewGenerateCommand()
+		cmd.SetArgs([]string{"../fixtures/input/nonempty/secret_path.yaml", "--verbose-sensitive-output"})
+		cmd.SetOut(bytes.NewBufferString(""))
+		cmd.SetErr(bytes.NewBufferString(""))
+		logOut := helpers.CaptureOutput(func() {
+			cmd.Execute()
+		})
+
+		assert.Contains(t, logOut, "Running with --verbose-sensitive-output. Sensitive information will be printed to standard error!")
+		assert.Contains(t, logOut, "Hashicorp Vault authenticating with role ID broken_but_secret and secret ID broken_but_secret at path auth/approle")
+		assert.NotContains(t, logOut, "***REDACTED")
 	})
 
 	os.Unsetenv("AVP_TYPE")

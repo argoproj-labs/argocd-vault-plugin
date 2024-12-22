@@ -57,7 +57,7 @@ func (a *GCPSecretManager) GetSecrets(path string, version string, annotations m
 		return nil, fmt.Errorf("Could not find secret: %v", err)
 	}
 
-	utils.VerboseToStdErr("GCP Secret Manager access secret version response %v", result)
+	utils.VerboseToStdErr("GCP Secret Manager access secret version response %v", utils.SanitizeUnsafe(result))
 
 	data := make(map[string]interface{})
 

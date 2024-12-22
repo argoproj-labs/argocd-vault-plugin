@@ -210,7 +210,7 @@ func configReplacement(key, value string, resource Resource) (interface{}, []err
 
 	// configMap data values must be strings
 
-	utils.VerboseToStdErr("key %s comes from ConfigMap manifest, stringifying value %s to fit", key, value)
+	utils.VerboseToStdErr("key %s comes from ConfigMap manifest, stringifying value %s to fit", key, utils.SanitizeUnsafe(value))
 	return stringify(res), err
 }
 
@@ -219,7 +219,7 @@ func secretReplacement(key, value string, resource Resource) (interface{}, []err
 	if err == nil && genericPlaceholder.Match(decoded) {
 		res, err := genericReplacement(key, string(decoded), resource)
 
-		utils.VerboseToStdErr("key %s comes from Secret manifest, base64 encoding value %s to fit", key, value)
+		utils.VerboseToStdErr("key %s comes from Secret manifest, base64 encoding value %s to fit", key, utils.SanitizeUnsafe(value))
 		return base64.StdEncoding.EncodeToString([]byte(stringify(res))), err
 	}
 

@@ -60,7 +60,7 @@ func (a *DelineaSecretServer) GetSecrets(path string, version string, annotation
 		return nil, fmt.Errorf("could not decode secret json %s", secret_json)
 	}
 
-	utils.VerboseToStdErr("Delinea Secret Server decoding json %s", secret)
+	utils.VerboseToStdErr("Delinea Secret Server decoding json %s", utils.SanitizeUnsafe(secret))
 
 	secret_map := make(map[string]interface{})
 
@@ -69,7 +69,7 @@ func (a *DelineaSecretServer) GetSecrets(path string, version string, annotation
 		secret_map[secret.Fields[index].Slug] = secret.Fields[index].ItemValue
 	}
 
-	utils.VerboseToStdErr("Delinea Secret Server constructed map %s", secret_map)
+	utils.VerboseToStdErr("Delinea Secret Server constructed map %s", utils.SanitizeUnsafe(secret_map))
 	return secret_map, nil
 
 }

@@ -43,7 +43,7 @@ func (k *KubernetesSecret) GetSecrets(path string, version string, annotations m
 		out[k] = string(v)
 	}
 
-	utils.VerboseToStdErr("K8s Secret get secret response: %v", out)
+	utils.VerboseToStdErr("K8s Secret get secret response: %v", utils.SanitizeUnsafe(out))
 	return out, nil
 }
 
@@ -51,7 +51,7 @@ func (k *KubernetesSecret) GetSecrets(path string, version string, annotations m
 // Kubernetes Secrets can only be wholly read,
 // So, we use GetSecrets and extract the specific placeholder we want
 func (k *KubernetesSecret) GetIndividualSecret(path, secret, version string, annotations map[string]string) (interface{}, error) {
-	utils.VerboseToStdErr("K8s Secret getting secret %s and key %s", path, secret)
+	utils.VerboseToStdErr("K8s Secret getting secret %s and key %s", path, utils.SanitizeUnsafe(secret))
 	data, err := k.GetSecrets(path, version, annotations)
 	if err != nil {
 		return nil, err

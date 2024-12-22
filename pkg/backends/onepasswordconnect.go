@@ -37,7 +37,7 @@ func (a *OnePasswordConnect) GetSecrets(path string, version string, annotations
 		return nil, err
 	}
 
-	utils.VerboseToStdErr("OnePassword Connect get secret response: %v", result)
+	utils.VerboseToStdErr("OnePassword Connect get secret response: %v", utils.SanitizeUnsafe(result))
 
 	data := make(map[string]interface{})
 

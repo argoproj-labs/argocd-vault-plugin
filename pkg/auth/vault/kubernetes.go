@@ -41,7 +41,7 @@ func NewK8sAuth(role, mountPath, tokenPath string) *K8sAuth {
 func (k *K8sAuth) Authenticate(vaultClient *api.Client) error {
 	err := utils.LoginWithCachedToken(vaultClient, "kubernetes")
 	if err != nil {
-		utils.VerboseToStdErr("Hashicorp Vault cannot retrieve cached token: %v. Generating a new one", err)
+		utils.VerboseToStdErr("Hashicorp Vault cannot retrieve cached token: %v. Generating a new one", utils.SanitizeUnsafe(err))
 	} else {
 		return nil
 	}
@@ -61,18 +61,21 @@ func (k *K8sAuth) Authenticate(vaultClient *api.Client) error {
 		kubeAuthPath = k.MountPath
 	}
 
-	utils.VerboseToStdErr("Hashicorp Vault authenticating with Vault role %s using Kubernetes service account token %s read from %s", k.Role, serviceAccountFile, token)
+	utils.VerboseToStdErr(
+		"Hashicorp Vault authenticating with Vault role %s using Kubernetes service account token %s read from %s",
+		k.Role, serviceAccountFile, utils.SanitizeUnsafe(token),
+	)
 	data, err := vaultClient.Logical().Write(fmt.Sprintf("%s/login", kubeAuthPath), payload)
 	if err != nil {
 		return err
 	}
 
-	utils.VerboseToStdErr("Hashicorp Vault authentication response: %v", data)
+	utils.VerboseToStdErr("Hashicorp Vault authentication response: %v", utils.SanitizeUnsafe(data))
 
 	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
 	err = utils.SetToken(vaultClient, "kubernetes", data.Auth.ClientToken)
 	if err != nil {
-		utils.VerboseToStdErr("Hashicorp Vault cannot cache token for future runs: %v", err)
+		utils.VerboseToStdErr("Hashicorp Vault cannot cache token for future runs: %v", utils.SanitizeUnsafe(err))
 	}
 
 	return nil
