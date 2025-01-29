@@ -21,6 +21,9 @@ data:
             - "."
             - -name
             - kustomization.yaml
+            - -o
+            - -name
+            - kustomization.yml
       generate:
         command:
           - sh
