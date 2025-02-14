@@ -17,21 +17,22 @@ const (
 
 // K8sAuth TODO
 type K8sAuth struct {
-	// Optional, will use default path of auth/kubernetes if left blank
-	MountPath string
-
+	Role string
 	// Optional, will use default service account if left blank
 	TokenPath string
-
-	Role string
+	// Optional, will use default path of auth/kubernetes if left blank
+	MountPath string
+	// Optional, will use "default" if not provided
+	Namespace string
 }
 
 // NewK8sAuth initializes and returns a K8sAuth Struct
-func NewK8sAuth(role, mountPath, tokenPath string) *K8sAuth {
+func NewK8sAuth(role, mountPath, tokenPath string, namespace string) *K8sAuth {
 	k8sAuth := &K8sAuth{
 		Role:      role,
 		MountPath: mountPath,
 		TokenPath: tokenPath,
+		Namespace: namespace,
 	}
 
 	return k8sAuth
@@ -39,7 +40,7 @@ func NewK8sAuth(role, mountPath, tokenPath string) *K8sAuth {
 
 // Authenticate authenticates with Vault via K8s and returns a token
 func (k *K8sAuth) Authenticate(vaultClient *api.Client) error {
-	err := utils.LoginWithCachedToken(vaultClient, "kubernetes")
+	err := utils.LoginWithCachedToken(vaultClient, fmt.Sprintf("kubernetes_%s", k.Namespace))
 	if err != nil {
 		utils.VerboseToStdErr("Hashicorp Vault cannot retrieve cached token: %v. Generating a new one", err)
 	} else {
@@ -70,7 +71,7 @@ func (k *K8sAuth) Authenticate(vaultClient *api.Client) error {
 	utils.VerboseToStdErr("Hashicorp Vault authentication response: %v", data)
 
 	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
-	err = utils.SetToken(vaultClient, "kubernetes", data.Auth.ClientToken)
+	err = utils.SetToken(vaultClient, fmt.Sprintf("kubernetes_%s", k.Namespace), data.Auth.ClientToken)
 	if err != nil {
 		utils.VerboseToStdErr("Hashicorp Vault cannot cache token for future runs: %v", err)
 	}

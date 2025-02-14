@@ -87,16 +87,22 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				return nil, err
 			}
 
+			// get namespace (if any) to allow caching tokens from multiple auth methods
+			vaultNamespace := strings.TrimSpace(v.GetString(types.EnvVaultNamespace)) // strip whitespace and newlines
+				if vaultNamespace == "" {
+					vaultNamespace = "default"
+			}
+
 			switch authType {
 			case types.ApproleAuth:
 				if v.IsSet(types.EnvAvpRoleID) && v.IsSet(types.EnvAvpSecretID) {
-					auth = vault.NewAppRoleAuth(v.GetString(types.EnvAvpRoleID), v.GetString(types.EnvAvpSecretID), v.GetString(types.EnvAvpMountPath))
+					auth = vault.NewAppRoleAuth(v.GetString(types.EnvAvpRoleID), v.GetString(types.EnvAvpSecretID), v.GetString(types.EnvAvpMountPath), vaultNamespace)
 				} else {
 					return nil, fmt.Errorf("%s and %s for approle authentication cannot be empty", types.EnvAvpRoleID, types.EnvAvpSecretID)
 				}
 			case types.GithubAuth:
 				if v.IsSet(types.EnvAvpGithubToken) {
-					auth = vault.NewGithubAuth(v.GetString(types.EnvAvpGithubToken), v.GetString(types.EnvAvpMountPath))
+					auth = vault.NewGithubAuth(v.GetString(types.EnvAvpGithubToken), v.GetString(types.EnvAvpMountPath), vaultNamespace)
 				} else {
 					return nil, fmt.Errorf("%s for github authentication cannot be empty", types.EnvAvpGithubToken)
 				}
@@ -108,12 +114,14 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 							v.GetString(types.EnvAvpK8sRole),
 							v.GetString(types.EnvAvpK8sMountPath),
 							v.GetString(types.EnvAvpK8sTokenPath),
+							vaultNamespace,
 						)
 					} else {
 						auth = vault.NewK8sAuth(
 							v.GetString(types.EnvAvpK8sRole),
 							v.GetString(types.EnvAvpMountPath),
 							v.GetString(types.EnvAvpK8sTokenPath),
+							vaultNamespace,
 						)
 					}
 				} else {
@@ -127,7 +135,7 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				}
 			case types.UserPass:
 				if v.IsSet(types.EnvAvpUsername) && v.IsSet(types.EnvAvpPassword) {
-					auth = vault.NewUserPassAuth(v.GetString(types.EnvAvpUsername), v.GetString(types.EnvAvpPassword), v.GetString(types.EnvAvpMountPath))
+					auth = vault.NewUserPassAuth(v.GetString(types.EnvAvpUsername), v.GetString(types.EnvAvpPassword), v.GetString(types.EnvAvpMountPath), vaultNamespace)
 				} else {
 					return nil, fmt.Errorf("%s and %s for userpass authentication cannot be empty", types.EnvAvpUsername, types.EnvAvpPassword)
 				}

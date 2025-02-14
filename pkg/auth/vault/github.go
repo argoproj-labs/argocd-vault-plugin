@@ -15,13 +15,15 @@ const (
 type GithubAuth struct {
 	AccessToken string
 	MountPath   string
+	Namespace   string
 }
 
 // NewGithubAuth initializes a new GithubAuth with token
-func NewGithubAuth(token, mountPath string) *GithubAuth {
+func NewGithubAuth(token, mountPath string, namespace string) *GithubAuth {
 	githubAuth := &GithubAuth{
 		AccessToken: token,
 		MountPath:   githubMountPath,
+		Namespace:   namespace,
 	}
 	if mountPath != "" {
 		githubAuth.MountPath = mountPath
@@ -32,7 +34,7 @@ func NewGithubAuth(token, mountPath string) *GithubAuth {
 
 // Authenticate authenticates with Vault and returns a token
 func (g *GithubAuth) Authenticate(vaultClient *api.Client) error {
-	err := utils.LoginWithCachedToken(vaultClient, "github")
+	err := utils.LoginWithCachedToken(vaultClient, fmt.Sprintf("github_%s", g.Namespace))
 	if err != nil {
 		utils.VerboseToStdErr("Hashicorp Vault cannot retrieve cached token: %v. Generating a new one", err)
 	} else {
@@ -52,7 +54,7 @@ func (g *GithubAuth) Authenticate(vaultClient *api.Client) error {
 	utils.VerboseToStdErr("Hashicorp Vault authentication response: %v", data)
 
 	// If we cannot write the Vault token, we'll just have to login next time. Nothing showstopping.
-	err = utils.SetToken(vaultClient, "github", data.Auth.ClientToken)
+	err = utils.SetToken(vaultClient, fmt.Sprintf("github_%s", g.Namespace), data.Auth.ClientToken)
 	if err != nil {
 		utils.VerboseToStdErr("Hashicorp Vault cannot cache token for future runs: %v", err)
 	}

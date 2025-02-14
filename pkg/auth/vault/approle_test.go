@@ -14,14 +14,14 @@ func TestAppRoleLogin(t *testing.T) {
 	cluster, roleID, secretID := helpers.CreateTestAppRoleVault(t)
 	defer cluster.Cleanup()
 
-	appRole := vault.NewAppRoleAuth(roleID, secretID, "")
+	appRole := vault.NewAppRoleAuth(roleID, secretID, "", "default")
 
 	err := appRole.Authenticate(cluster.Cores[0].Client)
 	if err != nil {
 		t.Fatalf("expected no errors but got: %s", err)
 	}
 
-	cachedToken, err := utils.ReadExistingToken(fmt.Sprintf("approle_%s", roleID))
+	cachedToken, err := utils.ReadExistingToken(fmt.Sprintf("approle_default_%s", roleID))
 	if err != nil {
 		t.Fatalf("expected cached vault token but got: %s", err)
 	}
@@ -31,7 +31,7 @@ func TestAppRoleLogin(t *testing.T) {
 		t.Fatalf("expected no errors but got: %s", err)
 	}
 
-	newCachedToken, err := utils.ReadExistingToken(fmt.Sprintf("approle_%s", roleID))
+	newCachedToken, err := utils.ReadExistingToken(fmt.Sprintf("approle_default_%s", roleID))
 	if err != nil {
 		t.Fatalf("expected cached vault token but got: %s", err)
 	}
@@ -44,14 +44,14 @@ func TestAppRoleLogin(t *testing.T) {
 	secondCluster, secondRoleID, secondSecretID := helpers.CreateTestAppRoleVault(t)
 	defer secondCluster.Cleanup()
 
-	secondAppRole := vault.NewAppRoleAuth(secondRoleID, secondSecretID, "")
+	secondAppRole := vault.NewAppRoleAuth(secondRoleID, secondSecretID, "", "default")
 
 	err = secondAppRole.Authenticate(secondCluster.Cores[0].Client)
 	if err != nil {
 		t.Fatalf("expected no errors but got: %s", err)
 	}
 
-	secondCachedToken, err := utils.ReadExistingToken(fmt.Sprintf("approle_%s", secondRoleID))
+	secondCachedToken, err := utils.ReadExistingToken(fmt.Sprintf("approle_default_%s", secondRoleID))
 	if err != nil {
 		t.Fatalf("expected cached vault token but got: %s", err)
 	}
@@ -59,5 +59,21 @@ func TestAppRoleLogin(t *testing.T) {
 	// Both cache should be different
 	if bytes.Compare(cachedToken, secondCachedToken) == 0 {
 		t.Fatalf("expected different tokens but got %s", secondCachedToken)
+	}
+
+	// We create a new connection to a specific namespace and create a different cache
+	namespaceCluster, namespaceRoleID, namespaceSecretID := helpers.CreateTestAppRoleVault(t)
+	defer namespaceCluster.Cleanup()
+
+	namespaceAppRole := vault.NewAppRoleAuth(namespaceRoleID, namespaceSecretID, "", "my-other-namespace")
+
+	err = namespaceAppRole.Authenticate(namespaceCluster.Cores[0].Client)
+	if err != nil {
+		t.Fatalf("expected no errors but got: %s", err)
+	}
+
+	_, err = utils.ReadExistingToken(fmt.Sprintf("approle_my-other-namespace_%s", namespaceRoleID))
+	if err != nil {
+		t.Fatalf("expected cached vault token but got: %s", err)
 	}
 }

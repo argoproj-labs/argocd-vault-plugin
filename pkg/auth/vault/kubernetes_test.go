@@ -46,14 +46,14 @@ func TestKubernetesAuth(t *testing.T) {
 		t.Fatalf("error writing token: %s", err)
 	}
 
-	k8s := vault.NewK8sAuth("role", "", string(filepath.Join(saPath, "token")))
+	k8s := vault.NewK8sAuth("role", "", string(filepath.Join(saPath, "token")), "default")
 
 	err = k8s.Authenticate(cluster.Cores[0].Client)
 	if err != nil {
 		t.Fatalf("expected no errors but got: %s", err)
 	}
 
-	cachedToken, err := utils.ReadExistingToken("kubernetes")
+	cachedToken, err := utils.ReadExistingToken("kubernetes_default")
 	if err != nil {
 		t.Fatalf("expected cached vault token but got: %s", err)
 	}
@@ -63,13 +63,29 @@ func TestKubernetesAuth(t *testing.T) {
 		t.Fatalf("expected no errors but got: %s", err)
 	}
 
-	newCachedToken, err := utils.ReadExistingToken("kubernetes")
+	newCachedToken, err := utils.ReadExistingToken("kubernetes_default")
 	if err != nil {
 		t.Fatalf("expected cached vault token but got: %s", err)
 	}
 
 	if bytes.Compare(cachedToken, newCachedToken) != 0 {
 		t.Fatalf("expected same token %s but got %s", cachedToken, newCachedToken)
+	}
+
+	// We create a new connection to a specific namespace and create a different cache
+	namespaceCluster := helpers.CreateTestAuthVault(t)
+	defer namespaceCluster.Cleanup()
+
+	namespaceK8s := vault.NewK8sAuth("role", "", string(filepath.Join(saPath, "token")), "my-other-namespace")
+
+	err = namespaceK8s.Authenticate(namespaceCluster.Cores[0].Client)
+	if err != nil {
+		t.Fatalf("expected no errors but got: %s", err)
+	}
+
+	_, err = utils.ReadExistingToken("kubernetes_my-other-namespace")
+	if err != nil {
+		t.Fatalf("expected cached vault token but got: %s", err)
 	}
 
 	err = removeK8sToken()

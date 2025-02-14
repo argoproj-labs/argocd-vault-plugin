@@ -300,6 +300,90 @@ func TestMain(t *testing.T) {
 		}
 	})
 
+	t.Run("will create cache per namespace when provided", func(t *testing.T) {
+
+		// Purging token cache before launching this test
+		err := utils.PurgeTokenCache()
+		if err != nil {
+			t.Fatalf("fail to purge tocken cache: %s", err.Error())
+		}
+
+		args := []string{"../fixtures/input/nonempty"}
+		cmd := NewGenerateCommand()
+
+		b := bytes.NewBufferString("")
+		e := bytes.NewBufferString("")
+		cmd.SetArgs(args)
+		cmd.SetOut(b)
+		cmd.SetErr(e)
+		cmd.Execute()
+		out, err := io.ReadAll(b) // Read buffer to bytes
+		if err != nil {
+			t.Fatal(err)
+		}
+		stderr, err := io.ReadAll(e) // Read buffer to bytes
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		buf, err := os.ReadFile("../fixtures/output/all.yaml")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// We first check that the command was successful to make sure it reached the token caching part
+		expected := string(buf)
+		if string(out) != expected {
+			t.Fatalf("expected %s\n\nbut got\n\n%s\nerr: %s", expected, string(out), string(stderr))
+		}
+
+		// Default namespace cache is expected
+		_, err = utils.ReadExistingToken(fmt.Sprintf("approle_default_%s", roleid))
+		if err != nil {
+			t.Fatalf("expected cached vault token but got: %s", err)
+		}
+
+		// Setting the vault namespace environment variable
+		os.Setenv("VAULT_NAMESPACE", `test-namespace`)
+
+		nsArgs := []string{"../fixtures/input/nonempty"}
+		nsCmd := NewGenerateCommand()
+
+		nsB := bytes.NewBufferString("")
+		nsE := bytes.NewBufferString("")
+		nsCmd.SetArgs(nsArgs)
+		nsCmd.SetOut(nsB)
+		nsCmd.SetErr(nsE)
+		nsCmd.Execute()
+		nsOut, nsErr := io.ReadAll(nsB) // Read buffer to bytes
+		if nsErr != nil {
+			t.Fatal(nsErr)
+		}
+		nsStderr, nsErr := io.ReadAll(nsE) // Read buffer to bytes
+		if nsErr != nil {
+			t.Fatal(nsErr)
+		}
+
+		nsBuf, nsErr := os.ReadFile("../fixtures/output/all.yaml")
+		if nsErr != nil {
+			t.Fatal(nsErr)
+		}
+
+		// We first check that the command was successful to make sure it reached the token caching part
+		nsExpected := string(nsBuf)
+		if string(nsOut) != nsExpected {
+			t.Fatalf("expected %s\n\nbut got\n\n%s\nerr: %s", nsExpected, string(nsOut), string(nsStderr))
+		}
+
+		// Namespaced cache is expected
+		_, nsErr = utils.ReadExistingToken(fmt.Sprintf("approle_test-namespace_%s", roleid))
+		if nsErr != nil {
+			t.Fatalf("expected cached vault token but got: %s", nsErr)
+		}
+
+		os.Unsetenv("VAULT_NAMESPACE")
+	})
+
 	os.Unsetenv("AVP_TYPE")
 	os.Unsetenv("VAULT_ADDR")
 	os.Unsetenv("AVP_AUTH_TYPE")

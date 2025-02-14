@@ -20,6 +20,7 @@ const (
 	EnvAvpPathPrefix       = "AVP_PATH_PREFIX"
 	EnvAWSRegion           = "AWS_REGION"
 	EnvVaultAddress        = "VAULT_ADDR"
+	EnvVaultNamespace      = "VAULT_NAMESPACE"
 	EnvYCLKeyID            = "AVP_YCL_KEY_ID"
 	EnvYCLServiceAccountID = "AVP_YCL_SERVICE_ACCOUNT_ID"
 	EnvYCLPrivateKey       = "AVP_YCL_PRIVATE_KEY"

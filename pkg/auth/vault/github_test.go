@@ -14,14 +14,14 @@ func TestGithubLogin(t *testing.T) {
 	cluster := helpers.CreateTestAuthVault(t)
 	defer cluster.Cleanup()
 
-	github := vault.NewGithubAuth("123", "")
+	github := vault.NewGithubAuth("123", "", "default")
 
 	err := github.Authenticate(cluster.Cores[0].Client)
 	if err != nil {
 		t.Fatalf("expected no errors but got: %s", err)
 	}
 
-	cachedToken, err := utils.ReadExistingToken("github")
+	cachedToken, err := utils.ReadExistingToken("github_default")
 	if err != nil {
 		t.Fatalf("expected cached vault token but got: %s", err)
 	}
@@ -31,12 +31,28 @@ func TestGithubLogin(t *testing.T) {
 		t.Fatalf("expected no errors but got: %s", err)
 	}
 
-	newCachedToken, err := utils.ReadExistingToken("github")
+	newCachedToken, err := utils.ReadExistingToken("github_default")
 	if err != nil {
 		t.Fatalf("expected cached vault token but got: %s", err)
 	}
 
 	if bytes.Compare(cachedToken, newCachedToken) != 0 {
 		t.Fatalf("expected same token %s but got %s", cachedToken, newCachedToken)
+	}
+
+	// We create a new connection to a specific namespace and create a different cache
+	namespaceCluster := helpers.CreateTestAuthVault(t)
+	defer namespaceCluster.Cleanup()
+
+	namespaceGithub := vault.NewGithubAuth("123", "", "my-other-namespace")
+
+	err = namespaceGithub.Authenticate(namespaceCluster.Cores[0].Client)
+	if err != nil {
+		t.Fatalf("expected no errors but got: %s", err)
+	}
+
+	_, err = utils.ReadExistingToken("github_my-other-namespace")
+	if err != nil {
+		t.Fatalf("expected cached vault token but got: %s", err)
 	}
 }
