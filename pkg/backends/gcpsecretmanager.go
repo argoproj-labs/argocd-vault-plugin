@@ -2,6 +2,7 @@ package backends
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 
@@ -63,6 +64,7 @@ func (a *GCPSecretManager) GetSecrets(path string, version string, annotations m
 
 	secretName := matches[GCPPath.SubexpIndex("secretid")]
 	secretData := result.Payload.Data
+	json.Unmarshal(secretData, &data)
 	data[secretName] = string(secretData)
 
 	return data, nil
