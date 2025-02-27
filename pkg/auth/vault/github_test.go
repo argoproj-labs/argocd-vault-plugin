@@ -21,7 +21,8 @@ func TestGithubLogin(t *testing.T) {
 		t.Fatalf("expected no errors but got: %s", err)
 	}
 
-	cachedToken, err := utils.ReadExistingToken("github")
+	cachedToken, err := utils.ReadExistingToken(cluster.Cores[0].Client, "github")
+
 	if err != nil {
 		t.Fatalf("expected cached vault token but got: %s", err)
 	}
@@ -31,7 +32,8 @@ func TestGithubLogin(t *testing.T) {
 		t.Fatalf("expected no errors but got: %s", err)
 	}
 
-	newCachedToken, err := utils.ReadExistingToken("github")
+	newCachedToken, err := utils.ReadExistingToken(cluster.Cores[0].Client, "github")
+
 	if err != nil {
 		t.Fatalf("expected cached vault token but got: %s", err)
 	}

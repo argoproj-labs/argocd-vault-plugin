@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"crypto/sha1"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -30,13 +32,27 @@ func PurgeTokenCache() error {
 	return nil
 }
 
-func ReadExistingToken(identifier string) ([]byte, error) {
+func GetConfigFileName(vaultClient *api.Client, identifier string) string {
+	var config_prefix = identifier
+	var config_ext = ".json"
+	var config_name = "_" + vaultClient.Namespace()
+
+	hasher := sha1.New()
+	hasher.Write([]byte(vaultClient.Address()))
+	var config_addr_name = "_" + base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+
+	config := config_prefix + config_addr_name + config_name + config_ext
+
+	return config
+}
+
+func ReadExistingToken(vaultClient *api.Client, identifier string) ([]byte, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
 	}
 
-	avpConfigPath := filepath.Join(home, ".avp", fmt.Sprintf("%s_config.json", identifier))
+	avpConfigPath := filepath.Join(home, ".avp", GetConfigFileName(vaultClient, identifier))
 	if _, err := os.Stat(avpConfigPath); err != nil {
 		return nil, err
 	}
@@ -63,8 +79,8 @@ func ReadExistingToken(identifier string) ([]byte, error) {
 func LoginWithCachedToken(vaultClient *api.Client, identifier string) error {
 	if viper.GetBool("disableCache") {
 		return fmt.Errorf("Token cache feature is disabled")
-	}	else {
-		byteValue, err := ReadExistingToken(identifier)
+	} else {
+		byteValue, err := ReadExistingToken(vaultClient, identifier)
 		if err != nil {
 			return err
 		}
@@ -94,7 +110,7 @@ func SetToken(vaultClient *api.Client, identifier string, token string) error {
 
 	if viper.GetBool("disableCache") {
 		return fmt.Errorf("Token cache feature is disabled")
-	}	else {
+	} else {
 		home, err := os.UserHomeDir()
 		if err != nil {
 			return fmt.Errorf("Could not access home directory: %s", err.Error())
@@ -107,15 +123,16 @@ func SetToken(vaultClient *api.Client, identifier string, token string) error {
 				return fmt.Errorf("Could not create avp directory: %s", err.Error())
 			}
 		}
-
 		data := map[string]interface{}{
-			"vault_token": token,
+			"vault_addr":      os.Getenv("VAULT_ADDR"),
+			"vault_namespace": os.Getenv("VAULT_NAMESPACE"),
+			"vault_token":     token,
 		}
 		file, err := json.MarshalIndent(data, "", " ")
 		if err != nil {
 			return fmt.Errorf("Could not marshal token data: %s", err.Error())
 		}
-		err = os.WriteFile(filepath.Join(path, fmt.Sprintf("%s_config.json", identifier)), file, 0644)
+		err = os.WriteFile(filepath.Join(path, GetConfigFileName(vaultClient, identifier)), file, 0644)
 		if err != nil {
 			return fmt.Errorf("Could not write token to file, will need to login to Vault on subsequent runs: %s", err.Error())
 		}

@@ -13,9 +13,10 @@ import (
 
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/helpers"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
+	"github.com/hashicorp/vault/api"
 )
 
-func writeToken(identifier string, token string) error {
+func writeToken(identifier string, token string, client *api.Client) error {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
@@ -23,10 +24,12 @@ func writeToken(identifier string, token string) error {
 	path := filepath.Join(home, ".avp")
 	os.Mkdir(path, 0755)
 	data := map[string]interface{}{
-		"vault_token": token,
+		"vault_addr":      os.Getenv("VAULT_ADDR"),
+		"vault_namespace": os.Getenv("VAULT_NAMESPACE"),
+		"vault_token":     token,
 	}
 	file, _ := json.MarshalIndent(data, "", " ")
-	err = os.WriteFile(filepath.Join(path, fmt.Sprintf("%s_config.json", identifier)), file, 0644)
+	err = os.WriteFile(filepath.Join(path, utils.GetConfigFileName(client, identifier)), file, 0644)
 	if err != nil {
 		return err
 	}
@@ -43,9 +46,9 @@ func removeToken() error {
 	return nil
 }
 
-func readToken(identifier string) interface{} {
+func readToken(client *api.Client, identifier string) interface{} {
 	home, _ := os.UserHomeDir()
-	path := filepath.Join(home, ".avp", fmt.Sprintf("%s_config.json", identifier))
+	path := filepath.Join(home, ".avp", utils.GetConfigFileName(client, identifier))
 	dat, _ := os.ReadFile(path)
 	var result map[string]interface{}
 	json.Unmarshal([]byte(dat), &result)
@@ -57,7 +60,7 @@ func TestCheckExistingToken(t *testing.T) {
 	defer ln.Close()
 
 	t.Run("will set token if valid", func(t *testing.T) {
-		err := writeToken("test", roottoken)
+		err := writeToken("test", roottoken, client)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -88,7 +91,7 @@ func TestCheckExistingToken(t *testing.T) {
 		}
 
 		dir, _ := os.UserHomeDir()
-		expected := fmt.Sprintf("stat %s/.avp/test_config.json: no such file or directory", dir)
+		expected := fmt.Sprintf("CreateFile %s/.avp/%s: The system cannot find the path specified.", dir, utils.GetConfigFileName(client))
 		if err.Error() != expected {
 			t.Errorf("expected: %s, got: %s.", expected, err.Error())
 		}

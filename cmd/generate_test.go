@@ -294,7 +294,7 @@ func TestMain(t *testing.T) {
 		}
 
 		// No cache is expected
-		_, err = utils.ReadExistingToken(fmt.Sprintf("approle_%s", roleid))
+		_, err = utils.ReadExistingToken(cluster.Cores[0].Client, fmt.Sprintf("approle_%s", roleid))
 		if err == nil {
 			t.Fatalf("expected no cache but found one")
 		}
