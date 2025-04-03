@@ -23,6 +23,38 @@ var modifiers = map[string]func([]string, interface{}) (interface{}, error){
 	"yamlParse":    yamlParse,
 	"indent":       indent,
 	"sha256sum":    sha256sum,
+	"urldecode":    urldecode,
+	"urlencode":    urlencode,
+}
+
+func urlencode(params []string, input interface{}) (interface{}, error) {
+	if len(params) > 0 {
+		return nil, fmt.Errorf("invalid parameters")
+	}
+	switch input.(type) {
+	case string:
+		{
+			s := strings.ReplaceAll(input.(string), " ", "%20")
+			return s, nil
+		}
+	default:
+		return nil, fmt.Errorf("invalid datatype %v, expected string", reflect.TypeOf(input))
+	}
+}
+
+func urldecode(params []string, input interface{}) (interface{}, error) {
+	if len(params) > 0 {
+		return nil, fmt.Errorf("invalid parameters")
+	}
+	switch input.(type) {
+	case string:
+		{
+			s := strings.ReplaceAll(input.(string), "%20", " ")
+			return s, nil
+		}
+	default:
+		return nil, fmt.Errorf("invalid datatype %v, expected string", reflect.TypeOf(input))
+	}
 }
 
 func indent(params []string, input interface{}) (interface{}, error) {
