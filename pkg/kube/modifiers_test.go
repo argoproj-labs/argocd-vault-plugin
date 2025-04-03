@@ -245,3 +245,55 @@ func TestSha256Sum_success(t *testing.T) {
 	assertErrorEqual(t, nil, err)
 	assertResultEqual(t, expected, res)
 }
+
+func TestUrlEncode_invalidParams(t *testing.T) {
+	var data interface{} = "mysecret"
+	expectedErr := fmt.Errorf("invalid parameters")
+	_, err := urlencode([]string{"astring"}, data)
+	assertErrorEqual(t, expectedErr, err)
+}
+
+func TestUrlEncode_invalidDataType(t *testing.T) {
+	var data interface{} = map[string]interface{}{
+		"data": map[string]interface{}{
+			"subkey": "secret",
+		},
+	}
+	expectedErr := fmt.Errorf("invalid datatype map[string]interface {}, expected string")
+	_, err := urlencode([]string{}, data)
+	assertErrorEqual(t, expectedErr, err)
+}
+
+func TestUrlEncode_success(t *testing.T) {
+	var data interface{} = "my secret"
+	var expected interface{} = "my%20secret"
+	res, err := urlencode([]string{}, data)
+	assertErrorEqual(t, nil, err)
+	assertResultEqual(t, expected, res)
+}
+
+func TestUrlDecode_invalidParams(t *testing.T) {
+	var data interface{} = "my%20secret"
+	expectedErr := fmt.Errorf("invalid parameters")
+	_, err := urldecode([]string{"astring"}, data)
+	assertErrorEqual(t, expectedErr, err)
+}
+
+func TestUrlDecode_invalidDataType(t *testing.T) {
+	var data interface{} = map[string]interface{}{
+		"data": map[string]interface{}{
+			"subkey": "secret",
+		},
+	}
+	expectedErr := fmt.Errorf("invalid datatype map[string]interface {}, expected string")
+	_, err := urldecode([]string{}, data)
+	assertErrorEqual(t, expectedErr, err)
+}
+
+func TestUrlDecode_success(t *testing.T) {
+	var data interface{} = "my%20secret"
+	var expected interface{} = "my secret"
+	res, err := urldecode([]string{}, data)
+	assertErrorEqual(t, nil, err)
+	assertResultEqual(t, expected, res)
+}

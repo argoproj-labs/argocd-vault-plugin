@@ -92,14 +92,14 @@ metadata:
 **Note**: This ignored for secret managers that don't allow versioning, meaning the latest version is returned
 
 #### Inline-path placeholders
-An inline-path placeholder allows you to specify the path, key, and optionally, the version to use for a specific placeholder. This means you can inject values from _multiple distinct_ secrets in your secrets manager into the same YAML. 
+An inline-path placeholder allows you to specify the path, key, and optionally, the version to use for a specific placeholder. This means you can inject values from _multiple distinct_ secrets in your secrets manager into the same YAML.
 
 Valid examples:
 
 - `<path:some/path#secret-key>`
 - `<path:some/path#secret-key#version>`
 
-If the `version` is omitted (first example), the latest version of the secret is retrieved. 
+If the `version` is omitted (first example), the latest version of the secret is retrieved.
 
 ##### Specifying the path of a secret
 The only way to specify the path is in the placeholder itself: the string `path:` followed by the path in your secret manager to the secret. The `avp.kubernetes.io/path` annotation has _no effect_ on these placeholders.
@@ -112,9 +112,9 @@ The only way to specify the version is in the placeholder itself: the string fol
 #### Special behavior
 
 ##### Base64 placeholders
-Some tools like Kustomize secret generator will create Secrets with `data` fields containing base64 encoded strings from the source files. If you try to use `<placeholder>`s in the source files, they will be output in a base64 format. 
+Some tools like Kustomize secret generator will create Secrets with `data` fields containing base64 encoded strings from the source files. If you try to use `<placeholder>`s in the source files, they will be output in a base64 format.
 
-The plugin can handle this case by finding any base64 encoded placeholders (either generic or inline-path), replace them, and re-base64 encode the result. 
+The plugin can handle this case by finding any base64 encoded placeholders (either generic or inline-path), replace them, and re-base64 encode the result.
 
 For example, given this input:
 ```yaml
@@ -211,9 +211,9 @@ fieldRef:
 ```
 
 ##### Removing keys with missing values
-By default, AVP will return an error if there is a `<placeholder>` that has no matching key in the secrets manager. 
+By default, AVP will return an error if there is a `<placeholder>` that has no matching key in the secrets manager.
 
-You can override this by using the annotation `avp.kubernetes.io/remove-missing`. This will remove keys whose values are missing from Vault from the entire YAML. 
+You can override this by using the annotation `avp.kubernetes.io/remove-missing`. This will remove keys whose values are missing from Vault from the entire YAML.
 
 For example, given this input:
 ```yaml
@@ -336,6 +336,21 @@ spec:
     metadata:
       annotations:
         checksum/secret: <path:secrets/data/db#certs | sha256sum>
+```
+
+##### `urlencode` / `urldecode`
+
+The urlencode and urldecode modifiers are used to encode a string into a format that can be safely included in a URL
+
+Valid examples:
+
+```yaml
+kind: Deployment
+spec:
+  template:
+    metadata:
+      annotations:
+        checksum/secret: <path:secrets/data/db#certs | urlencode>
 ```
 
 ### Error Handling
