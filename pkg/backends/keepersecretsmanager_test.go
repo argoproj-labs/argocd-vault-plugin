@@ -49,7 +49,7 @@ func recordFromJSON(data string) *ksm.Record {
 
 func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
 	type args struct {
-		data string
+		records []string
 	}
 	tests := []struct {
 		name    string
@@ -60,7 +60,8 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
 		{
 			name: "should handle a secret of type login",
 			args: args{
-				data: `{
+				records: []string{`
+{
 	"uid": "some-uid",
 	"title": "some-title",
 	"type": "login",
@@ -98,6 +99,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
 	"custom": [],
 	"files": []
 }`,
+				},
 			},
 			want: map[string]interface{}{
 				"login":    "some-secret-username",
@@ -107,7 +109,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
 		{
 			name: "should handle a secret of type databaseCredentials",
 			args: args{
-				data: `
+				records: []string{`
 {
     "uid": "some-uid",
     "title": "some-title",
@@ -153,6 +155,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
     "custom": [],
     "files": []
 }`,
+				},
 			},
 			want: map[string]interface{}{
 				"host": map[string]interface{}{
@@ -167,7 +170,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
 		{
 			name: "should handle a secret of type encryptedNotes",
 			args: args{
-				data: `
+				records: []string{`
 {
     "uid": "some-uid",
     "title": "some-title",
@@ -194,6 +197,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
     "custom": [],
     "files": []
 }`,
+				},
 			},
 			want: map[string]interface{}{
 				"note": "some-value",
@@ -202,7 +206,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
 		{
 			name: "should handle a secret with custom fields",
 			args: args{
-				data: `
+				records: []string{`
 {
     "uid": "some-uid",
     "title": "some-title",
@@ -237,6 +241,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
 	],
     "files": []
 }`,
+				},
 			},
 			want: map[string]interface{}{
 				"note":   "some-value",
@@ -246,7 +251,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
 		{
 			name: "should not overwrite a built in field when a custom field of the same label exists",
 			args: args{
-				data: `
+				records: []string{`
 {
     "uid": "some-uid",
     "title": "some-title",
@@ -281,6 +286,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
 	],
     "files": []
 }`,
+				},
 			},
 			want: map[string]interface{}{
 				"note": "some-value",
@@ -289,7 +295,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
 		{
 			name: "should omit fields that have multiple values",
 			args: args{
-				data: `
+				records: []string{`
 {
     "uid": "some-uid",
     "title": "some-title",
@@ -324,6 +330,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
     "custom": [],
     "files": []
 }`,
+				},
 			},
 			want: map[string]interface{}{
 				"note": "some-value",
@@ -333,7 +340,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
 		{
 			name: "should omit fields that don't have a value",
 			args: args{
-				data: `
+				records: []string{`
 {
     "uid": "some-uid",
     "title": "some-title",
@@ -364,6 +371,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
     "custom": [],
     "files": []
 }`,
+				},
 			},
 			want: map[string]interface{}{
 				"note": "some-value",
@@ -372,7 +380,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
 		{
 			name: "should omit fields that don't have a type",
 			args: args{
-				data: `
+				records: []string{`
 {
     "uid": "some-uid",
     "title": "some-title",
@@ -405,6 +413,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
     "custom": [],
     "files": []
 }`,
+				},
 			},
 			want: map[string]interface{}{
 				"note": "some-value",
@@ -413,7 +422,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
 		{
 			name: "should omit fields that don't have a label or type",
 			args: args{
-				data: `
+				records: []string{`
 {
     "uid": "some-uid",
     "title": "some-title",
@@ -445,6 +454,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
     "custom": [],
     "files": []
 }`,
+				},
 			},
 			want: map[string]interface{}{
 				"note": "some-value",
@@ -453,7 +463,7 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
 		{
 			name: "should omit fields that don't have a value that is not a slice",
 			args: args{
-				data: `
+				records: []string{`
 {
     "uid": "some-uid",
     "title": "some-title",
@@ -485,21 +495,113 @@ func TestKeeperSecretsManager_GetSecrets(t *testing.T) {
     "custom": [],
     "files": []
 }`,
+				},
 			},
 			want: map[string]interface{}{
 				"note": "some-value",
 			},
 		},
+
+		{
+			name: "should handle multiple records with the same uid",
+			args: args{
+				records: []string{`
+{
+	"uid": "some-uid",
+	"title": "some-title",
+	"type": "login",
+	"fields": [
+		{
+			"label": "login",
+			"type": "login",
+			"value": [
+				"some-secret-username"
+			]
+		},
+		{
+			"label": "password",
+			"type": "password",
+			"value": [
+				"some-secret-password"
+			]
+		},
+		{
+			"label": "url",
+			"type": "url",
+			"value": []
+		},
+		{
+			"label": "fileRef",
+			"type": "fileRef",
+			"value": []
+		},
+		{
+			"label": "oneTimeCode",
+			"type": "oneTimeCode",
+			"value": []
+		}
+	],
+	"custom": [],
+	"files": []
+}`, `
+{
+	"uid": "some-uid",
+	"title": "some-title",
+	"type": "login",
+	"fields": [
+		{
+			"label": "login",
+				"type": "login",
+				"value": [
+				"some-secret-username"
+				]
+		},
+			{
+			"label": "password",
+				"type": "password",
+				"value": [
+				"some-secret-password"
+				]
+		},
+			{
+			"label": "url",
+				"type": "url",
+				"value": []
+		},
+			{
+			"label": "fileRef",
+				"type": "fileRef",
+				"value": []
+		},
+			{
+			"label": "oneTimeCode",
+				"type": "oneTimeCode",
+				"value": []
+		}
+		],
+	"custom": [],
+	"files": []
+}`,
+				},
+			},
+			want: map[string]interface{}{
+				"login":    "some-secret-username",
+				"password": "some-secret-password",
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			records := make([]*ksm.Record, len(tt.args.records))
+			for i, recordStr := range tt.args.records {
+				records[i] = recordFromJSON(recordStr)
+			}
+
 			a := backends.NewKeeperSecretsManagerBackend(
 				MockKeeperClient{
 					mocks: map[string]mockResults{
 						"path": {
-							Records: []*ksm.Record{
-								recordFromJSON(tt.args.data),
-							},
+							Records: records,
 						},
 					},
 				},
