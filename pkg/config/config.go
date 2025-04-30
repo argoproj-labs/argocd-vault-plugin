@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 
 	gcpsm "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/1Password/connect-sdk-go/connect"
@@ -25,6 +26,10 @@ import (
 	awssm "github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/hashicorp/vault/api"
 	ksm "github.com/keeper-security/secrets-manager-go/core"
+	"github.com/oracle/oci-go-sdk/v65/common"
+	ociauth "github.com/oracle/oci-go-sdk/v65/common/auth"
+	ocism "github.com/oracle/oci-go-sdk/v65/secrets"
+	ocivault "github.com/oracle/oci-go-sdk/v65/vault"
 	"github.com/spf13/viper"
 	ycsdk "github.com/yandex-cloud/go-sdk"
 	"github.com/yandex-cloud/go-sdk/iamkey"
@@ -47,6 +52,7 @@ var backendPrefixes []string = []string{
 	"aws",
 	"azure",
 	"google",
+	"oci",
 	"sops",
 	"op_connect",
 	"k8s_secret",
@@ -179,6 +185,50 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 			client := awssm.NewFromConfig(s)
 			backend = backends.NewAWSSecretsManagerBackend(client)
 		}
+	case types.OCIVaultbackend:
+		{
+
+			if !v.IsSet(types.EnvOCIVaultId) ||
+				!v.IsSet(types.EnvOCIVaultCompartmentId) {
+				return nil, fmt.Errorf(
+					"%s and %s are required for OCI Vault Service",
+					types.EnvOCIVaultId,
+					types.EnvOCIVaultCompartmentId,
+				)
+			}
+
+			var secret_client ocism.SecretsClient
+			var vault_client ocivault.VaultsClient
+			var err error
+			// Try using DefaultConfigProvider
+
+			p1 := common.NewRawConfigurationProvider(
+				v.GetString(types.EnvOCITenancy),
+				v.GetString(types.EnvOCIUser),
+				v.GetString(types.EnvOCIRegion),
+				v.GetString(types.EnvOCIFingerprint),
+				v.GetString(types.EnvOCIKeyFile),
+			    common.String(v.GetString(types.EnvOCIKeyPassphrase)))
+			secret_client, _ = ocism.NewSecretsClientWithConfigurationProvider(p1)
+			vault_client, err = ocivault.NewVaultsClientWithConfigurationProvider(p1)
+			if err == nil {
+				utils.VerboseToStdErr("Successfully created OCI Secrets client with DefaultConfigProvider\n")
+			} else {
+			// Fallback to InstancePrincipalConfigurationProvider if DefaultConfigProvider fails
+				utils.VerboseToStdErr("DefaultConfigProvider failed with error %v", err)
+				provider, err := ociauth.InstancePrincipalConfigurationProvider()
+				if err != nil {
+					utils.VerboseToStdErr("Error creating InstancePrincipalConfigurationProvider: %v", err)
+				}
+				secret_client, _ = ocism.NewSecretsClientWithConfigurationProvider(provider)
+				vault_client, err = ocivault.NewVaultsClientWithConfigurationProvider(provider)
+				if err != nil {
+					utils.VerboseToStdErr("Error creating Secrets client with InstancePrincipalConfigurationProviderr: %v", err)
+				}
+			}
+			backend = backends.NewOCIVaultBackend(secret_client,vault_client,v.GetString(types.EnvOCIVaultId),v.GetString(types.EnvOCIVaultCompartmentId))
+		}
+
 	case types.GCPSecretManagerbackend:
 		{
 			ctx := context.Background()

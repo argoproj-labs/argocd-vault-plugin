@@ -224,6 +224,46 @@ fDGt+yaf3RaZbVwHSVLzxiXGsu1WQJde3uJeNh5c6z+5
 			},
 			"*backends.KubernetesSecret",
 		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE": "ocivault",
+				"AVP_OCI_TENANCY": "ocid1.tenancy.oc1..aaaaaaaa",
+				"AVP_OCI_USER": "ocid1.user.oc1..aaaaaaaa",
+				"AVP_OCI_REGION": "test-region",
+				"AVP_OCI_FINGERPRINT": "test-fingerprint",
+				"AVP_OCI_VAULT_ID": "test-vault-id",
+				"AVP_OCI_VAULT_COMPARTMENT_ID": "test-vault-comp-id",
+				"AVP_OCI_KEY_FILE": `-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCyDz0+WvWGmcym
+OEBQ0zhWO1Abs/UQ1v0A7kXQpTgwAFKO0SR56jJBII1VmBuctDUYkdO55FvAuhNv
+WTQcxi0WjVejZ7npNhyU1vcDVmJGmVc1vgb6Jo+pfDGq/EnkaNthpE50+jPeA3jD
+l6/NHaHb4f9UUpX7o/YfG8RQ1kF7Dkq1YqVEPBrRfZOzenIE0CQjRjR6GnwdAePB
+GtrmHP3ZOM/t5QlKYd68z2xQfbvl88/W99PnjKMLmhyObWzwtcpWsjnjLm8vg49X
+ZOa7+y14/Ev/FR7HOAwsXpXFGtPiib5JcoFIddc+bdjlSaINx3nOq9lal/nNHv8Q
+hcSMg+RxAgMBAAECggEAV3EUamLQ4GD3F0nYi9iueep21KPzXWm2pZZdwrDgfvIp
+mOksOJLCSylpPveL19DHomE60LdMN8Epei0cYmUQD1sqBp0Rt21Ta+SFOaZabMEx
+CrtfQcleE6Vh3s42m2zDD5hYzylv/z9FNwhu1RQQQKMjeI12CjXi0DQanHgbgAoZ
+GN73kAAtwoi/wClpJsbMypshkShQGdMzBaXOh8rm5NGCOuzM0L2Ovm1yZdfn9in1
+T1ivStRXojAkWFYJ2PATpR0USEFboKahUDWHRMUUQhHXY5M07G9mxmyj1yeT3bPk
+yD4cFW8PHLRhfiM4FAX5/0ATpeaS+9yjRaZgqRknYQKBgQD0ZA9TyOe/iYFIXeuZ
+7fi/V08sJ7ULR+xRj65KYgOlowsRl4EzSURgaprMPpJQ4B6bWt4VHcxX3rpAnTie
+46LgOqU1iK9LYTBgvTpgnhLxzvKYosgtE8qrPnoiAmtXR+cBEcHTXFlomdwFBO40
+tNZaLQi9WpcZvw87t5mm6t5E6wKBgQC6hIznWSj51fcO3+OobQCZql3lSftJ/6EV
+BJ576uuaI4fbYgrw8O7q2WULVLeS34KERYS5mxQUhnkaC5hwQzYRVJ2lbsBFMqhv
+pT9maKSEqMfDm5iJmSz0k+L4eJaU7xR/RMaZRtQLR7MfY9nyKGeP97e0Kk1rhYF7
+7oNS5biVEwKBgQDq3PY16M9+rSDHcSsoRSBWkguOPaKpcrdTMqem6Ebk+al7gIQz
+y2eg2RJm0oM+ogQH/O2MkZR9pZiM3As79zviDboTloYQBRi+/1uI2qEOLXnK4jVJ
+zMlqhKJO6NBLktgXmP8Spp9t/N8LG8/oaxnMk5bgkpy/q3NySmGpnfF5fQKBgGkC
+69ntBvbyknCbeS+Af1AE7WyEpKha9jRBL4GRGCjmTD0mDAbvf3RWBV/FyL02feM+
+yKU/PKT5uQEC+kZqcOx8+W0E19ed19tT7EgaLlZKOH5XAiCmTvs8sBM4wX8ExEOL
+U01E5WmcaqsHqtN+ECCsVY9oKcKZnfdKqEFp+OxlAoGAMrCGEePfP3z6uLQW5JZ6
+/F3yvIIbFf9qERwr56eyk6MPqZMN+QdZuVVY0qFxj0F1NRKFJN2IZU8LPnmNICuh
+Ap0WFIpwv5OJ94OlooATeYakqTj5l2gdQkgxAI8bZlqO7XVtVEPSvXCoLrZKEVqA
+Zfzm2fgQCYKEhd8HQDmkT/8=
+-----END PRIVATE KEY-----`,
+			},
+			"*backends.OCIVault",
+		},
 	}
 	for _, tc := range testCases {
 		for k, v := range tc.environment {

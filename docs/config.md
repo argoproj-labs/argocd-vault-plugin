@@ -67,13 +67,13 @@ Make sure that these environment variables are available to the plugin when runn
 environment variables take precedence over configuration pulled from a Kubernetes Secret or a file.
 
 ### Full List of Supported Parameters
-We support all the backend specific environment variables each backend's SDK will accept (e.g, `VAULT_NAMESPACE`, `AWS_REGION`, etc). Refer to the [specific backend's documentation](../backends) for details.
+We support all the backend specific environment variables each backend's SDK will accept (e.g, `VAULT_NAMESPACE`, `AWS_REGION`, etc). Refer to the [specific backend's documentation](./backends.md) for details.
 
 We also support these AVP specific variables:
 
 | Name                       | Description                                         | Notes                                                                                                                                                                        |
 | -------------------------- |-----------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| AVP_TYPE                   | The type of Vault backend                           | Supported values: `vault`, `ibmsecretsmanager`, `awssecretsmanager`, `gcpsecretmanager`, `yandexcloudlockbox` and `1passwordconnect`                                         |
+| AVP_TYPE                   | The type of Vault backend                           | Supported values: `vault`, `ibmsecretsmanager`, `awssecretsmanager`, `gcpsecretmanager`, `yandexcloudlockbox` , `1passwordconnect` and `ocivault`                                         |
 | AVP_KV_VERSION             | The vault secret engine                             | Supported values: `1` and `2` (defaults to 2). KV_VERSION will be ignored if the `avp.kubernetes.io/kv-version` annotation is present in a YAML resource.                    |
 | AVP_AUTH_TYPE              | The type of authentication                          | Supported values: vault: `approle, github, k8s, token`. Only honored for `AVP_TYPE` of `vault`                                                                               |
 | AVP_GITHUB_TOKEN           | Github token                                        | Required with `AUTH_TYPE` of `github`                                                                                                                                        |
@@ -90,7 +90,14 @@ We also support these AVP specific variables:
 | AVP_YCL_KEY_ID             | Yandex Cloud Lockbox service account Key ID         | Required with `TYPE` of `yandexcloudlockbox`                                                                                                                                 |
 | AVP_YCL_PRIVATE_KEY        | Yandex Cloud Lockbox service account private key    | Required with `TYPE` of `yandexcloudlockbox`                                                                                                                                 |
 | AVP_PATH_VALIDATION        | Regular Expression to validate the Vault path       | Optional. Can be used for e.g. to prevent path traversals.                                                                                                                   |
-
+| AVP_OCI_TENANCY                 | OCI Vault tenancy id                          | Only valid with `TYPE` `ocivault`                                                                                                                                   |
+| AVP_OCI_USER                 | OCI Vault user id                          | Only valid with `TYPE` `ocivault`                                                                                                                                   |
+| AVP_OCI_REGION                 | OCI Vault region                         | Only valid with `TYPE` `ocivault`                                                                                                                                   |
+| AVP_OCI_FINGERPRINT                 | OCI Vault user fingerprint                         | Only valid with `TYPE` `ocivault`                                                                                                                                   |
+| AVP_OCI_KEY_FILE                 | OCI Vault api private key                         | Only valid with `TYPE` `ocivault`                                                                                                                                   |
+| AVP_OCI_KEY_PASSPHRASE                 | OCI Vault api private key passphrase                        | Only valid with `TYPE` `ocivault`                                                                                                                                   |
+| AVP_OCI_VAULT_ID                 | OCI Vault ocid                        | Only valid with `TYPE` `ocivault`                                                                                                                                   |
+| AVP_OCI_VAULT_COMPARTMENT_ID                 | OCI Vault compartment ocid                        | Only valid with `TYPE` `ocivault`                                                                                                                                   |
 ### Full List of Supported Annotation
 
 We support several different annotations that can be used inside a kubernetes resource. These annotations will override any corresponding configuration set via Environment Variable or Configuration File.
