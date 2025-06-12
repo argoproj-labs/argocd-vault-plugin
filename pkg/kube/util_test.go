@@ -195,6 +195,131 @@ func TestGenericReplacement_specificPathWithValidation(t *testing.T) {
 	})
 }
 
+func TestGenericReplacement_specificPathUrlEncoded(t *testing.T) {
+	// Test that the generic replacement function can find/replace placeholders that were url-encoded
+	mv := helpers.MockVault{}
+	mv.LoadData(map[string]interface{}{
+		"namespace": "default ns",
+	})
+
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": "%3Cpath%3Ablah%2Fblah%23namespace%3E",
+			"name":      "<name>",
+		},
+		Data: map[string]interface{}{
+			"namespace": "something-else",
+			"name":      "foo",
+		},
+		Backend: &mv,
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+	if !mv.GetIndividualSecretCalled {
+		t.Fatalf("expected GetSecrets to be called since placeholder contains explicit path so Vault lookup is neeed")
+	}
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": "default+ns",
+			"name":      "foo",
+		},
+		Data: map[string]interface{}{
+			"namespace": "something-else",
+			"name":      "foo",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
+func TestGenericReplacement_specificPathUrlEncodedWithValidation(t *testing.T) {
+	// Test that the generic replacement function can find/replace placeholders that were url-encoded
+	mv := helpers.MockVault{}
+	mv.LoadData(map[string]interface{}{
+		"namespace": "default ns",
+	})
+
+	t.Run("valid path", func(t *testing.T) {
+		dummyResource := Resource{
+			TemplateData: map[string]interface{}{
+				"namespace": "%3Cpath%3Ablah%2Fblah%23namespace%3E",
+				"name":      "<name>",
+			},
+			Data: map[string]interface{}{
+				"namespace": "something-else",
+				"name":      "foo",
+			},
+			Backend: &mv,
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
+			PathValidation: regexp.MustCompile(`^([A-Za-z/]*)$`),
+		}
+
+		replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+		if !mv.GetIndividualSecretCalled {
+			t.Fatalf("expected GetSecrets to be called since placeholder contains explicit path so Vault lookup is neeed")
+		}
+
+		expected := Resource{
+			TemplateData: map[string]interface{}{
+				"namespace": "default+ns",
+				"name":      "foo",
+			},
+			Data: map[string]interface{}{
+				"namespace": "something-else",
+				"name":      "foo",
+			},
+			replacementErrors: []error{},
+		}
+
+		assertSuccessfulReplacement(&dummyResource, &expected, t)
+	})
+
+	t.Run("invalid path", func(t *testing.T) {
+		dummyResource := Resource{
+			TemplateData: map[string]interface{}{
+				"namespace": "%3Cpath%3A..%2Fblah%2Fblah%23namespace%3E",
+			},
+			Data: map[string]interface{}{
+				"namespace": "something-else",
+			},
+			Backend: &mv,
+			Annotations: map[string]string{
+				(types.AVPPathAnnotation): "",
+			},
+			PathValidation: regexp.MustCompile(`^([A-Za-z/]*)$`),
+		}
+
+		replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+		if !mv.GetIndividualSecretCalled {
+			t.Fatalf("expected GetSecrets to be called since placeholder contains explicit path so Vault lookup is neeed")
+		}
+
+		expected := Resource{
+			TemplateData: map[string]interface{}{
+				"namespace": "%3Cpath%3A..%2Fblah%2Fblah%23namespace%3E",
+			},
+			Data: map[string]interface{}{
+				"namespace": "something-else",
+			},
+			replacementErrors: []error{
+				fmt.Errorf("the path ../blah/blah is disallowed by AVP_PATH_VALIDATION restriction"),
+			},
+		}
+
+		assertFailedReplacement(&dummyResource, &expected, t)
+	})
+}
+
 func TestGenericReplacement_specificPathVersioned(t *testing.T) {
 	// Test that the specific-path placeholder syntax with versioning is used to find/replace placeholders
 	mv := helpers.MockVault{}
@@ -309,6 +434,87 @@ func TestGenericReplacement_multiString(t *testing.T) {
 			"namespace": "default",
 			"name":      "app",
 			"tag":       "latest",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
+func TestGenericReplacement_multiStringSpecificPathUrlEncoded(t *testing.T) {
+	// Test that multiple url-encoded placeholders in one value string can all be found/replaced.
+	mv := helpers.MockVault{}
+	mv.LoadData(map[string]interface{}{
+		"name": "my app",
+		"tag": "v1",
+	})
+
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": "<namespace>",
+			"image":     "foo.io/%3Cpath%3Ablah%2Fblah%23name%3E:%3Cpath%3Ablah%2Fblah%23tag%3E",
+		},
+		Data: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+		Backend: &mv,
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, genericReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"namespace": "default",
+			"image":     "foo.io/my+app:v1",
+		},
+		Data: map[string]interface{}{
+			"namespace": "default",
+			"name":      "app",
+			"tag":       "latest",
+		},
+		replacementErrors: []error{},
+	}
+
+	assertSuccessfulReplacement(&dummyResource, &expected, t)
+}
+
+func TestSecretReplacement_SpecificPathUrlEncoded_Base64Encoded(t *testing.T) {
+	// Test that the secret replacement function can find/replace placeholders that were url-encoded
+	// and then base64-encoded.
+	mv := helpers.MockVault{}
+	mv.LoadData(map[string]interface{}{
+		"password": "redis@123",
+		"username": "redis",
+	})
+
+	dummyResource := Resource{
+		TemplateData: map[string]interface{}{
+			"url": `cmVkaXM6Ly8lM0NwYXRoJTNBYmxhaCUyRmJsYWglMjN1c2VybmFtZSUzRTolM0NwYXRoJTNBYmxhaCUyRmJsYWglMjNwYXNzd29yZCUzRUByZWRpcy1tYXN0ZXIuaGFyYm9yLnN2Yy5jbHVzdGVyLmxvY2FsLzA/aWRsZV90aW1lb3V0X3NlY29uZHM9MzAK`,
+		},
+		Data: map[string]interface{}{
+			"password": "test",
+			"username": "test",
+		},
+		Backend: &mv,
+		Annotations: map[string]string{
+			(types.AVPPathAnnotation): "",
+		},
+	}
+
+	replaceInner(&dummyResource, &dummyResource.TemplateData, secretReplacement)
+
+	expected := Resource{
+		TemplateData: map[string]interface{}{
+			"url": "cmVkaXM6Ly9yZWRpczpyZWRpcyU0MDEyM0ByZWRpcy1tYXN0ZXIuaGFyYm9yLnN2Yy5jbHVzdGVyLmxvY2FsLzA/aWRsZV90aW1lb3V0X3NlY29uZHM9MzAK",
+		},
+		Data: map[string]interface{}{
+			"password": "test",
+			"username": "test",
 		},
 		replacementErrors: []error{},
 	}

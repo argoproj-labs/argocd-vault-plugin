@@ -13,6 +13,7 @@ import (
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/types"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
 	k8yaml "k8s.io/apimachinery/pkg/util/yaml"
+	"net/url"
 )
 
 type missingKeyError struct {
@@ -25,6 +26,7 @@ func (e *missingKeyError) Error() string {
 
 var genericPlaceholder, _ = regexp.Compile(`(?mU)<(.*)>`)
 var specificPathPlaceholder, _ = regexp.Compile(`(?mU)<path:([^#]+)#([^#]+)(?:#([^#]+))?>`)
+var specificPathUrlEncodedPlaceholder, _ = regexp.Compile(`(?mU)%3Cpath%3A(.+)%23(.+)(?:%23(.+))?%3E`)
 var indivPlaceholderSyntax, _ = regexp.Compile(`(?mU)path:(?P<path>[^#]+?)#(?P<key>[^#]+?)(?:#(?P<version>.+?))??`)
 
 // replaceInner recurses through the given map and replaces the placeholders by calling `replacerFunc`
@@ -105,6 +107,29 @@ func replaceInner(
 func genericReplacement(key, value string, resource Resource) (_ interface{}, err []error) {
 	var nonStringReplacement interface{}
 	var placeholderRegex = specificPathPlaceholder
+
+	// If some sepecific path placeholders were URL-encoded, we match them with a special regex, 
+	// decode them, get secret values and re-encode them.
+	decodedValue := specificPathUrlEncodedPlaceholder.ReplaceAllFunc([]byte(value), func(match []byte) []byte {
+		decoded, decErr:= url.QueryUnescape(string(match))
+		if decErr != nil || !placeholderRegex.Match([]byte(decoded)) {
+			err = append(err, decErr)
+			return match
+		}
+
+		repl, replErr := genericReplacement(key, decoded, resource)
+		if replErr != nil {
+			err = append(err, replErr...)
+			return match
+		}
+
+		return []byte(url.QueryEscape(stringify(repl)))
+	})
+
+	if string(decodedValue) != value {
+		utils.VerboseToStdErr("key %s had value with URL encoded placeholder", key)
+		value = string(decodedValue)
+	}
 
 	// If the Vault path annotation is present, there may be placeholders with/without an explicit path
 	// so we look for those. Only if the annotation is absent do we narrow the search to placeholders with
@@ -216,7 +241,7 @@ func configReplacement(key, value string, resource Resource) (interface{}, []err
 
 func secretReplacement(key, value string, resource Resource) (interface{}, []error) {
 	decoded, err := base64.StdEncoding.DecodeString(value)
-	if err == nil && genericPlaceholder.Match(decoded) {
+	if err == nil && (genericPlaceholder.Match(decoded) || specificPathUrlEncodedPlaceholder.Match(decoded)) {
 		res, err := genericReplacement(key, string(decoded), resource)
 
 		utils.VerboseToStdErr("key %s comes from Secret manifest, base64 encoding value %s to fit", key, value)

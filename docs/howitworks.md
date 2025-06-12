@@ -153,6 +153,40 @@ data:
   POSTGRES_URL: cG9zdGdyZXM6Ly91c2VyOnBhc3NAaG9zdDo5NDQzL215LWRiP3NzbG1vZGU9cmVxdWlyZQ==
 ```
 
+##### URL encoded placeholders
+When using plugin with a Helm chart, it is possible to use placeholders in values file. If a chart applies Helm's `urlquery` function to the value in order to safely include it in an URL, the placeholder will end up looking like this: `%3Cpath%3Asome%2Fpath%23secret-key%3E`.
+
+The plugin can handle this case by finding any url encoded placeholders (inline-path only), replacing them, and re-url encoding the result.
+
+For example, imagine that we have this value file:
+
+```yaml
+redis:
+  external:
+    addr: "redis-master.harbor.svc.cluster.local"
+    password: <path:kv/data/config/redis-pwd#password>
+```
+
+And that the Helm chart passes the password value through `urlquery`, combines it with other data into a connection string and then adds it to a ConfigMap or Secret looking like this:
+
+```yaml
+data:
+  _REDIS_URL_CORE: >-
+    redis://:%3Cpath%3Akv%2Fdata%2Fconfig%2Fredis-pwd%23password%3E@redis-master.harbor.svc.cluster.local/0?idle_timeout_seconds=30
+```
+
+The plugin will be able to find the placeholder `%3Cpath%3Akv%2Fdata%2Fconfig%2Fredis-pwd%23password%3E`, decode it, get the password value (for example, "redis@123"), re-encode the value as "redis%40123" and put it back in the connection string.
+
+Thus, the output will look like this:
+
+```yaml
+data:
+  _REDIS_URL_CORE: >-
+    redis://:redis%40123@redis-master.harbor.svc.cluster.local/0?idle_timeout_seconds=30
+```
+
+It will work even if the string with url-encoded placeholders was added to a Secret and base64-encoded.
+
 ##### Automatically ignoring `<placeholder>` strings
 The plugin tries to be helpful and will ignore strings in the format `<string>` if the `avp.kubernetes.io/path` annotation is missing, and only try to replace [inline-path placeholders](#inline-path-placeholders)
 
