@@ -431,10 +431,11 @@ data:
   password-old: <path:projects/12345678987/secrets/test-secret#password#another-version-id>
 ```
 
-### AZURE Key Vault
+### Azure Key Vault
 
 ##### Azure Authentication
-Refer to the [Use environment-based authentication](https://docs.microsoft.com/en-us/azure/developer/go/azure-sdk-authorization#use-environment-based-authentication) in the Azure SDK for Go.
+
+The Azure SDK for Go leverages a credential chain that supports many authentication methods. See [DefaultAzureCredential overview](https://learn.microsoft.com/en-us/azure/developer/go/sdk/authentication/credential-chains#defaultazurecredential-overview) for the supported options.
 
 Any secrets that are disabled in the key vault will be skipped if found.
 
@@ -446,8 +447,15 @@ For Azure, `path` is the unique name of your key vault.
 (fewer HTTP calls and therefore lower chance of hitting rate limit) than generic placeholders.
 
 These are the parameters for Azure:
+
 ```
 AVP_TYPE: azurekeyvault
+```
+
+Optionally, you may specify the cloud name. Valid values are `AzureCloud` (default), `AzureChinaCloud`, and `AzureUSGovernment`:
+
+```
+AVP_AZURE_CLOUD_NAME: AzureCloud
 ```
 
 ##### Examples

@@ -5,6 +5,7 @@ const (
 	EnvArgoCDPrefix = "ARGOCD_ENV"
 
 	// Environment Variable Constants
+	EnvAvpAzureCloud       = "AVP_AZURE_CLOUD_NAME"
 	EnvAvpType             = "AVP_TYPE"
 	EnvAvpRoleID           = "AVP_ROLE_ID"
 	EnvAvpSecretID         = "AVP_SECRET_ID"
@@ -33,31 +34,37 @@ const (
 	EnvAvpDelineaDomain    = "AVP_DELINEA_DOMAIN"
 
 	// Backend and Auth Constants
-	VaultBackend                = "vault"
-	IBMSecretsManagerbackend    = "ibmsecretsmanager"
-	AWSSecretsManagerbackend    = "awssecretsmanager"
-	GCPSecretManagerbackend     = "gcpsecretmanager"
-	AzureKeyVaultbackend        = "azurekeyvault"
-	Sopsbackend                 = "sops"
-	YandexCloudLockboxbackend   = "yandexcloudlockbox"
-	DelineaSecretServerbackend  = "delineasecretserver"
-	OnePasswordConnect          = "1passwordconnect"
-	KeeperSecretsManagerBackend = "keepersecretsmanager"
-	KubernetesSecretBackend     = "kubernetessecret"
-	K8sAuth                     = "k8s"
-	ApproleAuth                 = "approle"
-	GithubAuth                  = "github"
-	TokenAuth                   = "token"
-	UserPass                    = "userpass"
-	IAMAuth                     = "iam"
-	AwsDefaultRegion            = "us-east-2"
-	GCPCurrentSecretVersion     = "latest"
-	IBMMaxRetries               = 3
-	IBMRetryIntervalSeconds     = 20
-	IBMMaxPerPage               = 200
-	IBMIAMCredentialsType       = "iam_credentials"
-	IBMImportedCertType         = "imported_cert"
-	IBMPublicCertType           = "public_cert"
+	VaultBackend                       = "vault"
+	IBMSecretsManagerbackend           = "ibmsecretsmanager"
+	AWSSecretsManagerbackend           = "awssecretsmanager"
+	GCPSecretManagerbackend            = "gcpsecretmanager"
+	AzureKeyVaultbackend               = "azurekeyvault"
+	AzurePublicCloudName               = "AzureCloud"
+	AzurePublicCloudKeyVaultDnsSuffix  = "vault.azure.net"
+	AzureChinaCloudName                = "AzureChinaCloud"
+	AzureChinaCloudKeyVaultDnsSuffix   = "vault.azure.cn"
+	AzureUSGovernmentCloudName         = "AzureUSGovernment"
+	AzureUSGovernmentKeyVaultDnsSuffix = "vault.usgovcloudapi.net"
+	Sopsbackend                        = "sops"
+	YandexCloudLockboxbackend          = "yandexcloudlockbox"
+	DelineaSecretServerbackend         = "delineasecretserver"
+	OnePasswordConnect                 = "1passwordconnect"
+	KeeperSecretsManagerBackend        = "keepersecretsmanager"
+	KubernetesSecretBackend            = "kubernetessecret"
+	K8sAuth                            = "k8s"
+	ApproleAuth                        = "approle"
+	GithubAuth                         = "github"
+	TokenAuth                          = "token"
+	UserPass                           = "userpass"
+	IAMAuth                            = "iam"
+	AwsDefaultRegion                   = "us-east-2"
+	GCPCurrentSecretVersion            = "latest"
+	IBMMaxRetries                      = 3
+	IBMRetryIntervalSeconds            = 20
+	IBMMaxPerPage                      = 200
+	IBMIAMCredentialsType              = "iam_credentials"
+	IBMImportedCertType                = "imported_cert"
+	IBMPublicCertType                  = "public_cert"
 
 	// Supported annotations
 	AVPPathAnnotation          = "avp.kubernetes.io/path"

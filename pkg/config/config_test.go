@@ -149,6 +149,36 @@ func TestNewConfig(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
+				"AVP_TYPE":             "azurekeyvault",
+				"AVP_AZURE_CLOUD_NAME": "AzureCloud",
+				"AZURE_TENANT_ID":      "test",
+				"AZURE_CLIENT_ID":      "test",
+				"AZURE_CLIENT_SECRET":  "test",
+			},
+			"*backends.AzureKeyVault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":             "azurekeyvault",
+				"AVP_AZURE_CLOUD_NAME": "AzureUSGovernment",
+				"AZURE_TENANT_ID":      "test",
+				"AZURE_CLIENT_ID":      "test",
+				"AZURE_CLIENT_SECRET":  "test",
+			},
+			"*backends.AzureKeyVault",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":             "azurekeyvault",
+				"AVP_AZURE_CLOUD_NAME": "AzureChinaCloud",
+				"AZURE_TENANT_ID":      "test",
+				"AZURE_CLIENT_ID":      "test",
+				"AZURE_CLIENT_SECRET":  "test",
+			},
+			"*backends.AzureKeyVault",
+		},
+		{
+			map[string]interface{}{
 				"AVP_TYPE":                   "yandexcloudlockbox",
 				"AVP_YCL_KEY_ID":             "test",
 				"AVP_YCL_SERVICE_ACCOUNT_ID": "test",

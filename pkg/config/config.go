@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"os"
 	"strconv"
 	"strings"
@@ -12,7 +11,10 @@ import (
 
 	gcpsm "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/1Password/connect-sdk-go/connect"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	delineasecretserver "github.com/DelineaXPM/tss-sdk-go/v2/server"
 	"github.com/IBM/go-sdk-core/v5/core"
 	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
@@ -190,12 +192,36 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 		}
 	case types.AzureKeyVaultbackend:
 		{
-			cred, err := azidentity.NewDefaultAzureCredential(nil)
+			cloudName := v.GetString(types.EnvAvpAzureCloud)
+			var cloudCfg cloud.Configuration
+			var keyVaultDnsSuffix string
+			switch cloudName {
+			case "", types.AzurePublicCloudName:
+				cloudCfg = cloud.AzurePublic
+				keyVaultDnsSuffix = types.AzurePublicCloudKeyVaultDnsSuffix
+				utils.VerboseToStdErr("using Azure Public Cloud for Key Vault")
+			case types.AzureChinaCloudName:
+				cloudCfg = cloud.AzureChina
+				keyVaultDnsSuffix = types.AzureChinaCloudKeyVaultDnsSuffix
+				utils.VerboseToStdErr("using Azure China Cloud for Key Vault")
+			case types.AzureUSGovernmentCloudName:
+				cloudCfg = cloud.AzureGovernment
+				keyVaultDnsSuffix = types.AzureUSGovernmentKeyVaultDnsSuffix
+				utils.VerboseToStdErr("using Azure US Government Cloud for Key Vault")
+			default:
+				return nil, fmt.Errorf("unsupported Azure cloud name %s for Key Vault", cloudName)
+			}
+			coreClientOptions := azcore.ClientOptions{
+				Cloud: cloudCfg,
+			}
+			cred, err := azidentity.NewDefaultAzureCredential(&azidentity.DefaultAzureCredentialOptions{
+				ClientOptions: coreClientOptions,
+			})
 			if err != nil {
 				return nil, err
 			}
 
-			backend = backends.NewAzureKeyVaultBackend(cred, azsecrets.NewClient)
+			backend = backends.NewAzureKeyVaultBackend(cred, azsecrets.NewClient, azsecrets.ClientOptions{ClientOptions: coreClientOptions}, keyVaultDnsSuffix)
 		}
 	case types.Sopsbackend:
 		{

@@ -3,12 +3,13 @@ package backends_test
 import (
 	"context"
 	"errors"
+	"reflect"
+	"testing"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
-	"reflect"
-	"testing"
 )
 
 const secretNamePrefix = "https://myvaultname.vault.azure.net/keys/"
@@ -37,7 +38,8 @@ func makeResponse(id azsecrets.ID, value string, err error) (azsecrets.GetSecret
 
 func newAzureKeyVaultBackendMock(simulateError string) *backends.AzureKeyVault {
 	return &backends.AzureKeyVault{
-		Credential: nil,
+		Credential:        nil,
+		KeyVaultDNSSuffix: "vault.azure.net",
 		ClientBuilder: func(vaultURL string, credential azcore.TokenCredential, options *azsecrets.ClientOptions) (backends.AzSecretsClient, error) {
 			return &mockClientProxy{
 				simulateError: simulateError,
@@ -142,7 +144,8 @@ func TestAzGetSecretNotExist(t *testing.T) {
 
 func TestAzGetSecretBuilderError(t *testing.T) {
 	var keyVault = &backends.AzureKeyVault{
-		Credential: nil,
+		Credential:        nil,
+		KeyVaultDNSSuffix: "vault.azure.net",
 		ClientBuilder: func(vaultURL string, credential azcore.TokenCredential, options *azsecrets.ClientOptions) (backends.AzSecretsClient, error) {
 			return nil, errors.New("boom")
 		},
@@ -199,7 +202,8 @@ func TestAzGetSecretsWithErrorOnGetSecret(t *testing.T) {
 
 func TestAzGetSecretsBuilderError(t *testing.T) {
 	var keyVault = &backends.AzureKeyVault{
-		Credential: nil,
+		Credential:        nil,
+		KeyVaultDNSSuffix: "vault.azure.net",
 		ClientBuilder: func(vaultURL string, credential azcore.TokenCredential, options *azsecrets.ClientOptions) (backends.AzSecretsClient, error) {
 			return nil, errors.New("boom")
 		},

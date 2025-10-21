@@ -3,17 +3,20 @@ package backends
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/utils"
-	"time"
 )
 
 // AzureKeyVault is a struct for working with an Azure Key Vault backend
 type AzureKeyVault struct {
-	Credential    azcore.TokenCredential
-	ClientBuilder func(vaultURL string, credential azcore.TokenCredential, options *azsecrets.ClientOptions) (AzSecretsClient, error)
+	Credential          azcore.TokenCredential
+	KeyVaultDNSSuffix   string
+	SecretClientOptions azsecrets.ClientOptions
+	ClientBuilder       func(vaultURL string, credential azcore.TokenCredential, options *azsecrets.ClientOptions) (AzSecretsClient, error)
 }
 
 type AzSecretsClient interface {
@@ -22,9 +25,11 @@ type AzSecretsClient interface {
 }
 
 // NewAzureKeyVaultBackend initializes a new Azure Key Vault backend
-func NewAzureKeyVaultBackend(credential azcore.TokenCredential, clientBuilder func(vaultURL string, credential azcore.TokenCredential, options *azsecrets.ClientOptions) (*azsecrets.Client, error)) *AzureKeyVault {
+func NewAzureKeyVaultBackend(credential azcore.TokenCredential, clientBuilder func(vaultURL string, credential azcore.TokenCredential, options *azsecrets.ClientOptions) (*azsecrets.Client, error), secretClientOptions azsecrets.ClientOptions, dnsSuffix string) *AzureKeyVault {
 	return &AzureKeyVault{
-		Credential: credential,
+		Credential:          credential,
+		KeyVaultDNSSuffix:   dnsSuffix,
+		SecretClientOptions: secretClientOptions,
 		ClientBuilder: func(vaultURL string, credential azcore.TokenCredential, options *azsecrets.ClientOptions) (AzSecretsClient, error) {
 			return clientBuilder(vaultURL, credential, options)
 		},
@@ -40,14 +45,14 @@ func (a *AzureKeyVault) Login() error {
 // For Azure Key Vault, `kvpath` is the unique name of your vault
 // For Azure use the version here not make really sens as each secret have a different version but let support it
 func (a *AzureKeyVault) GetSecrets(kvpath string, version string, _ map[string]string) (map[string]interface{}, error) {
-	kvpath = fmt.Sprintf("https://%s.vault.azure.net", kvpath)
+	kvpath = fmt.Sprintf("https://%s.%s", kvpath, a.KeyVaultDNSSuffix)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	verboseOptionalVersion("Azure Key Vault list all secrets from vault %s", version, kvpath)
 
-	client, err := a.ClientBuilder(kvpath, a.Credential, nil)
+	client, err := a.ClientBuilder(kvpath, a.Credential, &a.SecretClientOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -97,10 +102,9 @@ func (a *AzureKeyVault) GetIndividualSecret(kvpath, secret, version string, anno
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	kvpath = fmt.Sprintf("https://%s.%s", kvpath, a.KeyVaultDNSSuffix)
 	verboseOptionalVersion("Azure Key Vault getting individual secret %s from vault %s", version, secret, kvpath)
-
-	kvpath = fmt.Sprintf("https://%s.vault.azure.net", kvpath)
-	client, err := a.ClientBuilder(kvpath, a.Credential, nil)
+	client, err := a.ClientBuilder(kvpath, a.Credential, &a.SecretClientOptions)
 	if err != nil {
 		return nil, err
 	}
