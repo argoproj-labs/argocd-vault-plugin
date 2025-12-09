@@ -77,8 +77,14 @@ func (a *AWSSecretsManager) GetSecrets(path string, version string, annotations 
 	if result.SecretString != nil {
 		err := json.Unmarshal([]byte(*result.SecretString), &dat)
 		if err != nil {
-			return nil, err
+			// If JSON unmarshal fails, treat as plain text
+			utils.VerboseToStdErr("Get plain text value for %v", path)
+			dat = make(map[string]interface{})
+			dat["SecretString"] = *result.SecretString
+			return dat, nil
 		}
+		// Always include SecretString to allow retrieving raw JSON value
+		dat["SecretString"] = *result.SecretString
 	} else if result.SecretBinary != nil {
 		utils.VerboseToStdErr("Get binary value for %v", path)
 		dat = make(map[string]interface{})

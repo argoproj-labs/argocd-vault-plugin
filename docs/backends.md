@@ -312,6 +312,25 @@ stringData:
 type: Opaque
 ```
 
+###### Plain Text Secrets
+
+AWS Secrets Manager can store plain text (non-JSON) secrets. To retrieve the entire secret value as a raw string (whether it's plain text or JSON), use `SecretString` as the key:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-example
+stringData:
+  # Plain text secret
+  sample-secret: <path:test-plaintext-secret#SecretString>
+  # Or JSON secret as raw string
+  json-as-string: <path:test-json-secret#SecretString>
+type: Opaque
+```
+
+**Note**: Use `#SecretString` to retrieve the raw secret value as a single string. If the secret contains JSON and you want to access individual elements, use `#keyName` (e.g., `<path:test-secret#username>`).
+
 ###### Versioned secrets
 
 ```yaml
@@ -357,9 +376,11 @@ stringData:
 type: Opaque
 ```
 
-###### Retrieving of binary data
+###### Retrieving Binary and Plain Text Data
 
-Since there is no way to set a key for binary type in AWS Secret Manager, set the `<key>` part to `SecretBinary` to retrieve binary data:
+AWS Secrets Manager supports three types of secret values: JSON objects, plain text strings, and binary data.
+
+**For binary data**, use `SecretBinary` as the key:
 
 ```yaml
 apiVersion: v1
@@ -368,6 +389,31 @@ metadata:
   name: aws-example
 stringData:
   sample-secret: <path:arn:aws:secretsmanager:<REGION>:<ACCOUNT_NUMBER>:<SECRET_ID>#SecretBinary>
+type: Opaque
+```
+
+**For plain text (non-JSON) strings**, use `SecretString` as the key:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-example
+stringData:
+  sample-secret: <path:arn:aws:secretsmanager:<REGION>:<ACCOUNT_NUMBER>:<SECRET_ID>#SecretString>
+type: Opaque
+```
+
+**For JSON secrets**, specify the individual key you want to retrieve:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: aws-example
+stringData:
+  username: <path:arn:aws:secretsmanager:<REGION>:<ACCOUNT_NUMBER>:<SECRET_ID>#username>
+  password: <path:arn:aws:secretsmanager:<REGION>:<ACCOUNT_NUMBER>:<SECRET_ID>#password>
 type: Opaque
 ```
 
