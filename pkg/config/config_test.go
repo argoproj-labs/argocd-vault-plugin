@@ -220,6 +220,17 @@ fDGt+yaf3RaZbVwHSVLzxiXGsu1WQJde3uJeNh5c6z+5
 		},
 		{
 			map[string]interface{}{
+				"AVP_TYPE":                 "securden",
+				"AVP_SECURDEN_URL":         "https://securden.example.com",
+				"AVP_SECURDEN_AUTHTOKEN":   "token",
+				"AVP_SECURDEN_REASON":      "Argo CD secret rendering",
+				"AVP_SECURDEN_TICKET_ID":   "INC-123",
+				"AVP_SECURDEN_SKIP_VERIFY": "true",
+			},
+			"*backends.Securden",
+		},
+		{
+			map[string]interface{}{
 				"AVP_TYPE": "kubernetessecret",
 			},
 			"*backends.KubernetesSecret",
@@ -481,6 +492,20 @@ func TestNewConfigMissingParameter(t *testing.T) {
 				"AVP_AUTH_TYPE": "userpass",
 			},
 			"*backends.DelineaSecretServer",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":               "securden",
+				"AVP_SECURDEN_AUTHTOKEN": "token",
+			},
+			"*backends.Securden",
+		},
+		{
+			map[string]interface{}{
+				"AVP_TYPE":         "securden",
+				"AVP_SECURDEN_URL": "https://securden.example.com",
+			},
+			"*backends.Securden",
 		},
 	}
 	for _, tc := range testCases {

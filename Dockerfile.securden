@@ -1,0 +1,9 @@
+FROM golang:1.22.7 AS builder
+WORKDIR /src
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -buildvcs=false -o /argocd-vault-plugin .
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /argocd-vault-plugin /usr/local/bin/argocd-vault-plugin
+ENTRYPOINT ["argocd-vault-plugin"]

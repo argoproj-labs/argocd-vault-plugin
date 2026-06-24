@@ -739,6 +739,63 @@ data:
   password: <path:secret-id#key | base64encode>
 ```
 
+### Securden
+
+**Note**: The Securden backend does not support versioning in the initial implementation. It currently returns only the account password.
+
+##### Securden Authentication
+
+These are the parameters for Securden:
+```
+AVP_TYPE: securden
+AVP_SECURDEN_URL: The URL of the Securden PAM server
+AVP_SECURDEN_AUTHTOKEN: The Securden API auth token
+
+Optional:
+AVP_SECURDEN_REASON: Access reason sent to Securden
+AVP_SECURDEN_TICKET_ID: Ticket or change request identifier sent to Securden
+AVP_SECURDEN_SKIP_VERIFY: Set to true to skip TLS certificate verification
+```
+
+Example configuration:
+
+```yaml
+AVP_TYPE: securden
+AVP_SECURDEN_URL: https://securden.example.com
+AVP_SECURDEN_AUTHTOKEN: <token>
+AVP_SECURDEN_REASON: Argo CD secret rendering
+```
+
+##### Examples
+
+`path` is treated as the Securden `account_id`.
+
+###### Path Annotation
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: securden-example
+  annotations:
+    avp.kubernetes.io/path: "2000000001800"
+type: Opaque
+stringData:
+  password: <password>
+```
+
+###### Inline Path
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: securden-example
+type: Opaque
+stringData:
+  password: <path:2000000001800#password>
+```
+
 ### Kubernetes Secret
 
 Inject values from any kubernetes secret

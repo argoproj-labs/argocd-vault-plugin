@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	delineasecretserver "github.com/DelineaXPM/tss-sdk-go/v2/server"
 	"github.com/IBM/go-sdk-core/v5/core"
 	ibmsm "github.com/IBM/secrets-manager-go-sdk/secretsmanagerv2"
+	securdensdk "github.com/SecurdenDevOps/securden-sdk"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/auth/vault"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/backends"
 	"github.com/argoproj-labs/argocd-vault-plugin/pkg/kube"
@@ -278,6 +280,33 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				return nil, err
 			}
 			backend = backends.NewDelineaSecretServerBackend(tss)
+		}
+	case types.SecurdenBackend:
+		{
+			if !v.IsSet(types.EnvAvpSecurdenURL) {
+				return nil, fmt.Errorf("%s is required for Securden", types.EnvAvpSecurdenURL)
+			}
+			if !v.IsSet(types.EnvAvpSecurdenAuthToken) {
+				return nil, fmt.Errorf("%s is required for Securden", types.EnvAvpSecurdenAuthToken)
+			}
+
+			cfg := securdensdk.NewConfiguration(v.GetString(types.EnvAvpSecurdenURL))
+			cfg.SetAuthToken(v.GetString(types.EnvAvpSecurdenAuthToken))
+
+			if v.GetBool(types.EnvAvpSecurdenSkipVerify) {
+				httpClient := utils.DefaultHttpClient()
+				transport := httpClient.Transport.(*http.Transport).Clone()
+				transport.TLSClientConfig = transport.TLSClientConfig.Clone()
+				transport.TLSClientConfig.InsecureSkipVerify = true
+				httpClient.Transport = transport
+				cfg.HTTPClient = httpClient
+			}
+
+			backend = backends.NewSecurdenBackend(backends.NewSecurdenSDKClient(
+				securdensdk.NewAPIClient(cfg),
+				v.GetString(types.EnvAvpSecurdenReason),
+				v.GetString(types.EnvAvpSecurdenTicketID),
+			))
 		}
 	case types.KubernetesSecretBackend:
 		{

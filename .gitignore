@@ -1,10 +1,12 @@
 argocd-vault-plugin
+argocd-vault-plugin.exe
 RELEASE_CHANGELOG.md
 bin
 .DS_Store
 test
 local
 cover.out
+.gocache/
 
 # Project workspaces
 .idea
