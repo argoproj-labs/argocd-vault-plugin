@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azsecrets"
 
 	gcpsm "cloud.google.com/go/secretmanager/apiv1"
 	"github.com/1Password/connect-sdk-go/connect"
@@ -24,6 +25,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	awssm "github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/hashicorp/vault/api"
+	infisical "github.com/infisical/go-sdk"
 	ksm "github.com/keeper-security/secrets-manager-go/core"
 	"github.com/spf13/viper"
 	ycsdk "github.com/yandex-cloud/go-sdk"
@@ -50,6 +52,7 @@ var backendPrefixes []string = []string{
 	"sops",
 	"op_connect",
 	"k8s_secret",
+	"infisical",
 }
 
 // New returns a new Config struct
@@ -278,6 +281,41 @@ func New(v *viper.Viper, co *Options) (*Config, error) {
 				return nil, err
 			}
 			backend = backends.NewDelineaSecretServerBackend(tss)
+		}
+	case types.InfisicalBackend:
+		{
+			if !v.IsSet(types.EnvAvpInfisicalKubernetesIdentityID) {
+				return nil, fmt.Errorf("%s is required for Infisical Kubernetes auth", types.EnvAvpInfisicalKubernetesIdentityID)
+			}
+			if !v.IsSet(types.EnvAvpInfisicalProjectSlug) {
+				return nil, fmt.Errorf("%s is required for Infisical", types.EnvAvpInfisicalProjectSlug)
+			}
+			if !v.IsSet(types.EnvAvpInfisicalEnvironment) {
+				return nil, fmt.Errorf("%s is required for Infisical", types.EnvAvpInfisicalEnvironment)
+			}
+
+			siteURL := "https://app.infisical.com"
+			if v.IsSet(types.EnvAvpInfisicalSiteURL) {
+				siteURL = v.GetString(types.EnvAvpInfisicalSiteURL)
+			}
+
+			client := infisical.NewInfisicalClient(context.Background(), infisical.Config{
+				SiteUrl: siteURL,
+			})
+
+			_, err := client.Auth().KubernetesAuthLogin(
+				v.GetString(types.EnvAvpInfisicalKubernetesIdentityID),
+				v.GetString(types.EnvAvpInfisicalKubernetesServiceAccountTokenPath),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("Infisical authentication failed: %w", err)
+			}
+
+			backend = backends.NewInfisicalBackend(
+				client.Secrets(),
+				v.GetString(types.EnvAvpInfisicalProjectSlug),
+				v.GetString(types.EnvAvpInfisicalEnvironment),
+			)
 		}
 	case types.KubernetesSecretBackend:
 		{

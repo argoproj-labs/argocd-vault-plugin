@@ -739,6 +739,75 @@ data:
   password: <path:secret-id#key | base64encode>
 ```
 
+### Infisical
+
+**Note**: The Infisical backend does not support versioning, so specifying a version will be ignored.
+
+##### Infisical Authentication
+
+Infisical uses [Machine Identity Kubernetes Auth](https://infisical.com/docs/documentation/platform/identities/kubernetes-auth) for authentication. You must create a Machine Identity in Infisical and configure it with Kubernetes auth before using this backend.
+
+These are the required parameters for Infisical:
+```
+AVP_TYPE: infisical
+AVP_INFISICAL_PROJECT_SLUG: Your Infisical project slug
+AVP_INFISICAL_ENVIRONMENT: The environment to fetch secrets from (e.g., dev, staging, prod)
+AVP_INFISICAL_KUBERNETES_IDENTITY_ID: The ID of the Machine Identity configured with Kubernetes auth
+
+Optional:
+AVP_INFISICAL_SITE_URL: Your Infisical instance URL (defaults to https://app.infisical.com)
+AVP_INFISICAL_KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH: Path to the Kubernetes service account token (Defaults to the standard service account token path)
+```
+
+For self-hosted Infisical instances, set `AVP_INFISICAL_SITE_URL` to your instance URL.
+
+##### Examples
+
+###### Path Annotation
+
+The `path` annotation corresponds to the secret folder path in Infisical.
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: infisical-example
+  annotations:
+    avp.kubernetes.io/path: "/"
+type: Opaque
+data:
+  username: <USERNAME>
+  password: <PASSWORD>
+```
+
+###### Inline Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: infisical-example
+type: Opaque
+data:
+  username: <path:/#USERNAME>
+  password: <path:/#PASSWORD>
+```
+
+###### Nested Path
+
+```yaml
+kind: Secret
+apiVersion: v1
+metadata:
+  name: infisical-example
+  annotations:
+    avp.kubernetes.io/path: "/backend/database"
+type: Opaque
+data:
+  username: <DB_USERNAME>
+  password: <DB_PASSWORD>
+```
+
 ### Kubernetes Secret
 
 Inject values from any kubernetes secret

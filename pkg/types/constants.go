@@ -32,6 +32,13 @@ const (
 	EnvAvpDelineaPassword  = "AVP_DELINEA_PASSWORD"
 	EnvAvpDelineaDomain    = "AVP_DELINEA_DOMAIN"
 
+	// Infisical Environment Variable Constants
+	EnvAvpInfisicalProjectSlug                      = "AVP_INFISICAL_PROJECT_SLUG"
+	EnvAvpInfisicalEnvironment                      = "AVP_INFISICAL_ENVIRONMENT"
+	EnvAvpInfisicalSiteURL                          = "AVP_INFISICAL_SITE_URL"
+	EnvAvpInfisicalKubernetesIdentityID             = "AVP_INFISICAL_KUBERNETES_IDENTITY_ID"
+	EnvAvpInfisicalKubernetesServiceAccountTokenPath = "AVP_INFISICAL_KUBERNETES_SERVICE_ACCOUNT_TOKEN_PATH"
+
 	// Backend and Auth Constants
 	VaultBackend                = "vault"
 	IBMSecretsManagerbackend    = "ibmsecretsmanager"
@@ -44,6 +51,7 @@ const (
 	OnePasswordConnect          = "1passwordconnect"
 	KeeperSecretsManagerBackend = "keepersecretsmanager"
 	KubernetesSecretBackend     = "kubernetessecret"
+	InfisicalBackend            = "infisical"
 	K8sAuth                     = "k8s"
 	ApproleAuth                 = "approle"
 	GithubAuth                  = "github"
