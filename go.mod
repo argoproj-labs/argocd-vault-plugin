@@ -1,6 +1,6 @@
 module github.com/argoproj-labs/argocd-vault-plugin
 
-go 1.22.7
+go 1.25.4
 
 require (
 	cloud.google.com/go/secretmanager v1.13.0

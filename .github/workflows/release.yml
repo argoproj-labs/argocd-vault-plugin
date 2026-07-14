@@ -21,7 +21,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.22.7
+          go-version: 1.25.4
 
       - name: Install git-chglog
         run: go install github.com/git-chglog/git-chglog/cmd/git-chglog@latest
